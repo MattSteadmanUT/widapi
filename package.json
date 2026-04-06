@@ -1,0 +1,25 @@
+{
+  "name": "widapi",
+  "version": "1.0.0",
+  "description": "A shared repository for API specifications (Swagger / OpenAPI) and related documentation.",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "update-vendor": "node scripts/update-vendor.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MattSteadmanUT/widapi.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MattSteadmanUT/widapi/issues"
+  },
+  "homepage": "https://github.com/MattSteadmanUT/widapi#readme",
+  "dependencies": {
+    "swagger-ui-dist": "^5.32.1"
+  }
+}
