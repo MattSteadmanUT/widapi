@@ -1,12 +1,8 @@
 # Docs
 
-Place non-Swagger documents here (architecture decisions, runbooks, onboarding guides, etc.).
+Non-spec documentation for the WID 3.0 working group.
 
-Use sub-directories to organise by topic, for example:
-
-```
-docs/
-  adr/          # Architecture Decision Records
-  runbooks/     # Operational runbooks
-  onboarding/   # New-team-member guides
-```
+| Directory       | Purpose                                              |
+|-----------------|------------------------------------------------------|
+| `decisions/`    | Design decisions — field names, endpoints, data types |
+| `field-mapping/`| WID 2.8 → 3.0 field mapping notes by domain area    |

@@ -1,16 +1,20 @@
-# widapi
+# WID 3.0 API Specification
 
-A shared repository for API specifications (Swagger / OpenAPI) and related documentation.
+A collaborative repository for developing the national **Workforce Information Database (WID) 3.0** API specification. Multiple state workforce agencies contribute to and review this spec together.
+
+For background on the WID standard, see [widcenter.org](https://widcenter.org).
 
 ---
 
 ## Viewing the API docs
 
-Open **`index.html`** in a browser, or enable [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-github-pages) on this repository (source: `/ (root)`, branch: `main`) to get a publicly-hosted Swagger UI at:
+GitHub Pages is enabled on this repository. The Swagger UI is available at:
 
 ```
-https://<org>.github.io/<repo>/
+https://mattsteadmanut.github.io/widapi/
 ```
+
+The "Try it out" feature in Swagger UI will send requests directly from your browser to whatever server URL is set in the spec. The target API must have CORS enabled for browser-based testing to work.
 
 ---
 
@@ -18,30 +22,44 @@ https://<org>.github.io/<repo>/
 
 ```
 widapi/
-├── index.html              # Swagger UI entry point
-├── swagger/
-│   └── openapi.yaml        # Default OpenAPI 3 specification
-├── vendor/
-│   └── swagger-ui/         # Vendored Swagger UI static assets
+├── index.html                        # Swagger UI entry point (GitHub Pages)
+├── specs/
+│   ├── wid-3.0/
+│   │   └── draft.yaml                # National WID 3.0 working draft
+│   └── reference/
+│       ├── README.md                 # How to add a reference spec
+│       └── <state>-wid-<ver>.yaml    # State-contributed reference specs
 ├── docs/
-│   └── README.md           # Home for non-spec documents
-├── scripts/
-│   └── update-vendor.js    # Helper to refresh vendored assets
-└── package.json            # Node metadata (swagger-ui-dist dependency)
+│   ├── decisions/                    # Design decisions and rationale
+│   └── field-mapping/                # WID 2.8 → 3.0 field mapping notes
+├── vendor/swagger-ui/                # Vendored Swagger UI assets
+├── scripts/update-vendor.js          # Helper to refresh vendored assets
+└── package.json
 ```
 
 ---
 
-## Adding a new API spec
+## Contributing
 
-1. Create a new YAML or JSON file under `swagger/`, e.g. `swagger/payments.yaml`.
-2. Open `index.html` and add an entry to the `urls` array:
+All changes go through pull requests — no one pushes directly to `main`.
 
-```js
-{ name: "Payments API", url: "swagger/payments.yaml" },
-```
+### Proposing a change to the WID 3.0 draft
 
-3. Commit and push — the new spec will appear in the Swagger UI dropdown.
+1. Fork this repository (or create a branch if you are a direct collaborator)
+2. Edit `specs/wid-3.0/draft.yaml`
+3. If the change maps from a WID 2.8 field, update the relevant file in `docs/field-mapping/`
+4. Open a pull request — the PR template will guide you through what to include
+5. At least one reviewer must approve before the PR can be merged
+
+### Adding a reference spec
+
+1. Add your state's YAML file to `specs/reference/` following the naming convention in that folder's README
+2. Uncomment (or add) the matching entry in `index.html` so it appears in the Swagger UI dropdown
+3. Open a pull request
+
+### Adding a design decision record
+
+Add a Markdown file to `docs/decisions/` following the format described in that folder's README.
 
 ---
 
@@ -53,17 +71,3 @@ npm run update-vendor
 ```
 
 Commit the changed files under `vendor/swagger-ui/`.
-
----
-
-## Adding other documents
-
-Place Markdown, PDF, or any other document under `docs/`. Use sub-directories to keep things organised (see `docs/README.md` for suggestions).
-
----
-
-## Contributing
-
-1. Fork or branch from `main`.
-2. Make your changes.
-3. Open a pull request with a short description of what was added or changed.

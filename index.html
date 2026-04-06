@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>widapi – API Docs</title>
+    <title>WID 3.0 API Docs</title>
     <link rel="stylesheet" href="vendor/swagger-ui/swagger-ui.css" />
     <style>
       body { margin: 0; }
@@ -17,17 +17,15 @@
     <script>
       window.onload = function () {
         SwaggerUIBundle({
-          // List every spec file you want to expose.
-          // The first entry in `urls` is shown by default.
           urls: [
             {
-              name: "widapi",
-              url: "swagger/openapi.yaml",
+              name: "WID 3.0 — National Draft",
+              url: "specs/wid-3.0/draft.yaml",
             },
-            // Add more specs below as needed, e.g.:
-            // { name: "Payments API", url: "swagger/payments.yaml" },
+            // Reference specs — add an entry here when a state contributes one:
+            // { name: "Oregon WID 2.8 (reference)", url: "specs/reference/oregon-wid-2.8.yaml" },
           ],
-          "urls.primaryName": "widapi",
+          "urls.primaryName": "WID 3.0 — National Draft",
           dom_id: "#swagger-ui",
           presets: [
             SwaggerUIBundle.presets.apis,

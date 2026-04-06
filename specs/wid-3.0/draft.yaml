@@ -1,0 +1,22 @@
+openapi: "3.0.3"
+info:
+  title: WID 3.0 API — National Draft
+  description: >
+    Working draft of the national Workforce Information Database (WID) 3.0 API specification.
+    This specification is being developed collaboratively by multiple state workforce agencies.
+
+    For background on the WID standard, see https://widcenter.org.
+
+    This is a living document. Open a pull request to propose changes.
+  version: "3.0.0-draft"
+  contact:
+    name: WID 3.0 Working Group
+
+servers:
+  - url: https://api.example.com/v1
+    description: Placeholder — update with actual endpoint URL before testing
+
+paths: {}
+
+components:
+  schemas: {}
