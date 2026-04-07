@@ -15,6 +15,7 @@ info:
     3. **Consistent naming** — all API field names use `camelCase` equivalents of the WID 3.0
        column names (e.g., `StFips` → `stFips`, `AreaTypeVersion` → `areaTypeVersion`).
     4. **Standard envelope** — every list response wraps results in `{ meta, data, links }`.
+       The envelope supports both page-number and cursor pagination.
     5. **State-agnostic** — `stFips` is never hardcoded; the spec supports all 50 states plus
        national data.
 
@@ -102,6 +103,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -157,6 +160,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - name: areaType
           in: query
@@ -177,6 +182,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
       responses:
         '200':
@@ -194,6 +201,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
       responses:
         '200':
           description: Successful response
@@ -213,6 +222,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/periodType'
         - $ref: '#/components/parameters/minYear'
         - $ref: '#/components/parameters/maxYear'
@@ -236,6 +247,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/periodType'
         - name: period
           in: query
@@ -260,6 +273,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/industryCodeType'
         - $ref: '#/components/parameters/industryCode'
@@ -282,6 +297,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/occupationCodeType'
         - $ref: '#/components/parameters/occupationCode'
@@ -306,6 +323,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - name: seriesCodeType
           in: query
@@ -334,6 +353,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
       responses:
         '200':
           description: Successful response
@@ -350,6 +371,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
       responses:
         '200':
@@ -369,6 +392,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
       responses:
         '200':
           description: Successful response
@@ -385,6 +410,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
       responses:
         '200':
           description: Successful response
@@ -402,6 +429,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
       responses:
         '200':
@@ -435,6 +464,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -481,6 +512,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -519,6 +552,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -560,6 +595,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -600,6 +637,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/periodType'
         - $ref: '#/components/parameters/periodYear'
         - $ref: '#/components/parameters/period'
@@ -628,6 +667,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/periodType'
         - $ref: '#/components/parameters/periodYear'
         - $ref: '#/components/parameters/period'
@@ -655,6 +696,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/industryCodeType'
         - $ref: '#/components/parameters/industryCode'
@@ -679,6 +722,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/occupationCodeType'
         - $ref: '#/components/parameters/occupationCode'
@@ -711,6 +756,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -755,6 +802,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -782,6 +831,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - name: licAuthID
           in: query
@@ -812,6 +863,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -840,6 +893,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/occupationCodeType'
         - $ref: '#/components/parameters/occupationCode'
@@ -869,6 +924,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -902,6 +959,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -933,6 +992,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -967,6 +1028,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -1001,6 +1064,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -1032,6 +1097,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/occupationCodeType'
         - $ref: '#/components/parameters/occupationCode'
@@ -1056,7 +1123,7 @@ components:
     page:
       name: page
       in: query
-      description: Page number (1-based)
+      description: Page number (1-based); ignored when `cursor` is supplied
       schema:
         type: integer
         minimum: 1
@@ -1065,12 +1132,34 @@ components:
     pageSize:
       name: pageSize
       in: query
-      description: Records per page
+      description: Records per page for page-number mode
       schema:
         type: integer
         minimum: 1
         maximum: 1000
         default: 100
+
+    cursor:
+      name: cursor
+      in: query
+      description: >
+        Opaque cursor token for cursor-based pagination. If provided, implementations
+        should ignore `page` and continue from the encoded position.
+      schema:
+        type: string
+        example: 'eyJzdEZpcHMiOiI0MSIsInBlcmlvZFlYciI6IjIwMjQiLCJwZXJpb2QiOiIxMiJ9'
+
+    limit:
+      name: limit
+      in: query
+      description: >
+        Record cap for cursor-based pagination. If omitted, implementations may use
+        `pageSize` as the effective limit.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        example: 100
 
     stFips:
       name: stFips
@@ -1242,6 +1331,21 @@ components:
         pageSize:
           type: integer
           example: 100
+        paginationMode:
+          type: string
+          description: Pagination mode used for this response
+          enum: [page, cursor]
+          example: page
+        cursor:
+          type: string
+          nullable: true
+          description: Echo of the request cursor when cursor pagination is used
+          example: 'eyJzdEZpcHMiOiI0MSIsInBlcmlvZFlYciI6IjIwMjQiLCJwZXJpb2QiOiIxMiJ9'
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor token for the next page when more records are available
+          example: 'eyJzdEZpcHMiOiI0MSIsInBlcmlvZFlYciI6IjIwMjQiLCJwZXJpb2QiOiIxMSJ9'
         hasMore:
           type: boolean
           example: true

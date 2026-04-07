@@ -140,6 +140,28 @@ would prevent other states from deploying a conforming implementation.
 
 ---
 
+## Decision 10: Dual pagination modes supported on all list endpoints
+
+**Decision:** Every list endpoint supports both page-number pagination (`page`, `pageSize`) and
+cursor pagination (`cursor`, `limit`) using the same response envelope.
+
+**Context:** The initial draft used page-number pagination only and raised cursor pagination as an
+open question for large result sets. The working preference is to keep pagination behaviour
+consistent across the API instead of introducing endpoint-specific differences.
+
+**Rationale:** A uniform model keeps client SDKs and implementation templates simple. Callers can
+start with page-based traversal and switch to cursor mode for stable deep scans without changing
+endpoint-level assumptions.
+
+**Implementation notes:**
+- If `cursor` is supplied, implementations should treat cursor mode as authoritative and ignore
+   `page`.
+- `limit` controls page size for cursor mode; if omitted, implementations may use `pageSize`.
+- `meta.paginationMode` indicates which strategy was used.
+- `meta.nextCursor` is populated when cursor mode has additional records.
+
+---
+
 ## Open questions / items for discussion
 
 1. **`AreaTypeVersion` default** — Should the `areaTypeVersion` parameter default to `'0'`
@@ -157,6 +179,3 @@ would prevent other states from deploying a conforming implementation.
 4. **`empDB` table** — The Employer Database (`EmpDB`) table is a WID 3.0 core table but was
    omitted from this draft because it contains employer-level data with significant PII
    considerations. Should a read-only aggregate or suppressed view be included?
-
-5. **Pagination style** — This spec uses page-number pagination (`page`, `pageSize`). Should
-   cursor-based pagination be considered for large result sets (e.g., full CES history)?

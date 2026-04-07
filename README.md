@@ -16,6 +16,20 @@ https://mattsteadmanut.github.io/widapi/
 
 The "Try it out" feature in Swagger UI will send requests directly from your browser to whatever server URL is set in the spec. The target API must have CORS enabled for browser-based testing to work.
 
+If the page loads but says "No API definition provided", open one of these direct URLs to verify the YAML is reachable:
+
+```
+https://mattsteadmanut.github.io/widapi/specs/wid-3.0/draft.yaml
+https://mattsteadmanut.github.io/widapi/specs/reference/oregon-wid-2.8.yaml
+```
+
+You can also force which spec Swagger loads first via query param:
+
+```
+https://mattsteadmanut.github.io/widapi/?spec=specs/wid-3.0/draft.yaml
+https://mattsteadmanut.github.io/widapi/?spec=specs/reference/oregon-wid-2.8.yaml
+```
+
 ---
 
 ## Repository structure

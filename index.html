@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="vendor/swagger-ui/swagger-ui.css" />
     <style>
       body { margin: 0; }
-      #swagger-ui .topbar { display: none; }
     </style>
   </head>
   <body>
@@ -16,26 +15,33 @@
     <script src="vendor/swagger-ui/swagger-ui-bundle.js"></script>
     <script>
       window.onload = function () {
+        const specs = [
+          {
+            name: "WID 3.0 - National Draft",
+            url: "specs/wid-3.0/draft.yaml",
+          },
+          {
+            name: "Oregon WID 2.8 (reference)",
+            url: "specs/reference/oregon-wid-2.8.yaml",
+          },
+        ];
+
+        const params = new URLSearchParams(window.location.search);
+        const requested = params.get("spec");
+        const requestedSpec = specs.find((s) => s.name === requested || s.url === requested);
+        const defaultSpec = requestedSpec || specs[0];
+
         SwaggerUIBundle({
-          urls: [
-            {
-              name: "WID 3.0 — National Draft",
-              url: "specs/wid-3.0/draft.yaml",
-            },
-            { 
-              name: "Oregon WID 2.8 (reference)", 
-              url: "specs/reference/oregon-wid-2.8.yaml" 
-            },
-            // Reference specs — add an entry here when a state contributes one:
-            // { name: "Oregon WID 2.8 (reference)", url: "specs/reference/oregon-wid-2.8.yaml" },
-          ],
-          "urls.primaryName": "WID 3.0 — National Draft",
+          // Set a concrete default so the page renders even if multi-spec selection fails.
+          url: defaultSpec.url,
+          urls: specs,
+          "urls.primaryName": defaultSpec.name,
           dom_id: "#swagger-ui",
           presets: [
             SwaggerUIBundle.presets.apis,
             SwaggerUIBundle.SwaggerUIStandalonePreset,
           ],
-          layout: "BaseLayout",
+          layout: "StandaloneLayout",
           deepLinking: true,
         });
       };
