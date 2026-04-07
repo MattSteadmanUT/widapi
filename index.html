@@ -31,17 +31,20 @@
         const requestedSpec = specs.find((s) => s.name === requested || s.url === requested);
         const defaultSpec = requestedSpec || specs[0];
 
+        const hasStandalonePreset = typeof SwaggerUIBundle.SwaggerUIStandalonePreset !== "undefined";
+        const presets = [SwaggerUIBundle.presets.apis];
+        if (hasStandalonePreset) {
+          presets.push(SwaggerUIBundle.SwaggerUIStandalonePreset);
+        }
+
         SwaggerUIBundle({
           // Set a concrete default so the page renders even if multi-spec selection fails.
           url: defaultSpec.url,
           urls: specs,
           "urls.primaryName": defaultSpec.name,
           dom_id: "#swagger-ui",
-          presets: [
-            SwaggerUIBundle.presets.apis,
-            SwaggerUIBundle.SwaggerUIStandalonePreset,
-          ],
-          layout: "StandaloneLayout",
+          presets,
+          layout: hasStandalonePreset ? "StandaloneLayout" : "BaseLayout",
           deepLinking: true,
         });
       };
