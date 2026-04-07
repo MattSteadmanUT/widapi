@@ -391,12 +391,11 @@ function renderThreadMarkdown(rootId, byId, children, indentLevel) {
 
 function toMarkdown(posts, threadData) {
   const { threads, children, byId } = threadData;
-  const now = new Date().toISOString();
 
   const lines = [];
   lines.push("# National WID Forum Sync");
   lines.push("");
-  lines.push(`Synced: ${now}`);
+  lines.push("Synced: Deterministic output (updated when source forum content changes)");
   lines.push(`Source: ${s3Source}`);
   lines.push(`AWS Profile: ${awsProfile}`);
   lines.push(`Post Count: ${posts.length}`);
@@ -427,7 +426,6 @@ function writeOutputs(posts, threadData) {
   fs.writeFileSync(docsOut, markdown);
 
   const json = {
-    generatedAt: new Date().toISOString(),
     source: s3Source,
     awsProfile,
     postCount: posts.length,
