@@ -16,8 +16,9 @@
     <script>
       window.onload = function () {
         const defaultSpecName = "WID 3.0 - National Draft";
-        const defaultSpecPath = "specs/wid-3.0/draft.yaml";
+        const defaultSpecSourceYamlPath = "specs/wid-3.0/draft.yaml";
         const defaultSpecJsonPath = "specs/wid-3.0/draft.json";
+        const defaultSpecPath = defaultSpecJsonPath;
         const specs = [
           {
             name: defaultSpecName,
@@ -31,7 +32,18 @@
 
         const params = new URLSearchParams(window.location.search);
         const requested = params.get("spec");
-        const requestedSpec = specs.find((s) => s.name === requested || s.url === requested);
+        const requestedSpec = specs.find((s) => {
+          if (s.name === requested || s.url === requested) {
+            return true;
+          }
+
+          // Backward compatibility: treat explicit draft YAML selection as the same default draft target.
+          if (s.name === defaultSpecName && requested === defaultSpecSourceYamlPath) {
+            return true;
+          }
+
+          return false;
+        });
         const defaultSpec = requestedSpec || specs.find((s) => s.name === defaultSpecName) || specs[0];
         const resolvedSpecs = specs.map((s) => ({
           name: s.name,
