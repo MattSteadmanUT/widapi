@@ -16,6 +16,20 @@ https://mattsteadmanut.github.io/widapi/
 
 The "Try it out" feature in Swagger UI will send requests directly from your browser to whatever server URL is set in the spec. The target API must have CORS enabled for browser-based testing to work.
 
+If the page loads but says "No API definition provided", open one of these direct URLs to verify the YAML is reachable:
+
+```
+https://mattsteadmanut.github.io/widapi/specs/wid-3.0/draft.yaml
+https://mattsteadmanut.github.io/widapi/specs/reference/oregon-wid-2.8.yaml
+```
+
+You can also force which spec Swagger loads first via query param:
+
+```
+https://mattsteadmanut.github.io/widapi/?spec=specs/wid-3.0/draft.yaml
+https://mattsteadmanut.github.io/widapi/?spec=specs/reference/oregon-wid-2.8.yaml
+```
+
 ---
 
 ## Repository structure
@@ -71,3 +85,51 @@ npm run update-vendor
 ```
 
 Commit the changed files under `vendor/swagger-ui/`.
+
+---
+
+## Syncing External Forum Discussions
+
+This repo includes a local sync utility to pull discussion posts from the
+national WID forum S3 location and materialize them as reviewable artifacts in
+both docs and spec-supporting JSON.
+
+### Source
+
+- S3 prefix: `s3://ulmita-forum-content/nationalwid/`
+- AWS profile used by default: `GovProd`
+
+### Run manually
+
+```bash
+npm run sync:forum
+```
+
+Optional overrides:
+
+```bash
+node scripts/sync-forum-content.js --profile GovProd --source s3://ulmita-forum-content/nationalwid/
+```
+
+Generated outputs:
+
+- `docs/reference-documents/forum/nationalwid-forum-sync.md`
+- `specs/wid-3.0/supporting/forum/nationalwid-forum-normalized.json`
+
+The Markdown output is thread-formatted so reply relationships are clear by
+indentation and explicit `Reply to` lines.
+
+### Run automatically before pushes (local machine)
+
+Install the pre-push hook once:
+
+```bash
+npm run install:hooks
+```
+
+After this, each `git push` from this local clone will:
+
+1. Run forum sync
+2. Block push if forum-derived files changed and are not yet committed
+
+To disable, remove `.git/hooks/pre-push`.

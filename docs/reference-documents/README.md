@@ -29,3 +29,19 @@ Both PDF files are stored in `specs/wid-3.0/` alongside the draft API specificat
 
 - `specs/wid-3.0/WID-3.0-Structure-20251120.pdf`
 - `specs/wid-3.0/WID-v30-Addenda.pdf`
+
+## Forum Discussion Sync Artifacts
+
+Generated artifacts from external forum discussions are written to:
+
+- `docs/reference-documents/forum/nationalwid-forum-sync.md`
+- `specs/wid-3.0/supporting/forum/nationalwid-forum-normalized.json`
+
+These are produced by running:
+
+```bash
+npm run sync:forum
+```
+
+The Markdown format is thread-oriented and shows which posts reply to which
+parent posts.

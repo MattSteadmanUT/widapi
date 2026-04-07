@@ -6,7 +6,9 @@
     "doc": "docs"
   },
   "scripts": {
-    "update-vendor": "node scripts/update-vendor.js"
+    "update-vendor": "node scripts/update-vendor.js",
+    "sync:forum": "node scripts/sync-forum-content.js",
+    "install:hooks": "node scripts/install-git-hooks.js"
   },
   "repository": {
     "type": "git",
