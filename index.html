@@ -15,10 +15,12 @@
     <script src="vendor/swagger-ui/swagger-ui-bundle.js"></script>
     <script>
       window.onload = function () {
+        const defaultSpecName = "WID 3.0 - National Draft";
+        const defaultSpecPath = "specs/wid-3.0/draft.yaml";
         const specs = [
           {
-            name: "WID 3.0 - National Draft",
-            url: "specs/wid-3.0/draft.yaml",
+            name: defaultSpecName,
+            url: defaultSpecPath,
           },
           {
             name: "Oregon WID 2.8 (reference)",
@@ -29,7 +31,15 @@
         const params = new URLSearchParams(window.location.search);
         const requested = params.get("spec");
         const requestedSpec = specs.find((s) => s.name === requested || s.url === requested);
-        const defaultSpec = requestedSpec || specs[0];
+        const defaultSpec = requestedSpec || specs.find((s) => s.name === defaultSpecName) || specs[0];
+        const resolvedSpecs = specs.map((s) => ({
+          name: s.name,
+          url: new URL(s.url, window.location.href).toString(),
+        }));
+        const resolvedDefaultSpec = {
+          name: defaultSpec.name,
+          url: new URL(defaultSpec.url, window.location.href).toString(),
+        };
 
         const hasStandalonePreset = typeof SwaggerUIBundle.SwaggerUIStandalonePreset !== "undefined";
         const presets = [SwaggerUIBundle.presets.apis];
@@ -38,10 +48,10 @@
         }
 
         SwaggerUIBundle({
-          // Set a concrete default so the page renders even if multi-spec selection fails.
-          url: defaultSpec.url,
-          urls: specs,
-          "urls.primaryName": defaultSpec.name,
+          // Force a concrete default so current draft always renders by default.
+          url: resolvedDefaultSpec.url,
+          urls: resolvedSpecs,
+          "urls.primaryName": resolvedDefaultSpec.name,
           dom_id: "#swagger-ui",
           presets,
           layout: hasStandalonePreset ? "StandaloneLayout" : "BaseLayout",
