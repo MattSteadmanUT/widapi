@@ -1,0 +1,4386 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "WID 3.0 API — National Draft",
+    "description": "Working draft of the national **Workforce Information Database (WID) 3.0** API specification.\nThis specification is being developed collaboratively by multiple state workforce agencies\nunder the Analyst Resource Center (ARC) consortium.\n\n## Design philosophy\n\n1. **Table-native endpoints** — every WID 3.0 core table is exposed as a queryable resource\n   at its own path with filter parameters that mirror the table's columns exactly.\n2. **View endpoints** — cross-table views join related tables and return enriched records\n   (e.g., CES employment with resolved geography names and series titles).\n3. **Consistent naming** — all API field names use `camelCase` equivalents of the WID 3.0\n   column names (e.g., `StFips` → `stFips`, `AreaTypeVersion` → `areaTypeVersion`).\n4. **Standard envelope** — every list response wraps results in `{ meta, data, links }`.\n   The envelope supports both page-number and cursor pagination.\n5. **State-agnostic** — `stFips` is never hardcoded; the spec supports all 50 states plus\n   national data.\n\n## Key structural changes from WID 2.8 / Oregon reference spec\n\n- `AreaTypeVersion` is a new field in WID 3.0 that is part of the geography primary key.\n  It allows historical vintages of area definitions (especially MSAs) to coexist.\n- CES is a **single table** containing employment, production-worker stats, and\n  hours/earnings.  The Oregon spec split these into separate endpoints, which is a 2.8-era\n  design choice not needed in 3.0.\n- `SeriesCodeType` is part of the CES primary key alongside `SeriesCode` (to support\n  multiple industry classification systems).\n- Lookup tables such as `IndDirectories` and `OccDirectories` now serve as the canonical\n  directory of projection-period matrix codes, replacing the ad-hoc listIndustries /\n  listOccupations sub-endpoints in the Oregon spec.\n- Licensing tables (`License`, `LicenseAuthorities`, `LicenseHistory`, `LicenseXOcc`)\n  are new in WID 3.0 with no equivalent in WID 2.8.\n\n## Reference documents\n\n- [WID 3.0 Structure (Nov 2025)](../WID-3.0-Structure-20251120.pdf)\n- [WID v3.0 Addenda](../WID-v30-Addenda.pdf)\n- [Oregon WID 2.8 reference spec](../../reference/oregon-wid-2.8.yaml)\n\nFor background on the WID standard see https://widcenter.org.\nThis is a living document — open a pull request to propose changes.\n",
+    "version": "3.0.0-draft",
+    "contact": {
+      "name": "WID 3.0 Working Group"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/v3",
+      "description": "Placeholder — update with actual endpoint URL before testing"
+    }
+  ],
+  "tags": [
+    {
+      "name": "lookups",
+      "description": "Reference and lookup tables — stable code lists and geographic registries. These correspond 1-to-1 with WID 3.0 lookup tables.\n"
+    },
+    {
+      "name": "ces",
+      "description": "Current Employment Statistics (CES) — employment, hours, and earnings estimates by industry series, area, and period.  Maps to the WID 3.0 `CES` table.\n"
+    },
+    {
+      "name": "laborForce",
+      "description": "Local Area Unemployment Statistics (LAUS) — civilian labor force, employment, unemployment, and rates by area and period.  Maps to the WID 3.0 `LaborForce` table.\n"
+    },
+    {
+      "name": "industry",
+      "description": "QCEW industry employment and wage data by ownership type. Maps to the WID 3.0 `Industry` table.\n"
+    },
+    {
+      "name": "projections",
+      "description": "Industry-occupation employment projections and related directories. Maps to `ProjectionsMatrix`, `IndDirectories`, and `OccDirectories`.\n"
+    },
+    {
+      "name": "wages",
+      "description": "Occupation/industry wage data from OES/OEWS and other sources. Maps to the WID 3.0 `IOWage` table.\n"
+    },
+    {
+      "name": "licensing",
+      "description": "Occupational licensing data — new in WID 3.0, no equivalent in WID 2.8. Maps to `LicenseAuthorities`, `License`, `LicenseHistory`, and `LicenseXOcc`.\n"
+    },
+    {
+      "name": "views",
+      "description": "Pre-joined views that combine data across related WID 3.0 tables for common display patterns such as CES with geography names resolved.\n"
+    }
+  ],
+  "paths": {
+    "/lookups/geographies": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the Geographies table",
+        "description": "Returns geographic area descriptor records from the WID 3.0 `Geographies` table. The composite primary key is (stFips, areaType, areaTypeVersion, area). `areaTypeVersion` is new in WID 3.0 and allows multiple vintage definitions of the same area type (e.g., MSA 2013 vs MSA 2018 definitions) to coexist.\n",
+        "operationId": "getGeographies",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeographyListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/geographies/{stFips}/{areaType}/{areaTypeVersion}/{area}": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Get a single geography record by composite primary key",
+        "operationId": "getGeography",
+        "parameters": [
+          {
+            "name": "stFips",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "41"
+            }
+          },
+          {
+            "name": "areaType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "04"
+            }
+          },
+          {
+            "name": "areaTypeVersion",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "0"
+            }
+          },
+          {
+            "name": "area",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "041005"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Geography"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/lookups/areaTypes": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the AreaTypes lookup table",
+        "description": "Area types include: '00'=National, '01'=State, '04'=County, '21'=MSA, '31'=Metropolitan Statistical Area (current standard), etc.\n",
+        "operationId": "getAreaTypes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "name": "areaType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AreaTypeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/stateFips": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the StateFips lookup table",
+        "operationId": "getStateFips",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StateFipsListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/periodTypes": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the PeriodTypes lookup table",
+        "operationId": "getPeriodTypes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeriodTypeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/periodYears": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the PeriodYears lookup table",
+        "description": "Returns the set of valid data years by periodType. Use this to determine what years are available for a given data series.\n",
+        "operationId": "getPeriodYears",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeriodYearListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/periods": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the Periods lookup table",
+        "description": "Returns available time periods (periodType + period combinations). Replaces the per-domain `listYears`, `maxPeriod`, and `minPeriod` sub-endpoints found in the Oregon WID 2.8 spec — callers simply filter and sort here instead.\n",
+        "operationId": "getPeriods",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "description": "Specific period code (e.g. '06' for June)",
+            "schema": {
+              "type": "string",
+              "example": "06"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeriodListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/industryCodes": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the IndustryCodes table",
+        "description": "Multi-code industry classification table. Covers NAICS (codeType='10'), SIC (codeType='05'), and any other classification systems a state uses.\n",
+        "operationId": "getIndustryCodes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/industryCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/industryCode"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryCodeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/occupationCodes": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the OccupationCodes table",
+        "description": "Multi-code occupation classification table. Covers SOC 2018 (codeType='19'), SOC 2010 (codeType='14'), OES (codeType='45'), and other systems.\n",
+        "operationId": "getOccupationCodes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCode"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccupationCodeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/cesCodes": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the CESCodes lookup table",
+        "description": "Returns CES industry series codes. `stFips` was added to this table as part of the **May 2025 WID 3.0 addenda** because there are genuine definitional differences between some CES series codes at the national vs. state level. Filter by `stFips` to retrieve state-specific series; omit it for national series.\n",
+        "operationId": "getCesCodes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "name": "seriesCodeType",
+            "in": "query",
+            "description": "Industry code classification type used for CES series",
+            "schema": {
+              "type": "string",
+              "example": "10"
+            }
+          },
+          {
+            "name": "seriesCode",
+            "in": "query",
+            "description": "8-character CES industry series code",
+            "schema": {
+              "type": "string",
+              "example": "00000000"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CesCodeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/ownerships": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the Ownerships lookup table",
+        "description": "Ownership codes identify employer type. Common values: '10'=Total, '20'=Federal Government, '50'=Private.\n",
+        "operationId": "getOwnerships",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnershipListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/wageSources": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the WageSources lookup table",
+        "operationId": "getWageSources",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WageSourceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/wageRateTypes": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the WageRateTypes lookup table",
+        "description": "Rate type distinguishes hourly (rateType='1') from annual (rateType='2') wages.\n",
+        "operationId": "getWageRateTypes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WageRateTypeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/benchmarks": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the Benchmark lookup table",
+        "operationId": "getBenchmarks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lookups/growthCodes": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the GrowthCodes lookup table",
+        "description": "State-specific 2-character codes describing industry or occupation growth.",
+        "operationId": "getGrowthCodes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrowthCodeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ces": {
+      "get": {
+        "tags": [
+          "ces"
+        ],
+        "summary": "Query the CES table",
+        "description": "Returns employment estimates from the Current Employment Statistics program. The WID 3.0 CES table is a single table that contains employment, production-worker employment, hours, and earnings data — unlike the Oregon WID 2.8 spec which exposed these as separate endpoints.\nEach record is uniquely identified by (stFips, areaType, areaTypeVersion, area, periodYear, periodType, period, seriesCodeType, seriesCode, adjusted).\nUse response fields beginning with `supp` to determine whether specific sub-measures should be displayed.\n",
+        "operationId": "getCes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "name": "seriesCodeType",
+            "in": "query",
+            "description": "Industry code type for CES series (e.g. '10' for NAICS)",
+            "schema": {
+              "type": "string",
+              "example": "10"
+            }
+          },
+          {
+            "name": "seriesCode",
+            "in": "query",
+            "description": "8-character CES industry series code",
+            "schema": {
+              "type": "string",
+              "example": "00000000"
+            }
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "description": "'1' for seasonally adjusted, '0' for unadjusted",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CesListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/laborForce": {
+      "get": {
+        "tags": [
+          "laborForce"
+        ],
+        "summary": "Query the LaborForce table",
+        "description": "Returns civilian labor force, employment, unemployment, and rate estimates from the Local Area Unemployment Statistics (LAUS) program. Primary key: (stFips, areaType, areaTypeVersion, area, periodYear, periodType, period, adjusted).\n",
+        "operationId": "getLaborForce",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "description": "'1' for seasonally adjusted, '0' for not adjusted",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaborForceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/industry": {
+      "get": {
+        "tags": [
+          "industry"
+        ],
+        "summary": "Query the Industry table (QCEW)",
+        "description": "Returns covered employment and wage data from the ES-202/QCEW report. Each record covers one state, area, industry, ownership type, and time period. Monthly employment is stored as `month1Emp`, `month2Emp`, `month3Emp` (i.e., the three months of the quarter, or months 1/2/3 for annual records).\n",
+        "operationId": "getIndustry",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "$ref": "#/components/parameters/industryCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/industryCode"
+          },
+          {
+            "name": "ownership",
+            "in": "query",
+            "description": "Ownership code (e.g. '50'=Private, '10'=Total)",
+            "schema": {
+              "type": "string",
+              "example": "50"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projections": {
+      "get": {
+        "tags": [
+          "projections"
+        ],
+        "summary": "Query the ProjectionsMatrix table",
+        "description": "Returns industry-occupation employment projections. Primary key: (stFips, areaType, areaTypeVersion, area, periodYear, periodType, period, matrixIndCode, matrixOccCode). `projectedYear` indicates the target year. The `periodYear`/`periodType`/`period` keys identify the base-year projection run.\n",
+        "operationId": "getProjections",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "name": "projectedYear",
+            "in": "query",
+            "description": "Target/projected calendar year",
+            "schema": {
+              "type": "string",
+              "example": "2032"
+            }
+          },
+          {
+            "name": "matrixIndCode",
+            "in": "query",
+            "description": "IO matrix industry code (from `IndDirectories`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "matrixOccCode",
+            "in": "query",
+            "description": "IO matrix occupation code (from `OccDirectories`)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectionListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projections/indDirectories": {
+      "get": {
+        "tags": [
+          "projections"
+        ],
+        "summary": "Query IndDirectories — matrix industry code directory",
+        "description": "Returns the directory of MicroMatrix industry codes valid for a given projection run (periodYear / periodType / period / projectedYear). Use this to enumerate available industry codes before querying `/projections`. Replaces the Oregon-style `ioMatrix/listIndustries` sub-endpoint.\n",
+        "operationId": "getIndDirectories",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "name": "projectedYear",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "2032"
+            }
+          },
+          {
+            "name": "matrixIndCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndDirectoryListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projections/occDirectories": {
+      "get": {
+        "tags": [
+          "projections"
+        ],
+        "summary": "Query OccDirectories — matrix occupation code directory",
+        "description": "Returns the directory of MicroMatrix occupation codes valid for a given projection run.  Replaces the Oregon-style `ioMatrix/listOccupations` sub-endpoint.\n",
+        "operationId": "getOccDirectories",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "name": "projectedYear",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "2032"
+            }
+          },
+          {
+            "name": "matrixOccCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccDirectoryListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projections/matrixXInd": {
+      "get": {
+        "tags": [
+          "projections"
+        ],
+        "summary": "Query the MatrixXInd crosswalk table",
+        "description": "Crosswalk from matrix industry codes to standard IndustryCodes entries.\n",
+        "operationId": "getMatrixXInd",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/industryCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/industryCode"
+          },
+          {
+            "name": "matrixIndCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatrixXIndListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projections/matrixXOcc": {
+      "get": {
+        "tags": [
+          "projections"
+        ],
+        "summary": "Query the MatrixXOcc crosswalk table",
+        "description": "Crosswalk from matrix occupation codes to standard OccupationCodes entries.\n",
+        "operationId": "getMatrixXOcc",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCode"
+          },
+          {
+            "name": "matrixOccCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatrixXOccListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wages": {
+      "get": {
+        "tags": [
+          "wages"
+        ],
+        "summary": "Query the IOWage table",
+        "description": "Returns occupational wage data from OES/OEWS and other wage programs. Each record covers one state, area, industry, occupation, wage source, rate type, and time period. Use `suppressWage`, `suppressAll`, and `suppressEmp` flags to determine whether wage or employment values may be displayed.\n",
+        "operationId": "getWages",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "$ref": "#/components/parameters/industryCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/industryCode"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCode"
+          },
+          {
+            "name": "wageSource",
+            "in": "query",
+            "description": "Wage data source code (see `/lookups/wageSources`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rateType",
+            "in": "query",
+            "description": "Rate type code: '1'=hourly, '2'=annual",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1",
+                "2"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WageListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/licensing/authorities": {
+      "get": {
+        "tags": [
+          "licensing"
+        ],
+        "summary": "Query the LicenseAuthorities table",
+        "description": "Returns occupational licensing authority records. New in WID 3.0. Primary key: (stFips, areaType, areaTypeVersion, area, licAuthID).\n",
+        "operationId": "getLicenseAuthorities",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "name": "licAuthID",
+            "in": "query",
+            "description": "Licensing authority identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseAuthorityListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/licensing/licenses": {
+      "get": {
+        "tags": [
+          "licensing"
+        ],
+        "summary": "Query the License table",
+        "description": "Returns individual licenses authorized by a state. Primary key: (stFips, licenseID).\n",
+        "operationId": "getLicenses",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "name": "licAuthID",
+            "in": "query",
+            "description": "Filter by licensing authority",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "licenseID",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "licenseType",
+            "in": "query",
+            "description": "License type code",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/licensing/history": {
+      "get": {
+        "tags": [
+          "licensing"
+        ],
+        "summary": "Query the LicenseHistory table",
+        "description": "Returns the count of licenses awarded for a specific license, area, and period.\n",
+        "operationId": "getLicenseHistory",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "name": "licenseID",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseHistoryListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/licensing/occupationCrosswalks": {
+      "get": {
+        "tags": [
+          "licensing"
+        ],
+        "summary": "Query the LicenseXOcc crosswalk table",
+        "description": "Returns the crosswalk from licenses to standard OccupationCodes entries.\n",
+        "operationId": "getLicenseXOcc",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCode"
+          },
+          {
+            "name": "licenseID",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseXOccListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/cesWithGeography": {
+      "get": {
+        "tags": [
+          "views"
+        ],
+        "summary": "CES employment enriched with geography name and series title",
+        "description": "Joins `CES` → `Geographies` → `CESCodes` to add `areaName` and `seriesTitle` to each CES record.  The most common display format for CES dashboards.\n",
+        "operationId": "getCesWithGeography",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "name": "seriesCode",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "00000000"
+            }
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CesWithGeographyListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/laborForceWithGeography": {
+      "get": {
+        "tags": [
+          "views"
+        ],
+        "summary": "Labor force data enriched with geography name",
+        "description": "Joins `LaborForce` → `Geographies` to add `areaName` to LAUS records.\n",
+        "operationId": "getLaborForceWithGeography",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaborForceWithGeographyListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/wagesWithDescriptions": {
+      "get": {
+        "tags": [
+          "views"
+        ],
+        "summary": "Wage data enriched with occupation title, industry title, and area name",
+        "description": "Joins `IOWage` → `OccupationCodes` → `IndustryCodes` → `Geographies` → `WageSources` → `WageRateTypes` to produce a display-ready wage record.\n",
+        "operationId": "getWagesWithDescriptions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCode"
+          },
+          {
+            "$ref": "#/components/parameters/industryCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/industryCode"
+          },
+          {
+            "name": "wageSource",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rateType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1",
+                "2"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WageWithDescriptionsListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/projectionsWithTitles": {
+      "get": {
+        "tags": [
+          "views"
+        ],
+        "summary": "Projections enriched with industry title, occupation title, and area name",
+        "description": "Joins `ProjectionsMatrix` → `IndDirectories` → `OccDirectories` → `Geographies` → `GrowthCodes` to produce display-ready projection records.\n",
+        "operationId": "getProjectionsWithTitles",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "name": "projectedYear",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "2032"
+            }
+          },
+          {
+            "name": "matrixIndCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "matrixOccCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectionWithTitlesListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/industryWithGeography": {
+      "get": {
+        "tags": [
+          "views"
+        ],
+        "summary": "QCEW industry data enriched with area name, industry title, and ownership name",
+        "description": "Joins `Industry` → `Geographies` → `IndustryCodes` → `Ownerships`.\n",
+        "operationId": "getIndustryWithGeography",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/industryCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/industryCode"
+          },
+          {
+            "name": "ownership",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryWithGeographyListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/licensingByOccupation": {
+      "get": {
+        "tags": [
+          "views"
+        ],
+        "summary": "Licensing requirements grouped by occupation",
+        "description": "Joins `LicenseXOcc` → `License` → `LicenseAuthorities` → `OccupationCodes` to show which licenses are required for a given occupation in a given state.\n",
+        "operationId": "getLicensingByOccupation",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCode"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicensingByOccupationListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "page": {
+        "name": "page",
+        "in": "query",
+        "description": "Page number (1-based); ignored when `cursor` is supplied",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        }
+      },
+      "pageSize": {
+        "name": "pageSize",
+        "in": "query",
+        "description": "Records per page for page-number mode",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "default": 100
+        }
+      },
+      "cursor": {
+        "name": "cursor",
+        "in": "query",
+        "description": "Opaque cursor token for cursor-based pagination. If provided, implementations should ignore `page` and continue from the encoded position.\n",
+        "schema": {
+          "type": "string",
+          "example": "eyJzdEZpcHMiOiI0MSIsInBlcmlvZFlYciI6IjIwMjQiLCJwZXJpb2QiOiIxMiJ9"
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "Record cap for cursor-based pagination. If omitted, implementations may use `pageSize` as the effective limit.\n",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "example": 100
+        }
+      },
+      "stFips": {
+        "name": "stFips",
+        "in": "query",
+        "description": "2-digit state FIPS code. Use '00' for national data. All 50 states are supported — this parameter is never restricted to a single state.\n",
+        "schema": {
+          "type": "string",
+          "pattern": "^\\d{2}$",
+          "example": "41"
+        }
+      },
+      "areaType": {
+        "name": "areaType",
+        "in": "query",
+        "description": "2-digit area type code. Common values: '00'=National, '01'=State, '04'=County, '31'=MSA. Full list in `/lookups/areaTypes`.\n",
+        "schema": {
+          "type": "string",
+          "example": "04"
+        }
+      },
+      "areaTypeVersion": {
+        "name": "areaTypeVersion",
+        "in": "query",
+        "description": "Area type version — new field in WID 3.0. Default is '0' (current definition). Use non-zero values to retrieve data under historical vintage definitions (e.g., pre-2013 MSA boundaries).\n",
+        "schema": {
+          "type": "string",
+          "default": "0",
+          "example": "0"
+        }
+      },
+      "area": {
+        "name": "area",
+        "in": "query",
+        "description": "6-character area code (zero-padded, left-justified)",
+        "schema": {
+          "type": "string",
+          "example": "041005"
+        }
+      },
+      "periodType": {
+        "name": "periodType",
+        "in": "query",
+        "description": "Period type code. Common values: '01'=Annual, '03'=Monthly, '04'=Quarterly. Full list in `/lookups/periodTypes`.\n",
+        "schema": {
+          "type": "string",
+          "example": "03"
+        }
+      },
+      "periodYear": {
+        "name": "periodYear",
+        "in": "query",
+        "description": "4-digit calendar year of the data",
+        "schema": {
+          "type": "string",
+          "example": "2024"
+        }
+      },
+      "period": {
+        "name": "period",
+        "in": "query",
+        "description": "Zero-padded period within the year (e.g. '06' for June for monthly data; '00' for annual records).\n",
+        "schema": {
+          "type": "string",
+          "example": "06"
+        }
+      },
+      "minYear": {
+        "name": "minYear",
+        "in": "query",
+        "description": "Earliest year to include (inclusive)",
+        "schema": {
+          "type": "string",
+          "example": "2020"
+        }
+      },
+      "maxYear": {
+        "name": "maxYear",
+        "in": "query",
+        "description": "Latest year to include (inclusive)",
+        "schema": {
+          "type": "string",
+          "example": "2024"
+        }
+      },
+      "industryCodeType": {
+        "name": "industryCodeType",
+        "in": "query",
+        "description": "Industry code classification type. Common values: '05'=SIC, '10'=NAICS 2022, '11'=NAICS 2017.\n",
+        "schema": {
+          "type": "string",
+          "example": "10"
+        }
+      },
+      "industryCode": {
+        "name": "industryCode",
+        "in": "query",
+        "description": "Industry classification code (left-justified, blank-filled to 10 chars)",
+        "schema": {
+          "type": "string",
+          "example": "722511    "
+        }
+      },
+      "occupationCodeType": {
+        "name": "occupationCodeType",
+        "in": "query",
+        "description": "Occupation code classification type. Common values: '19'=SOC 2018, '14'=SOC 2010, '45'=OES wage occupations.\n",
+        "schema": {
+          "type": "string",
+          "example": "19"
+        }
+      },
+      "occupationCode": {
+        "name": "occupationCode",
+        "in": "query",
+        "description": "Occupation classification code (left-justified, blank-filled to 10 chars)",
+        "schema": {
+          "type": "string",
+          "example": "35-2014   "
+        }
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "Record not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Invalid query parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Metadata": {
+        "type": "object",
+        "description": "Pagination and provenance metadata returned with every list response",
+        "properties": {
+          "widVersion": {
+            "type": "string",
+            "description": "WID database version the data was drawn from",
+            "example": "3.0"
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "3.0.0-draft"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total matching records before pagination",
+            "example": 4521
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "example": 100
+          },
+          "paginationMode": {
+            "type": "string",
+            "description": "Pagination mode used for this response",
+            "enum": [
+              "page",
+              "cursor"
+            ],
+            "example": "page"
+          },
+          "cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Echo of the request cursor when cursor pagination is used",
+            "example": "eyJzdEZpcHMiOiI0MSIsInBlcmlvZFlYciI6IjIwMjQiLCJwZXJpb2QiOiIxMiJ9"
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cursor token for the next page when more records are available",
+            "example": "eyJzdEZpcHMiOiI0MSIsInBlcmlvZFlYciI6IjIwMjQiLCJwZXJpb2QiOiIxMSJ9"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "example": true
+          },
+          "dataSource": {
+            "type": "string",
+            "description": "Identifier for the source state or system",
+            "example": "OR-QualityInfo"
+          }
+        }
+      },
+      "Link": {
+        "type": "object",
+        "properties": {
+          "href": {
+            "type": "string",
+            "example": "https://api.example.com/v3/ces?page=2"
+          },
+          "rel": {
+            "type": "string",
+            "example": "next"
+          },
+          "type": {
+            "type": "string",
+            "example": "GET"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 404
+          },
+          "message": {
+            "type": "string",
+            "example": "Record not found"
+          }
+        }
+      },
+      "Geography": {
+        "type": "object",
+        "description": "A geographic area descriptor from the WID 3.0 `Geographies` table. Primary key: (stFips, areaType, areaTypeVersion, area).\n",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "04",
+            "description": "Area type code; see `/lookups/areaTypes`"
+          },
+          "areaTypeVersion": {
+            "type": "string",
+            "example": "0",
+            "description": "Area type version — new in WID 3.0; default is '0'"
+          },
+          "area": {
+            "type": "string",
+            "example": "041005",
+            "description": "6-digit area code (zero front-padded)"
+          },
+          "areaName": {
+            "type": "string",
+            "example": "Clackamas County"
+          },
+          "areaDesc": {
+            "type": "string",
+            "example": "Clackamas County, Oregon"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "example": 45.21
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "example": -122.53
+          },
+          "geoPrecisionCode": {
+            "type": "string",
+            "example": "1"
+          }
+        }
+      },
+      "GeographyListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Geography"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "AreaType": {
+        "type": "object",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "04"
+          },
+          "areaTypeName": {
+            "type": "string",
+            "example": "County"
+          }
+        }
+      },
+      "AreaTypeListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AreaType"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "StateFips": {
+        "type": "object",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "stateName": {
+            "type": "string",
+            "example": "Oregon"
+          },
+          "stateAbbrev": {
+            "type": "string",
+            "example": "OR"
+          }
+        }
+      },
+      "StateFipsListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StateFips"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "PeriodType": {
+        "type": "object",
+        "properties": {
+          "periodType": {
+            "type": "string",
+            "example": "03"
+          },
+          "periodTypeName": {
+            "type": "string",
+            "example": "Monthly"
+          }
+        }
+      },
+      "PeriodTypeListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PeriodType"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "PeriodYear": {
+        "type": "object",
+        "properties": {
+          "periodType": {
+            "type": "string",
+            "example": "03"
+          },
+          "periodYear": {
+            "type": "string",
+            "example": "2024"
+          }
+        }
+      },
+      "PeriodYearListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PeriodYear"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "Period": {
+        "type": "object",
+        "properties": {
+          "periodType": {
+            "type": "string",
+            "example": "03"
+          },
+          "period": {
+            "type": "string",
+            "example": "06"
+          }
+        }
+      },
+      "PeriodListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Period"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "IndustryCode": {
+        "type": "object",
+        "description": "An entry from the WID 3.0 `IndustryCodes` multi-code table",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "codeType": {
+            "type": "string",
+            "example": "10",
+            "description": "Code classification type (e.g. '10'=NAICS)"
+          },
+          "code": {
+            "type": "string",
+            "example": "722511    ",
+            "description": "10-char industry code, left-justified, blank-filled"
+          },
+          "codeTitle": {
+            "type": "string",
+            "example": "Full-Service Restaurants"
+          },
+          "codeTitleLong": {
+            "type": "string",
+            "example": "Full-Service Restaurants (NAICS 2022)"
+          },
+          "codeLevel": {
+            "type": "string",
+            "example": "6"
+          }
+        }
+      },
+      "IndustryCodeListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndustryCode"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "OccupationCode": {
+        "type": "object",
+        "description": "An entry from the WID 3.0 `OccupationCodes` multi-code table",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "codeType": {
+            "type": "string",
+            "example": "19",
+            "description": "Code classification type (e.g. '19'=SOC 2018)"
+          },
+          "code": {
+            "type": "string",
+            "example": "35-2014   ",
+            "description": "10-char occupation code, left-justified, blank-filled"
+          },
+          "codeTitle": {
+            "type": "string",
+            "example": "Cooks, Restaurant"
+          },
+          "codeTitleLong": {
+            "type": "string",
+            "example": "Cooks, Restaurant (SOC 2018)"
+          },
+          "codeLevel": {
+            "type": "string",
+            "example": "6"
+          },
+          "subTotal": {
+            "type": "string",
+            "example": "0"
+          }
+        }
+      },
+      "OccupationCodeListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OccupationCode"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "CesCode": {
+        "type": "object",
+        "description": "An entry from the WID 3.0 `CESCodes` lookup table. `stFips` was added to this table in the May 2025 addenda.\n",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41",
+            "description": "State FIPS. Added May 2025 to accommodate definitional differences between state-level and national-level CES series codes.\n"
+          },
+          "seriesCodeType": {
+            "type": "string",
+            "example": "10"
+          },
+          "seriesCode": {
+            "type": "string",
+            "example": "00000000"
+          },
+          "seriesTitle": {
+            "type": "string",
+            "example": "Total Nonfarm"
+          },
+          "seriesTitleLong": {
+            "type": "string",
+            "example": "Total Nonfarm Employment"
+          },
+          "seriesDesc": {
+            "type": "string",
+            "description": "Description of the industries comprising the series"
+          },
+          "seriesLevel": {
+            "type": "string",
+            "example": "0"
+          }
+        }
+      },
+      "CesCodeListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CesCode"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "Ownership": {
+        "type": "object",
+        "properties": {
+          "ownership": {
+            "type": "string",
+            "example": "50"
+          },
+          "ownershipTitle": {
+            "type": "string",
+            "example": "Private"
+          }
+        }
+      },
+      "OwnershipListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ownership"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "WageSource": {
+        "type": "object",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "wageSource": {
+            "type": "string",
+            "example": "3"
+          },
+          "wageSourceTitle": {
+            "type": "string",
+            "example": "OES/OEWS"
+          }
+        }
+      },
+      "WageSourceListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WageSource"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "WageRateType": {
+        "type": "object",
+        "properties": {
+          "rateType": {
+            "type": "string",
+            "example": "1"
+          },
+          "rateTypeTitle": {
+            "type": "string",
+            "example": "Hourly"
+          }
+        }
+      },
+      "WageRateTypeListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WageRateType"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "Benchmark": {
+        "type": "object",
+        "properties": {
+          "benchmark": {
+            "type": "string",
+            "example": "2023",
+            "description": "Benchmark year identifier"
+          }
+        }
+      },
+      "BenchmarkListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Benchmark"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "GrowthCode": {
+        "type": "object",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "growthCode": {
+            "type": "string",
+            "maxLength": 2,
+            "example": "AA"
+          },
+          "growthCodeTitle": {
+            "type": "string",
+            "example": "Rapid growth"
+          }
+        }
+      },
+      "GrowthCodeListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GrowthCode"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "Ces": {
+        "type": "object",
+        "description": "A single record from the WID 3.0 `CES` table. Contains employment, production-worker employment, hours, and earnings for one state/area/series/period combination. Suppress flags indicate which sub-measures must be withheld from public display.\n",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          },
+          "areaTypeVersion": {
+            "type": "string",
+            "example": "0"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "periodYear": {
+            "type": "string",
+            "example": "2024"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "03"
+          },
+          "period": {
+            "type": "string",
+            "example": "06"
+          },
+          "seriesCodeType": {
+            "type": "string",
+            "example": "10"
+          },
+          "seriesCode": {
+            "type": "string",
+            "example": "00000000"
+          },
+          "adjusted": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0",
+            "description": "'1'=seasonally adjusted, '0'=not adjusted"
+          },
+          "benchmark": {
+            "type": "string",
+            "example": "2023"
+          },
+          "prelim": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0",
+            "description": "'0'=not preliminary, '1'=preliminary"
+          },
+          "empCES": {
+            "type": "integer",
+            "example": 1953400,
+            "description": "Employment by place of work; actual count (not in thousands)"
+          },
+          "empProductionWorkers": {
+            "type": "integer",
+            "example": 0
+          },
+          "empFemaleWorkers": {
+            "type": "integer",
+            "example": 0
+          },
+          "hoursPerWeek": {
+            "type": "number",
+            "example": 33.8,
+            "description": "Average hours per week for production workers"
+          },
+          "earningsPerWeek": {
+            "type": "number",
+            "example": 1054,
+            "description": "Average weekly earnings for production workers"
+          },
+          "earningsPerHour": {
+            "type": "number",
+            "example": 31.18,
+            "description": "Average hourly earnings for production workers"
+          },
+          "suppRecord": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0",
+            "description": "'1'=suppress total record, '0'=not suppressed"
+          },
+          "suppHoursEarnings": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0"
+          },
+          "suppProdWorkers": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0"
+          },
+          "suppFemaleWorkers": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0"
+          },
+          "hoursAllWorkers": {
+            "type": "number",
+            "example": 33.8,
+            "description": "Average hours per week for all workers"
+          },
+          "earningsAllWorkers": {
+            "type": "number",
+            "example": 1054,
+            "description": "Average weekly earnings for all workers"
+          },
+          "hourlyEarningsAllWorkers": {
+            "type": "number",
+            "example": 31.18
+          },
+          "suppHEAllWrkr": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0",
+            "description": "'1'=suppress hours/earnings for all workers"
+          }
+        }
+      },
+      "CesListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ces"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "LaborForce": {
+        "type": "object",
+        "description": "A single record from the WID 3.0 `LaborForce` table (LAUS).\n",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          },
+          "areaTypeVersion": {
+            "type": "string",
+            "example": "0"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "periodYear": {
+            "type": "string",
+            "example": "2024"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "03"
+          },
+          "period": {
+            "type": "string",
+            "example": "06"
+          },
+          "adjusted": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0",
+            "description": "'1'=seasonally adjusted, '0'=not adjusted"
+          },
+          "prelim": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0"
+          },
+          "benchmark": {
+            "type": "string",
+            "example": "2023"
+          },
+          "laborForce": {
+            "type": "integer",
+            "example": 2147000
+          },
+          "employed": {
+            "type": "integer",
+            "example": 2047000,
+            "description": "Employed by place of residence"
+          },
+          "unemployed": {
+            "type": "integer",
+            "example": 100000
+          },
+          "unemployedRate": {
+            "type": "number",
+            "example": 4.7
+          },
+          "clfpRate": {
+            "type": "number",
+            "example": 62.1,
+            "description": "Civilian labor force participation rate"
+          },
+          "empPopRatio": {
+            "type": "number",
+            "example": 59.2,
+            "description": "Employment to population ratio"
+          }
+        }
+      },
+      "LaborForceListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LaborForce"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "Industry": {
+        "type": "object",
+        "description": "A single record from the WID 3.0 `Industry` table (ES-202/QCEW). Monthly employment fields (`month1Emp`, `month2Emp`, `month3Emp`) represent the three months of the reporting quarter, or months 1/2/3 for annual aggregates.\n",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          },
+          "areaTypeVersion": {
+            "type": "string",
+            "example": "0"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "periodYear": {
+            "type": "string",
+            "example": "2023"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "01"
+          },
+          "period": {
+            "type": "string",
+            "example": "00"
+          },
+          "indCodeType": {
+            "type": "string",
+            "example": "10"
+          },
+          "indCode": {
+            "type": "string",
+            "example": "722511    "
+          },
+          "ownership": {
+            "type": "string",
+            "example": "50"
+          },
+          "prelim": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0"
+          },
+          "firms": {
+            "type": "integer",
+            "example": 4521
+          },
+          "establishments": {
+            "type": "integer",
+            "example": 4710
+          },
+          "quarterAvgEmp": {
+            "type": "integer",
+            "example": 82340,
+            "description": "Average employment for the quarter or year"
+          },
+          "month1Emp": {
+            "type": "integer",
+            "example": 80100
+          },
+          "month2Emp": {
+            "type": "integer",
+            "example": 82500
+          },
+          "month3Emp": {
+            "type": "integer",
+            "example": 84420
+          },
+          "topEmployerAvgEmp": {
+            "type": "integer",
+            "example": 0,
+            "description": "Average employment for the top employer in this geography/industry"
+          },
+          "totalWages": {
+            "type": "integer",
+            "example": 2543000000
+          },
+          "avgWeeklyWage": {
+            "type": "integer",
+            "example": 594
+          },
+          "taxableWages": {
+            "type": "integer",
+            "example": 1250000000
+          },
+          "uiContributions": {
+            "type": "integer",
+            "example": 12500000
+          },
+          "suppress": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0",
+            "description": "'1'=suppress employment & wage data, '0'=not suppressed"
+          }
+        }
+      },
+      "IndustryListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Industry"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "Projection": {
+        "type": "object",
+        "description": "A single record from the WID 3.0 `ProjectionsMatrix` table. Represents employment for one industry-occupation cell in a projection run.\n",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          },
+          "areaTypeVersion": {
+            "type": "string",
+            "example": "0"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "periodYear": {
+            "type": "string",
+            "example": "2022",
+            "description": "Base year of the projection run"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "01"
+          },
+          "period": {
+            "type": "string",
+            "example": "00"
+          },
+          "matrixIndCode": {
+            "type": "string",
+            "description": "MicroMatrix industry code; see `/projections/indDirectories`"
+          },
+          "matrixOccCode": {
+            "type": "string",
+            "description": "MicroMatrix occupation code; see `/projections/occDirectories`"
+          },
+          "projectedYear": {
+            "type": "string",
+            "example": "2032"
+          },
+          "estimatedEmp": {
+            "type": "integer",
+            "example": 45200,
+            "description": "Base-year employment estimate"
+          },
+          "projectedEmp": {
+            "type": "integer",
+            "example": 51800,
+            "description": "Projected-year employment estimate"
+          },
+          "pctEstInd": {
+            "type": "number",
+            "example": 12.3,
+            "description": "Occupation as % of industry employment (base year)"
+          },
+          "pctEstOcc": {
+            "type": "number",
+            "example": 8.7,
+            "description": "Industry as % of occupation employment (base year)"
+          },
+          "pctProjInd": {
+            "type": "number",
+            "example": 12.6
+          },
+          "pctProjOcc": {
+            "type": "number",
+            "example": 9.1
+          },
+          "numericChange": {
+            "type": "integer",
+            "example": 6600
+          },
+          "percentChange": {
+            "type": "number",
+            "example": 14.6,
+            "description": "((projectedEmp - estimatedEmp) / estimatedEmp) * 100"
+          },
+          "growthRate": {
+            "type": "number",
+            "example": 1.37,
+            "description": "Annualized percentage growth rate"
+          },
+          "growthCode": {
+            "type": "string",
+            "maxLength": 2,
+            "example": "AA",
+            "description": "State-specific growth descriptor; see `/lookups/growthCodes`"
+          },
+          "exits": {
+            "type": "integer",
+            "example": 28000
+          },
+          "annualExits": {
+            "type": "integer",
+            "example": 2800
+          },
+          "transfers": {
+            "type": "integer",
+            "example": 9500
+          },
+          "annualTransfers": {
+            "type": "integer",
+            "example": 950
+          },
+          "change": {
+            "type": "integer",
+            "example": 6600
+          },
+          "annualChange": {
+            "type": "integer",
+            "example": 660
+          },
+          "openings": {
+            "type": "integer",
+            "example": 44100,
+            "description": "Total openings = exits + transfers + change"
+          },
+          "annualOpenings": {
+            "type": "integer",
+            "example": 4410
+          },
+          "suppress": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0"
+          }
+        }
+      },
+      "ProjectionListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Projection"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "IndDirectory": {
+        "type": "object",
+        "description": "A MicroMatrix industry code entry from `IndDirectories`",
+        "properties": {
+          "matrixIndCode": {
+            "type": "string"
+          },
+          "periodYear": {
+            "type": "string",
+            "example": "2022"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "01"
+          },
+          "period": {
+            "type": "string",
+            "example": "00"
+          },
+          "projectedYear": {
+            "type": "string",
+            "example": "2032"
+          },
+          "matrixIndTitle": {
+            "type": "string",
+            "example": "Full-Service Restaurants"
+          },
+          "subTotal": {
+            "type": "string"
+          }
+        }
+      },
+      "IndDirectoryListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndDirectory"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "OccDirectory": {
+        "type": "object",
+        "description": "A MicroMatrix occupation code entry from `OccDirectories`",
+        "properties": {
+          "matrixOccCode": {
+            "type": "string"
+          },
+          "periodYear": {
+            "type": "string",
+            "example": "2022"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "01"
+          },
+          "period": {
+            "type": "string",
+            "example": "00"
+          },
+          "projectedYear": {
+            "type": "string",
+            "example": "2032"
+          },
+          "matrixOccTitle": {
+            "type": "string",
+            "example": "Cooks, Restaurant"
+          },
+          "subTotal": {
+            "type": "string"
+          }
+        }
+      },
+      "OccDirectoryListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OccDirectory"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "MatrixXInd": {
+        "type": "object",
+        "description": "Crosswalk from a matrix industry code to a standard IndustryCodes entry",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "matrixIndCode": {
+            "type": "string"
+          },
+          "indCodeType": {
+            "type": "string",
+            "example": "10"
+          },
+          "indCode": {
+            "type": "string",
+            "example": "722511    "
+          }
+        }
+      },
+      "MatrixXIndListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MatrixXInd"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "MatrixXOcc": {
+        "type": "object",
+        "description": "Crosswalk from a matrix occupation code to a standard OccupationCodes entry",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "matrixOccCode": {
+            "type": "string"
+          },
+          "occCodeType": {
+            "type": "string",
+            "example": "19"
+          },
+          "occCode": {
+            "type": "string",
+            "example": "35-2014   "
+          }
+        }
+      },
+      "MatrixXOccListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MatrixXOcc"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "Wage": {
+        "type": "object",
+        "description": "A single record from the WID 3.0 `IOWage` table. Three separate suppress flags control whether wages, total record, or employment may be published.\n",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          },
+          "areaTypeVersion": {
+            "type": "string",
+            "example": "0"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "periodYear": {
+            "type": "string",
+            "example": "2023"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "01"
+          },
+          "period": {
+            "type": "string",
+            "example": "00"
+          },
+          "indCodeType": {
+            "type": "string",
+            "example": "10"
+          },
+          "indCode": {
+            "type": "string",
+            "example": "          ",
+            "description": "Blank for cross-industry occupation totals"
+          },
+          "occCodeType": {
+            "type": "string",
+            "example": "19"
+          },
+          "occCode": {
+            "type": "string",
+            "example": "35-2014   "
+          },
+          "wageSource": {
+            "type": "string",
+            "example": "3"
+          },
+          "empCount": {
+            "type": "integer",
+            "example": 32500
+          },
+          "rateType": {
+            "type": "string",
+            "enum": [
+              "1",
+              "2"
+            ],
+            "example": "1",
+            "description": "'1'=hourly, '2'=annual"
+          },
+          "responseRate": {
+            "type": "integer",
+            "example": 28100,
+            "description": "Number of survey respondents"
+          },
+          "meanWage": {
+            "type": "number",
+            "example": 18.35
+          },
+          "entryWage": {
+            "type": "number",
+            "example": 13.25
+          },
+          "experiencedWage": {
+            "type": "number",
+            "example": 21.15,
+            "description": "Mean of the upper two-thirds (ALC definition)"
+          },
+          "percentile10Wage": {
+            "type": "number",
+            "example": 12.1
+          },
+          "percentile25Wage": {
+            "type": "number",
+            "example": 14.2
+          },
+          "medianWage": {
+            "type": "number",
+            "example": 17.05
+          },
+          "percentile75Wage": {
+            "type": "number",
+            "example": 21.4
+          },
+          "percentile90Wage": {
+            "type": "number",
+            "example": 26.8
+          },
+          "userDefinedPct": {
+            "type": "integer",
+            "description": "User-defined percentile point"
+          },
+          "userDefinedPctWage": {
+            "type": "number"
+          },
+          "wageRelativePctError": {
+            "type": "number"
+          },
+          "empRelativePctError": {
+            "type": "number"
+          },
+          "panelCode": {
+            "type": "string",
+            "description": "Reference panel code (yyyymm)"
+          },
+          "suppressWage": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0"
+          },
+          "suppressAll": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0"
+          },
+          "suppressEmp": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "example": "0"
+          }
+        }
+      },
+      "WageListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Wage"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "LicenseAuthority": {
+        "type": "object",
+        "description": "A licensing authority from the WID 3.0 `LicenseAuthorities` table",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          },
+          "areaTypeVersion": {
+            "type": "string",
+            "example": "0"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "licAuthID": {
+            "type": "string",
+            "example": "001"
+          },
+          "department": {
+            "type": "string",
+            "example": "Oregon Health Authority"
+          },
+          "division": {
+            "type": "string",
+            "example": "Health Systems Division"
+          },
+          "board": {
+            "type": "string",
+            "example": "Oregon State Board of Nursing"
+          },
+          "address1": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string",
+            "example": "Salem"
+          },
+          "state": {
+            "type": "string",
+            "example": "OR"
+          },
+          "zipCode": {
+            "type": "string",
+            "example": "97301"
+          },
+          "telephone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://osbn.oregon.gov"
+          }
+        }
+      },
+      "LicenseAuthorityListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LicenseAuthority"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "License": {
+        "type": "object",
+        "description": "An individual occupational license from the WID 3.0 `License` table",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "licenseID": {
+            "type": "string",
+            "example": "OR-RN-001"
+          },
+          "licAuthID": {
+            "type": "string",
+            "example": "001"
+          },
+          "licenseTitle": {
+            "type": "string",
+            "example": "Registered Nurse"
+          },
+          "licenseType": {
+            "type": "string",
+            "example": "1"
+          },
+          "exam": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "description": "'1'=exam required"
+          },
+          "education": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ]
+          },
+          "continuingEdu": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ]
+          },
+          "certification": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ]
+          },
+          "experience": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ]
+          },
+          "criminal": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ],
+            "description": "'1'=criminal background check required"
+          },
+          "physicalReq": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ]
+          },
+          "veteran": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ]
+          },
+          "inactive": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ]
+          },
+          "licenseURL": {
+            "type": "string"
+          },
+          "licenseUpdated": {
+            "type": "string",
+            "description": "Date last updated (yyyymmdd)",
+            "example": "20250101"
+          }
+        }
+      },
+      "LicenseListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/License"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "LicenseHistory": {
+        "type": "object",
+        "description": "Count of licenses awarded from the WID 3.0 `LicenseHistory` table",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          },
+          "areaTypeVersion": {
+            "type": "string",
+            "example": "0"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "periodYear": {
+            "type": "string",
+            "example": "2023"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "01"
+          },
+          "period": {
+            "type": "string",
+            "example": "00"
+          },
+          "licenseID": {
+            "type": "string",
+            "example": "OR-RN-001"
+          },
+          "licenseNumberType": {
+            "type": "string"
+          },
+          "licenseNumber": {
+            "type": "integer",
+            "example": 1245,
+            "description": "Number of licenses awarded"
+          }
+        }
+      },
+      "LicenseHistoryListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LicenseHistory"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "LicenseXOcc": {
+        "type": "object",
+        "description": "Crosswalk from a license to a standard OccupationCodes entry",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "licenseID": {
+            "type": "string",
+            "example": "OR-RN-001"
+          },
+          "occCodeType": {
+            "type": "string",
+            "example": "19"
+          },
+          "occCode": {
+            "type": "string",
+            "example": "29-1141   "
+          }
+        }
+      },
+      "LicenseXOccListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LicenseXOcc"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "CesWithGeography": {
+        "type": "object",
+        "description": "CES record enriched with geography name and series title",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Ces"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "areaName": {
+                "type": "string",
+                "example": "Oregon"
+              },
+              "seriesTitle": {
+                "type": "string",
+                "example": "Total Nonfarm Employment"
+              }
+            }
+          }
+        ]
+      },
+      "CesWithGeographyListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CesWithGeography"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "LaborForceWithGeography": {
+        "type": "object",
+        "description": "LaborForce record enriched with geography name",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/LaborForce"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "areaName": {
+                "type": "string",
+                "example": "Multnomah County"
+              }
+            }
+          }
+        ]
+      },
+      "LaborForceWithGeographyListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LaborForceWithGeography"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "WageWithDescriptions": {
+        "type": "object",
+        "description": "IOWage record enriched with occupation title, industry title, area name, and source descriptions",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Wage"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "areaName": {
+                "type": "string",
+                "example": "Oregon"
+              },
+              "occupationTitle": {
+                "type": "string",
+                "example": "Cooks, Restaurant"
+              },
+              "industryTitle": {
+                "type": "string",
+                "example": "Full-Service Restaurants"
+              },
+              "wageSourceTitle": {
+                "type": "string",
+                "example": "OES/OEWS"
+              },
+              "rateTypeTitle": {
+                "type": "string",
+                "example": "Hourly"
+              }
+            }
+          }
+        ]
+      },
+      "WageWithDescriptionsListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WageWithDescriptions"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "ProjectionWithTitles": {
+        "type": "object",
+        "description": "ProjectionsMatrix record enriched with industry title, occupation title, area name, and growth code description",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Projection"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "areaName": {
+                "type": "string",
+                "example": "Oregon"
+              },
+              "industryTitle": {
+                "type": "string",
+                "example": "Full-Service Restaurants"
+              },
+              "occupationTitle": {
+                "type": "string",
+                "example": "Cooks, Restaurant"
+              },
+              "growthCodeTitle": {
+                "type": "string",
+                "example": "Rapid growth"
+              }
+            }
+          }
+        ]
+      },
+      "ProjectionWithTitlesListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectionWithTitles"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "IndustryWithGeography": {
+        "type": "object",
+        "description": "Industry QCEW record enriched with area name, industry title, and ownership name",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Industry"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "areaName": {
+                "type": "string",
+                "example": "Oregon"
+              },
+              "industryTitle": {
+                "type": "string",
+                "example": "Full-Service Restaurants"
+              },
+              "ownershipTitle": {
+                "type": "string",
+                "example": "Private"
+              }
+            }
+          }
+        ]
+      },
+      "IndustryWithGeographyListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndustryWithGeography"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "LicensingByOccupation": {
+        "type": "object",
+        "description": "Licensing requirement record from joining LicenseXOcc with License and LicenseAuthorities",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "occCodeType": {
+            "type": "string",
+            "example": "19"
+          },
+          "occCode": {
+            "type": "string",
+            "example": "29-1141   "
+          },
+          "occupationTitle": {
+            "type": "string",
+            "example": "Registered Nurses"
+          },
+          "licenseID": {
+            "type": "string",
+            "example": "OR-RN-001"
+          },
+          "licenseTitle": {
+            "type": "string",
+            "example": "Registered Nurse"
+          },
+          "licenseType": {
+            "type": "string",
+            "example": "1"
+          },
+          "licAuthID": {
+            "type": "string",
+            "example": "001"
+          },
+          "board": {
+            "type": "string",
+            "example": "Oregon State Board of Nursing"
+          },
+          "licenseURL": {
+            "type": "string",
+            "example": "https://osbn.oregon.gov"
+          }
+        }
+      },
+      "LicensingByOccupationListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LicensingByOccupation"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Find out more about the Workforce Information Database",
+    "url": "https://widcenter.org"
+  }
+}

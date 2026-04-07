@@ -17,6 +17,7 @@
       window.onload = function () {
         const defaultSpecName = "WID 3.0 - National Draft";
         const defaultSpecPath = "specs/wid-3.0/draft.yaml";
+        const defaultSpecJsonPath = "specs/wid-3.0/draft.json";
         const specs = [
           {
             name: defaultSpecName,
@@ -46,17 +47,30 @@
         if (hasStandalonePreset) {
           presets.push(SwaggerUIBundle.SwaggerUIStandalonePreset);
         }
+        const resolvedDefaultSpecJsonUrl = new URL(defaultSpecJsonPath, window.location.href).toString();
+        let attemptedJsonFallback = false;
 
-        SwaggerUIBundle({
-          // Force a concrete default so current draft always renders by default.
-          url: resolvedDefaultSpec.url,
-          urls: resolvedSpecs,
-          "urls.primaryName": resolvedDefaultSpec.name,
-          dom_id: "#swagger-ui",
-          presets,
-          layout: hasStandalonePreset ? "StandaloneLayout" : "BaseLayout",
-          deepLinking: true,
-        });
+        function bootSwagger(targetUrl, targetName) {
+          SwaggerUIBundle({
+            // Force a concrete default so current draft always renders by default.
+            url: targetUrl,
+            urls: resolvedSpecs,
+            "urls.primaryName": targetName,
+            dom_id: "#swagger-ui",
+            presets,
+            layout: hasStandalonePreset ? "StandaloneLayout" : "BaseLayout",
+            deepLinking: true,
+            onFailure: function () {
+              // Some Swagger UI builds fail to parse YAML; fall back to JSON mirror for the draft spec.
+              if (!attemptedJsonFallback && targetUrl === resolvedDefaultSpec.url) {
+                attemptedJsonFallback = true;
+                bootSwagger(resolvedDefaultSpecJsonUrl, defaultSpecName);
+              }
+            },
+          });
+        }
+
+        bootSwagger(resolvedDefaultSpec.url, resolvedDefaultSpec.name);
       };
     </script>
   </body>
