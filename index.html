@@ -7,9 +7,37 @@
     <link rel="stylesheet" href="vendor/swagger-ui/swagger-ui.css" />
     <style>
       body { margin: 0; }
+      .docs-toolbar {
+        align-items: center;
+        background: #f6f8fa;
+        border-bottom: 1px solid #d0d7de;
+        display: flex;
+        gap: 12px;
+        padding: 12px 16px;
+      }
+      .docs-toolbar label,
+      .docs-toolbar select,
+      .docs-toolbar span {
+        font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .docs-toolbar select {
+        min-width: 280px;
+        padding: 6px 8px;
+      }
+      .docs-toolbar__status {
+        color: #57606a;
+      }
+      .docs-toolbar__status--error {
+        color: #cf222e;
+      }
     </style>
   </head>
   <body>
+    <div class="docs-toolbar">
+      <label for="spec-select">Specification</label>
+      <select id="spec-select"></select>
+      <span id="spec-status" class="docs-toolbar__status"></span>
+    </div>
     <div id="swagger-ui"></div>
 
     <script src="vendor/swagger-ui/swagger-ui-bundle.js"></script>
@@ -18,22 +46,25 @@
         const defaultSpecName = "WID 3.0 - National Draft";
         const defaultSpecSourceYamlPath = "specs/wid-3.0/draft.yaml";
         const defaultSpecJsonPath = "specs/wid-3.0/draft.json";
-        const defaultSpecPath = defaultSpecJsonPath;
         const specs = [
           {
             name: defaultSpecName,
-            url: defaultSpecPath,
+            sourceUrl: defaultSpecSourceYamlPath,
+            dataUrl: defaultSpecJsonPath,
           },
           {
             name: "Oregon WID 2.8 (reference)",
-            url: "specs/reference/oregon-wid-2.8.yaml",
+            sourceUrl: "specs/reference/oregon-wid-2.8.yaml",
+            dataUrl: "specs/reference/oregon-wid-2.8.json",
           },
         ];
+        const specSelect = document.getElementById("spec-select");
+        const specStatus = document.getElementById("spec-status");
 
         const params = new URLSearchParams(window.location.search);
         const requested = params.get("spec");
         const requestedSpec = specs.find((s) => {
-          if (s.name === requested || s.url === requested) {
+          if (s.name === requested || s.sourceUrl === requested || s.dataUrl === requested) {
             return true;
           }
 
@@ -45,44 +76,63 @@
           return false;
         });
         const defaultSpec = requestedSpec || specs.find((s) => s.name === defaultSpecName) || specs[0];
-        const resolvedSpecs = specs.map((s) => ({
-          name: s.name,
-          url: new URL(s.url, window.location.href).toString(),
-        }));
-        const resolvedDefaultSpec = {
-          name: defaultSpec.name,
-          url: new URL(defaultSpec.url, window.location.href).toString(),
-        };
 
         const hasStandalonePreset = typeof SwaggerUIBundle.SwaggerUIStandalonePreset !== "undefined";
         const presets = [SwaggerUIBundle.presets.apis];
         if (hasStandalonePreset) {
           presets.push(SwaggerUIBundle.SwaggerUIStandalonePreset);
         }
-        const resolvedDefaultSpecJsonUrl = new URL(defaultSpecJsonPath, window.location.href).toString();
-        let attemptedJsonFallback = false;
+        let swaggerUi = null;
 
-        function bootSwagger(targetUrl, targetName) {
-          SwaggerUIBundle({
-            // Force a concrete default so current draft always renders by default.
-            url: targetUrl,
-            urls: resolvedSpecs,
-            "urls.primaryName": targetName,
+        function setStatus(message, isError) {
+          specStatus.textContent = message;
+          specStatus.className = isError
+            ? "docs-toolbar__status docs-toolbar__status--error"
+            : "docs-toolbar__status";
+        }
+
+        async function renderSpec(specConfig) {
+          const resolvedDataUrl = new URL(specConfig.dataUrl, window.location.href).toString();
+          setStatus("Loading " + specConfig.name + "...", false);
+
+          try {
+            const response = await fetch(resolvedDataUrl, { cache: "no-store" });
+            if (!response.ok) {
+              throw new Error("HTTP " + response.status + " while loading spec data");
+            }
+
+            const specObject = await response.json();
+            document.getElementById("swagger-ui").innerHTML = "";
+            swaggerUi = SwaggerUIBundle({
+              spec: specObject,
             dom_id: "#swagger-ui",
             presets,
             layout: hasStandalonePreset ? "StandaloneLayout" : "BaseLayout",
             deepLinking: true,
-            onFailure: function () {
-              // Some Swagger UI builds fail to parse YAML; fall back to JSON mirror for the draft spec.
-              if (!attemptedJsonFallback && targetUrl === resolvedDefaultSpec.url) {
-                attemptedJsonFallback = true;
-                bootSwagger(resolvedDefaultSpecJsonUrl, defaultSpecName);
-              }
-            },
-          });
+            });
+            setStatus("Showing " + specConfig.name, false);
+          } catch (error) {
+            setStatus("Failed to load " + specConfig.name + ": " + error.message, true);
+            document.getElementById("swagger-ui").innerHTML = "<div style=\"padding:16px;font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#cf222e;\">Unable to load the selected API definition.</div>";
+          }
         }
 
-        bootSwagger(resolvedDefaultSpec.url, resolvedDefaultSpec.name);
+        specs.forEach((specConfig) => {
+          const option = document.createElement("option");
+          option.value = specConfig.name;
+          option.textContent = specConfig.name;
+          if (specConfig.name === defaultSpec.name) {
+            option.selected = true;
+          }
+          specSelect.appendChild(option);
+        });
+
+        specSelect.addEventListener("change", function () {
+          const selectedSpec = specs.find((specConfig) => specConfig.name === specSelect.value) || defaultSpec;
+          renderSpec(selectedSpec);
+        });
+
+        renderSpec(defaultSpec);
       };
     </script>
   </body>
