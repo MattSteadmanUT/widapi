@@ -1,0 +1,281 @@
+{
+  "generatedAt": "2026-04-07T17:36:32.483Z",
+  "source": "s3://ulmita-forum-content/nationalwid/",
+  "awsProfile": "GovProd",
+  "postCount": 20,
+  "threadCount": 6,
+  "threads": [
+    {
+      "rootId": "welcome#0",
+      "postIds": [
+        "welcome#0",
+        "welcome#1",
+        "welcome#2",
+        "welcome#3",
+        "welcome#4",
+        "welcome#5",
+        "welcome#6",
+        "welcome#7"
+      ]
+    },
+    {
+      "rootId": "projectoverviewandgoals#0",
+      "postIds": [
+        "projectoverviewandgoals#0"
+      ]
+    },
+    {
+      "rootId": "usecases#0",
+      "postIds": [
+        "usecases#0",
+        "usecases#1",
+        "usecases#2",
+        "usecases#3",
+        "usecases#4",
+        "usecases#6",
+        "usecases#7",
+        "usecases#5"
+      ]
+    },
+    {
+      "rootId": "datasourcesandloading#0",
+      "postIds": [
+        "datasourcesandloading#0"
+      ]
+    },
+    {
+      "rootId": "api#0",
+      "postIds": [
+        "api#0"
+      ]
+    },
+    {
+      "rootId": "meetingnotes3202026#0",
+      "postIds": [
+        "meetingnotes3202026#0"
+      ]
+    }
+  ],
+  "posts": [
+    {
+      "id": "welcome#0",
+      "rawId": "0",
+      "replyToId": null,
+      "threadHint": null,
+      "title": "Welcome!",
+      "body": "This Forum Topic is for discussions related to the National WID Project.  This project is part of the ARC Strategic Plan that was developed at the Raleigh NC meeting in January 2026.   \nThe members of this team are:\nGary SincickOregongary.m.sincick@employ.oregon.gov\nMatt SteadmanUtahmattsteadman@utah.govSteve DuthieMontanasduthie@mt.gov\nSteven PenningtonNorth Carolinasteven.pennington@commerce.nc.gov\nKyle DavisVirginakyle.davis@vec.virginia.gov\nMaali WilsonSouth Carolinamwilson@dew.sc.gov\nAdditionally - the entire ULMITA team will be available to work on this project\nAaron Campbellaaronc@utah.gov\nBrett Juddbdjudd@utah.gov\nJoe Skeenjsskeen@utah.gov\nMark Rockmrock@utah.gov",
+      "author": "gary.m.sincick",
+      "createdAt": "2026-01-21T23:31:22.650Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/welcome/0.json"
+    },
+    {
+      "id": "welcome#1",
+      "rawId": "1",
+      "replyToId": "welcome#0",
+      "threadHint": null,
+      "title": "welcome",
+      "body": "The whole ULMITA team will be involved in this, and we're looking forward to it!",
+      "author": "mattsteadman",
+      "createdAt": "2026-01-22T16:33:09.439Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/welcome/1.json"
+    },
+    {
+      "id": "welcome#2",
+      "rawId": "2",
+      "replyToId": "welcome#0",
+      "threadHint": null,
+      "title": "welcome",
+      "body": "I'm looking forward to working on this!",
+      "author": "aaronc",
+      "createdAt": "2026-01-22T17:36:05.548Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/welcome/2.json"
+    },
+    {
+      "id": "welcome#3",
+      "rawId": "3",
+      "replyToId": "welcome#0",
+      "threadHint": null,
+      "title": "welcome",
+      "body": "I am excited for the oppertunity to work on this project.",
+      "author": "mrock",
+      "createdAt": "2026-01-29T17:48:11.143Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/welcome/3.json"
+    },
+    {
+      "id": "welcome#4",
+      "rawId": "4",
+      "replyToId": "welcome#0",
+      "threadHint": null,
+      "title": "welcome",
+      "body": "So since Hi is fine. Ready to get started on WID 4.0 \"not\".😁",
+      "author": "sduthie",
+      "createdAt": "2026-02-13T19:31:04.526Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/welcome/4.json"
+    },
+    {
+      "id": "welcome#5",
+      "rawId": "5",
+      "replyToId": "welcome#0",
+      "threadHint": null,
+      "title": "welcome",
+      "body": "great idea! I'm going to lurk in the background 😀",
+      "author": "oriane.casale",
+      "createdAt": "2026-02-13T19:59:15.913Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/welcome/5.json"
+    },
+    {
+      "id": "welcome#6",
+      "rawId": "6",
+      "replyToId": "welcome#0",
+      "threadHint": null,
+      "title": "welcome",
+      "body": "Thanks Gary and Matt!",
+      "author": "kyle.davis",
+      "createdAt": "2026-02-13T20:48:20.858Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/welcome/6.json"
+    },
+    {
+      "id": "welcome#7",
+      "rawId": "7",
+      "replyToId": "welcome#0",
+      "threadHint": null,
+      "title": "welcome",
+      "body": "Was just talking about this today!",
+      "author": "steven.pennington",
+      "createdAt": "2026-02-13T23:06:01.865Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/welcome/7.json"
+    },
+    {
+      "id": "projectoverviewandgoals#0",
+      "rawId": "0",
+      "replyToId": null,
+      "threadHint": null,
+      "title": "Project Overview and Goals",
+      "body": "I'm starting this thread to we can better articulate the vision for this project and reach a common understanding of what it is we are tyring to do.  In the near term, I'd like to get something that we feel good about including in a survey of LMI Directors as we solicit input and try to gauge how much interest there is in this kind of product.  I'm including my rough elevator pitch below that came out of our meeting in Raleigh and that we shared with Don.  This can be a starting point for discussion, and we can share ideas at our meeting on Feb 25th.  \nProblem Statement\nStates have barriers to populating and / or restructuring the WID, whether due to resources or the structure of their organization with respect to IT.  As a result, states get of sync with each other over time in terms of WID structure.  \nWhile the common WID structure allows interstate data sharing in theory, distributed state-by-state implementations make it difficult to share/compare data in practice.  \nProject Description\nCreate a centralized WID database in the cloud that contains data for all states.  Data will be populated automatically from other published data sources, such as BLS.  Central WID data will be accessible to states through APIs or other data access methods.\nProject Goals\n-          Create a more efficient way to provide access to commonly used data sets\n-          Reduce effort in populating and maintaining the WID database\n-          Facilitate development of LMI products by providing a common API for WID data access.\n-          Foster consistency and comparability between states\n-          Provide a platform for further product development (e.g. chat bots, visualizations, etc)\n-          Create timely, trusted data sources",
+      "author": "gary.m.sincick",
+      "createdAt": "2026-02-20T22:00:43.437Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/projectoverviewandgoals/0.json"
+    },
+    {
+      "id": "usecases#0",
+      "rawId": "0",
+      "replyToId": null,
+      "threadHint": null,
+      "title": "Use Cases",
+      "body": "I'm creating a space here to collect use cases for the project.  States like Oregon that are largely self-reliant as far as WID administration is concerned are probably not going to be an abundant source of use cases.  So I'm going to be looking to other states to help flesh out the vision of how we imagine this project will add value to them.   We can start this discussion, along with the project concept and goals, at our meeting on Feb 25th.",
+      "author": "gary.m.sincick",
+      "createdAt": "2026-02-20T22:04:49.645Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/usecases/0.json"
+    },
+    {
+      "id": "usecases#1",
+      "rawId": "1",
+      "replyToId": "usecases#0",
+      "threadHint": null,
+      "title": "usecases",
+      "body": "I believe we started the conversation that led to this idea thinking about how we could help lower-resourced states, particularly those that have trouble maintaining (and restructuring) their WID.  This was a suggestion that might eliminate the necessity for them to maintain a WID all together.\nThinking about this a little more, I at least was imagining a situation in which states essentially opt into the WID.  Maybe that's worth some discussion, because it could come along with a whole other set of implications.  Maybe states become less likely to interact with the ARC as they minimize the use and importance of their own state WID.  Maybe ETA cuts our funding because our custom state WIDs are perceived as \"extra.\"\nAlternatively, this could be framed as simply making it easier for lower-resourced states to maintain a WID.",
+      "author": "steven.pennington",
+      "createdAt": "2026-02-20T23:30:37.514Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/usecases/1.json"
+    },
+    {
+      "id": "usecases#2",
+      "rawId": "2",
+      "replyToId": "usecases#0",
+      "threadHint": null,
+      "title": "usecases",
+      "body": "When I shared this project at a high level with my LMI shop, they expressed some hesitation. Specifically, they are concerned that a national WID could threaten the funding they currently receive to build and maintain their state WID.\nBecause this funding increases the shop's overall bandwidth, it makes their other projects and applications feasible. If a centralized WID caused them to lose that funding stream, they would likely have to scale back in other areas. Therefore, as we develop this project, it is crucial that we aim to augment existing state WID databases rather than replace them.",
+      "author": "mattsteadman",
+      "createdAt": "2026-02-23T15:34:39.248Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/usecases/2.json"
+    },
+    {
+      "id": "usecases#3",
+      "rawId": "3",
+      "replyToId": "usecases#0",
+      "threadHint": null,
+      "title": "usecases",
+      "body": "I’m going to throw this out there after today's meeting. Eight years ago, we discussed a National API. Obviously, a lot has changed since then...capacity has increased significantly with new tools and the Industry table discussion in the meeting brought this back to mind.  Are we using Metabase?  Raw files from BLS? Prevously we discussed a platform that states colud provide their load files or a system they could use to load it to the database...\nThat said, an CRUD plan needs to be at the front and center of this...who, where, what, when, and how.  Utah as the gatekeeper? Thinking back to the last attempt and the hurdles identified during the API structure work Gary led us through, we need to be clear on the goal and the end process.\nIs this truly an API users pull data from to support their applications, or is it an application that provides structured WID data files to load? If it’s the latter, how does it replace or enhance the options currently available through BLS?   \nIdeally, this would be a single, authoritative WID data resource...one place for all states WID data. Provide an easier way to access structured files for populating a state’s WID. I believe Gary suggested this as a Phase I, which makes sense as a starting point, with live API keyed connections as Phase II.  Or....",
+      "author": "joseph.jaehnke",
+      "createdAt": "2026-02-25T21:39:39.809Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/usecases/3.json"
+    },
+    {
+      "id": "usecases#4",
+      "rawId": "4",
+      "replyToId": "usecases#3",
+      "threadHint": null,
+      "title": "usecases",
+      "body": "Adding to my rambling… the idea is a state admin user interface that gives states real ownership of managing their WID through a national portal. Users would authenticate via login and have a designated drop file location. States would upload raw files to maintain their data.  From there, processes would generate SQL insert, update, and delete statements from the files, and a SQL*Loader type process…or Informatica, or Python, would run those statements to update the data.  Plug into the ETL pipeline and where states have limited resource, ARC would could assist.",
+      "author": "joseph.jaehnke",
+      "createdAt": "2026-02-26T11:20:49.145Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/usecases/4.json"
+    },
+    {
+      "id": "datasourcesandloading#0",
+      "rawId": "0",
+      "replyToId": null,
+      "threadHint": null,
+      "title": "Data Sources and Loading",
+      "body": "At our last meeting, it was suggested that Nevada might have something that is already providing a method to access BLS data through their API.  Oriane passed this link on to me this morning:https://github.com/schmidtDETR/BLSloadR\nI haven't delved into this too much, but it looks like a collection of R scripts for downloding BLS data, including CES, LAUS, QCEW, JOLTS, and OEWS.  A few thoughts on this:  What format/structure is the data returned in?  WID?  If our National WID project (at least in a hypothetical Phase 1) is just providing BLS data to help with WID database administration, are we duplicating effort here?  Would our system provide additional value?Could we leverage this existing method of accessing BLS data for use in a National WID system?",
+      "author": "gary.m.sincick",
+      "createdAt": "2026-02-26T22:48:32.227Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/datasourcesandloading/0.json"
+    },
+    {
+      "id": "usecases#5",
+      "rawId": "5",
+      "replyToId": "usecases#3",
+      "threadHint": null,
+      "title": "usecases",
+      "body": "Thanks for this Joe!  Good discussion fodder..After our meeting, I was kind of thinking about possible phases for this project.  Here's my back-of-the-envelope thinking:Phase 1 - 'WID Admin Assist' - Provides access to data tables only - Start with BLS data, such CES, LAUS - Delivers flat files/CSV only - Highly rate limited - State staff access only - Designed to be loaded into a local database, not live access - Main use case is providing WID-ready data files for local loadingNote:  This phase might already be partially or completely done by Nevada...see my other post...Phase 2 - 'WID Data Access'- Deliver data in JSON format (in addition to flat files /CSV)- Return data that includes (or has the option to include) related lookup values (i.e. geographic names, industry titles, etc)- API is still 'WID table centric'- API provides more metadata type queries (e.g. what industry series are available for CES data in my state)- Access provided to state staff, but could also be accessed directly by state websites- Rate limits appropriate for live (but limited) access- Use cases:  Access by staff using front end tools such as R, Python, supports simple tools for web sites, such as CES, LAUSPhase 3 - 'WID-Based Applications' - API provides data from multiple tables with a single query (e.g. give me projections and wages for SOC x) - Use case:  Provides support for more complex LMI tools, visualizations, widgets, etc. - If we make it this far, could discuss viability of making the API public",
+      "author": "gary.m.sincick",
+      "createdAt": "2026-02-26T23:05:32.435Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/usecases/5.json"
+    },
+    {
+      "id": "usecases#6",
+      "rawId": "6",
+      "replyToId": "usecases#4",
+      "threadHint": null,
+      "title": "usecases",
+      "body": "This is something we need to discuss more.  I'm not sure if a model of auto-populating a WID database from federal sources, such as BLS, is compatible with a system in which everyone can upload and is responsible for their own stuff.  \nOr maybe you are thinking of a setup where states might have the option to have their own WID database cloud-hosted?  If we're talking about a single unifed 50-state WID, though, it seems like we need to control the updates centrally, otherwise no one will know what the state of the database is at any one time.  Also, you would really need an Amanda-type person overseeing all this, or the potential for a big mess seems high.",
+      "author": "gary.m.sincick",
+      "createdAt": "2026-02-26T23:11:24.331Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/usecases/6.json"
+    },
+    {
+      "id": "api#0",
+      "rawId": "0",
+      "replyToId": null,
+      "threadHint": null,
+      "title": "API",
+      "body": "Starting a thread here for discussions on an API(s) for the National WID project.A couple of thoughts to start:  First, at some future meeting, I'd like to go through what we did for the WID API project some time ago.  There's a lot that we could use, or borrow, for an API for the current project.  Even if we don't use it directly, a lot of the concepts could be transferable.\nAlso, this morning Oriane and Jeff and I met with Chris Roseland and a couple of other folks from BLS to discuss BLS modernization.  There was some talk about the general dissatisfaction with the BLS API, and they seemed amenable to possibly looking at how it could be made easier to use and more useful in general.  They might be looking for our input on this in the future.  If we could come to an agreement on what kind of API we'd like to see for a National WID, this might be something we could share with them.  \nI'll be out this next week, but let's think about when we might want to meet again to discuss....",
+      "author": "gary.m.sincick",
+      "createdAt": "2026-02-27T22:03:09.559Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/api/0.json"
+    },
+    {
+      "id": "usecases#7",
+      "rawId": "7",
+      "replyToId": "usecases#6",
+      "threadHint": null,
+      "title": "usecases",
+      "body": "So...the admin portal would allow states to provide their raw data files, putting the responsiblity of 'maintaining' their data in the National WID database.  States would provide data in .txt or .csv WID format, add the table name and the application would convert to SQL as INSERT, UPDATE, DELETE and create .sql file that would run SQL Loader type function or reviewed prior to execution.  Yes, they would have their own cloud-hosted WID or part of the National WID.  However it works, I think a gate keeper is required and deadlines to provide the data files.  Maybe that concept makes a BIG mess...  Matt had a concern that this could impact state funding, but maybe it helps satisfy the requirements.  Agree that futher discussions needed:)   \nOn the backside it would allow users to download files as suggested in Phase I...",
+      "author": "joseph.jaehnke",
+      "createdAt": "2026-03-02T20:58:18.666Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/usecases/7.json"
+    },
+    {
+      "id": "meetingnotes3202026#0",
+      "rawId": "0",
+      "replyToId": null,
+      "threadHint": null,
+      "title": "Meeting Notes 3/20/2026",
+      "body": "Notes from 3/30/2026 National WID MeetingSome general agreement on the rough phases outlined in the use cases thread.\nData tables identified for first phase:\n-            CES\n-            ProjectionsMatrix\n-            IOWage\n-            Industry\n-            LaborForce\nAlso possibly CPI and CPIPlus?  Note:  EmpDb is not included, as it’s a special case.  License-related tables will need to be addressed at some point, as they are core tables, but unclear how we will handle these.\nAssociated lookup tables ( these are taken from the foreign key references specified in the WID 3.0 structure document)\n-            Geographies\n-            CESCodes\n-            Benchmark\n-            Periods\n-            Periodyears\n-            PeriodType\n-            IndCodeTypes\n-            WageSources\n-            WageRateTypes\n-            OccupationCodes\n-            IndustryCodes\n-            OccDirectories\n-            IndDirectories\n-            GrowthCodes\n-            Ownerships\nNote that there will be additional lookup tables required as these are created (e.g. AreaTypeVersions, GeoPrecisionCodes, etc).  We will need to work through all the transitive foreign key requirements.\nThere was discussion about the fact that because the StateFips field in the CES/CESCodes tables is part of the primary key, that means that each state will have a full set of CES series codes in the lookup table.  This probably isn’t super useful, but the decision was made not to deviate from WID 3.0 specification at this point.\nThe plan is to populate the database with both national data and data from all states.\nThere was discussion about the custom substate areas for projections and wage data.   At this point, we will start with just statewide data.  Handling each state’s particular substate areas is out of scope for the initial phase.\nTo populate these tables, we may leverage the work done by David Schmidt in Nevada:https://github.com/schmidtDETR/BLSloadR/tree/mainThis is a collection of R scripts that pull BLS flat files.  We may be able to adapt his work for our purposes.  We will invite him to our next (or future) meeting to compare notes.\nThe plan for an initial phase delivery is to create a CSV API, with a web front end so that people can download data without having to do it directly through the API.  The actual backend API may be JSON-based.  The JSON API will be made available in a subsequent phase, although keeping it just on the back end initially will allow us to make changes to it without causing user disruptions.\nWe took a quick look at the WID API that was developed in Oregon.  We may possibly use some part of this API, or some ideas from it.  Will need to have a way to share an API spec as it is developed for the national WID, either GitHub or SwaggerHub.\nWe will discuss API in more detail at the next meeting.\nNext meeting is Monday, April 6, 9:00 PST.",
+      "author": "gary.m.sincick",
+      "createdAt": "2026-03-30T19:24:46.598Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/meetingnotes3202026/0.json"
+    }
+  ]
+}

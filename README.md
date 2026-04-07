@@ -85,3 +85,51 @@ npm run update-vendor
 ```
 
 Commit the changed files under `vendor/swagger-ui/`.
+
+---
+
+## Syncing External Forum Discussions
+
+This repo includes a local sync utility to pull discussion posts from the
+national WID forum S3 location and materialize them as reviewable artifacts in
+both docs and spec-supporting JSON.
+
+### Source
+
+- S3 prefix: `s3://ulmita-forum-content/nationalwid/`
+- AWS profile used by default: `GovProd`
+
+### Run manually
+
+```bash
+npm run sync:forum
+```
+
+Optional overrides:
+
+```bash
+node scripts/sync-forum-content.js --profile GovProd --source s3://ulmita-forum-content/nationalwid/
+```
+
+Generated outputs:
+
+- `docs/reference-documents/forum/nationalwid-forum-sync.md`
+- `specs/wid-3.0/supporting/forum/nationalwid-forum-normalized.json`
+
+The Markdown output is thread-formatted so reply relationships are clear by
+indentation and explicit `Reply to` lines.
+
+### Run automatically before pushes (local machine)
+
+Install the pre-push hook once:
+
+```bash
+npm run install:hooks
+```
+
+After this, each `git push` from this local clone will:
+
+1. Run forum sync
+2. Block push if forum-derived files changed and are not yet committed
+
+To disable, remove `.git/hooks/pre-push`.
