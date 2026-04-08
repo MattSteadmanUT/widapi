@@ -50,9 +50,11 @@ The WID API follows the data-driven model: it provides flexible, fine-grained ac
 
 ### Data and Lookups Are Kept Separate
 
-A key design decision is that **lookup values (names, titles, codes) are not automatically included in data responses**. The WID API keeps lookup operations separate from data operations, mirroring the WID database's own separation of data tables from lookup tables.
+The Oregon API **specification** states that lookup values (names, titles, codes) are not automatically included in data responses — lookup operations are kept separate from data operations, mirroring the WID database's own separation of data tables from lookup tables.
 
-**Rationale:** Different WID data tables have varying numbers of foreign-key lookup relationships. Rather than making ad-hoc decisions per table about which lookups to include inline, the API is consistent: data returns codes, and a separate lookup call returns the titles. This is often actually more convenient for developers, who typically store lookup values in a client-side hash table and access them as needed. To ease this pattern, every data response includes **links** pointing to the relevant lookup endpoints pre-populated with the same query parameters.
+**Rationale from the spec:** Different WID data tables have varying numbers of foreign-key lookup relationships. Rather than making ad-hoc decisions per table about which lookups to include inline, the API is consistent: data returns codes, and a separate lookup call returns the titles. This is often actually more convenient for developers, who typically store lookup values in a client-side hash table and access them as needed. To ease this pattern, every data response includes **links** pointing to the relevant lookup endpoints pre-populated with the same query parameters.
+
+**However — spec vs. implementation divergence:** The Oregon API implementation diverged from this principle in practice. For example, the `cesEmployment` endpoint returns `industrySeriesTitle` inline alongside the series code, even though the spec calls for separation. This suggests the "data only" approach created enough friction for real users that it was quietly overridden. **This is an open design question for the national API** — see Section 11.
 
 ---
 
@@ -274,7 +276,7 @@ Each link object has:
 |---|---|
 | `href` | The endpoint URL |
 | `rel` | Link relationship: `next`, `prev`, or a lookup relationship |
-| `type` | HTTP method (always `GET`) |
+| `type` | HTTP method — always `GET` in the Oregon spec. Since the WID API is read-only and every link will always be `GET`, this field carries no information and **should be dropped from the national API spec**. It is inherited from general hypermedia conventions (HAL, JSON:API) where links can reference mutations; it has no practical value in a data-access-only API.
 
 Links are included when:
 - Additional pages exist → `rel: "next"` link with next page URL
@@ -401,21 +403,28 @@ Parameters that appear across multiple endpoints:
 
 These questions were explicitly raised at the November 2023 ARC presentation:
 
+- **Inline lookup values in data responses?** The Oregon spec calls for strict data/lookup separation, but the Oregon implementation diverges — e.g., `cesEmployment` returns `industrySeriesTitle` inline. Three approaches are on the table: (1) **data fields only**, always requiring a separate lookup call; (2) **always include lookups**, requiring per-table decisions about which ones to embed; (3) **optional embedding via a query parameter** (e.g., `?expand=true`), letting the caller decide. The optional approach avoids per-table judgment calls and serves both bulk data consumers and analysts building quick reports. An audit of which lookups are currently included in the Oregon implementation would help ground this discussion.
+- **WID 3.0 naming conventions** — the national API will target WID 3.0 and use WID 3.0 naming conventions for both parameter names and JSON/CSV field names. The Oregon API's human-readable naming convention (see Section 9) should be reconciled with WID 3.0 field names where they differ.
 - **XML support?** The 2019 design goals included XML as a potential response format. The 2023 update removed it. Consensus needed.
 - **JSON:API conformance?** The 2023 update noted this as a possibility but flagged it as probably unnecessary. To be confirmed.
 - **Versioning strategy?** The 2019 design included an explicit version segment (`/wid/v1.0/`). The OpenAPI spec dropped it. A versioning approach needs to be decided before the API is released publicly.
 - **API key / authentication?** The 2019 design included `api_key` as a universal parameter on all endpoints (optional depending on implementation). The later spec deferred this entirely. For a national multi-state system, this likely needs a decision.
-
 ---
 
 ## 12. Adaptation Notes for National WID 3.0
 
 | Area | Oregon API (WID 2.8) | National API (WID 3.0) |
 |---|---|---|
-| **Schema version** | WID 2.8 | Must update to WID 3.0 naming and structure |
+| **Schema version** | WID 2.8 | WID 3.0 — decided |
+| **Naming conventions** | Oregon human-readable names (e.g., `stateFips`, `seasonallyAdjusted`) | WID 3.0 naming conventions throughout — parameter names and JSON/CSV field names; Oregon's readable names to be reconciled with WID 3.0 spec |
+| **`stateFips` in PK** | Not a PK field in Oregon (single-state) | WID 3.0 adds `StateFips` to primary keys; becomes primary filtering dimension across all tables |
+| **Multi-state** | `stateFips` enum = `{'00', '41'}` | All state FIPS codes; national (`'00'`) aggregates |
 | **Phase 1 tables** | CES, IOMatrix, IOWage, Industry, LaborForce | Same five, per Phase 1 scoping decision |
 | **Substate geography** | County + MSA supported | Deferred to later phase; statewide only initially |
+| **Authentication** | Deferred to implementers | Needs a decision for national deployment |
 | **Versioning** | No version segment in URL | Recommended to add before public release |
+| **CES split** | `cesEmployment` / `cesHoursEarnings` | WID 3.0 CES structure to be confirmed |
+| **Response formats** | JSON + CSV | Same; XML removed from consideration |
 | **Parameter validation** | Strict (400 on unknown params) | Carry forward — especially important for multi-state data volumes |
 
 ---
