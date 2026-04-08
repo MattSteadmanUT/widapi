@@ -83,6 +83,11 @@ tags:
     description: >
       Pre-joined views that combine data across related WID 3.0 tables for common
       display patterns such as CES with geography names resolved.
+  - name: operational
+    description: >
+      Health check and data availability endpoints.  Use `/health` to verify the
+      service is reachable and `/status` to inspect which tables are loaded and how
+      current the data is.
 
 paths:
 
@@ -105,6 +110,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -116,6 +122,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GeographyListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/geographies/{stFips}/{areaType}/{areaTypeVersion}/{area}:
     get:
@@ -146,6 +162,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Geography'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -162,6 +180,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - name: areaType
           in: query
@@ -173,17 +192,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AreaTypeListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/stateFips:
     get:
       tags: [lookups]
       summary: Query the StateFips lookup table
+      description: >
+        Returns the list of valid state FIPS codes and their corresponding state names.
+        The record with `stFips = '00'` represents the United States as a whole (national
+        data) and is included in this table for completeness, though it is not a state.
+        Use `stFips = '00'` on data endpoints to retrieve national-level aggregates.
       operationId: getStateFips
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
       responses:
         '200':
@@ -192,6 +227,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StateFipsListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/periodTypes:
     get:
@@ -203,6 +248,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
       responses:
         '200':
           description: Successful response
@@ -210,6 +256,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PeriodTypeListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/periodYears:
     get:
@@ -224,6 +280,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/periodType'
         - $ref: '#/components/parameters/minYear'
         - $ref: '#/components/parameters/maxYear'
@@ -234,6 +291,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PeriodYearListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/periods:
     get:
@@ -249,6 +316,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/periodType'
         - name: period
           in: query
@@ -261,6 +329,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PeriodListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/industryCodes:
     get:
@@ -275,6 +353,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/industryCodeType'
         - $ref: '#/components/parameters/industryCode'
@@ -285,6 +364,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IndustryCodeListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/occupationCodes:
     get:
@@ -299,6 +388,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/occupationCodeType'
         - $ref: '#/components/parameters/occupationCode'
@@ -309,6 +399,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OccupationCodeListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/cesCodes:
     get:
@@ -325,6 +425,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - name: seriesCodeType
           in: query
@@ -341,6 +442,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CesCodeListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/ownerships:
     get:
@@ -355,6 +466,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
       responses:
         '200':
           description: Successful response
@@ -362,6 +474,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OwnershipListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/wageSources:
     get:
@@ -373,6 +495,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
       responses:
         '200':
@@ -381,6 +504,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WageSourceListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/wageRateTypes:
     get:
@@ -394,6 +527,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
       responses:
         '200':
           description: Successful response
@@ -401,6 +535,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WageRateTypeListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/benchmarks:
     get:
@@ -412,6 +556,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
       responses:
         '200':
           description: Successful response
@@ -419,6 +564,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BenchmarkListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /lookups/growthCodes:
     get:
@@ -431,6 +586,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
       responses:
         '200':
@@ -439,6 +595,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GrowthCodeListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   # ===========================================================================
   # CES — Current Employment Statistics
@@ -466,6 +632,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -494,6 +661,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CesListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   # ===========================================================================
   # LABOR FORCE — Local Area Unemployment Statistics
@@ -514,6 +691,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -534,6 +712,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LaborForceListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   # ===========================================================================
   # INDUSTRY — QCEW
@@ -554,6 +742,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -576,6 +765,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IndustryListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   # ===========================================================================
   # PROJECTIONS — ProjectionsMatrix and related directories
@@ -597,6 +796,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -623,6 +823,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectionListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /projections/indDirectories:
     get:
@@ -639,6 +849,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/periodType'
         - $ref: '#/components/parameters/periodYear'
         - $ref: '#/components/parameters/period'
@@ -655,6 +866,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IndDirectoryListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /projections/occDirectories:
     get:
@@ -669,6 +890,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/periodType'
         - $ref: '#/components/parameters/periodYear'
         - $ref: '#/components/parameters/period'
@@ -685,6 +907,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OccDirectoryListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /projections/matrixXInd:
     get:
@@ -698,6 +930,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/industryCodeType'
         - $ref: '#/components/parameters/industryCode'
@@ -711,6 +944,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MatrixXIndListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /projections/matrixXOcc:
     get:
@@ -724,6 +967,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/occupationCodeType'
         - $ref: '#/components/parameters/occupationCode'
@@ -737,6 +981,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MatrixXOccListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   # ===========================================================================
   # WAGES — IOWage
@@ -758,6 +1012,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -786,6 +1041,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WageListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   # ===========================================================================
   # LICENSING — new in WID 3.0
@@ -804,6 +1069,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -819,6 +1085,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LicenseAuthorityListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /licensing/licenses:
     get:
@@ -833,6 +1109,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - name: licAuthID
           in: query
@@ -852,6 +1129,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LicenseListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /licensing/history:
     get:
@@ -865,6 +1152,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -882,6 +1170,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LicenseHistoryListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /licensing/occupationCrosswalks:
     get:
@@ -895,6 +1193,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/occupationCodeType'
         - $ref: '#/components/parameters/occupationCode'
@@ -908,6 +1207,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LicenseXOccListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   # ===========================================================================
   # VIEWS — pre-joined cross-table endpoints
@@ -926,6 +1235,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -948,6 +1258,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CesWithGeographyListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /views/laborForceWithGeography:
     get:
@@ -961,6 +1281,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -980,6 +1301,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LaborForceWithGeographyListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /views/wagesWithDescriptions:
     get:
@@ -994,6 +1325,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -1016,6 +1348,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WageWithDescriptionsListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /views/projectionsWithTitles:
     get:
@@ -1030,6 +1372,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -1053,6 +1396,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectionWithTitlesListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /views/industryWithGeography:
     get:
@@ -1066,6 +1419,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/areaType'
         - $ref: '#/components/parameters/areaTypeVersion'
@@ -1085,6 +1439,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IndustryWithGeographyListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /views/licensingByOccupation:
     get:
@@ -1099,6 +1463,7 @@ paths:
         - $ref: '#/components/parameters/pageSize'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/stFips'
         - $ref: '#/components/parameters/occupationCodeType'
         - $ref: '#/components/parameters/occupationCode'
@@ -1109,6 +1474,65 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LicensingByOccupationListResponse'
+            text/csv:
+              schema:
+                type: string
+                description: >
+                  Flat CSV with one header row followed by one data row per record.
+                  Contains the same fields as the JSON `data` array items, in the
+                  same field order.  No metadata envelope or links are included.
+                  All string values are enclosed in double quotes.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ===========================================================================
+  # OPERATIONAL ENDPOINTS
+  # ===========================================================================
+
+  /health:
+    get:
+      tags: [operational]
+      summary: API health check
+      description: >
+        Returns a minimal response confirming that the API service is reachable and
+        operational.  Suitable for use by load balancers, uptime monitors, and CI
+        smoke tests.  Does **not** verify database connectivity — use `/status` for that.
+      operationId: getHealth
+      responses:
+        '200':
+          description: API is up
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /status:
+    get:
+      tags: [operational]
+      summary: Data availability status
+      description: >
+        Returns a structured summary of which WID 3.0 tables have been loaded, for
+        which states, and how current the data is.  Intended for administrators and
+        data consumers who need to verify data currency before running reports.
+
+        Each entry in the `tables` array describes one table-by-state combination.
+        The `dataAsOf` field is the date through which data has been loaded for that
+        combination.  A `null` value means the table has not been loaded for that state.
+
+        This endpoint is state-agnostic: it returns information for all states that
+        have data in the system.
+      operationId: getStatus
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
 # =============================================================================
 # COMPONENTS
@@ -1187,18 +1611,32 @@ components:
       name: areaTypeVersion
       in: query
       description: >
-        Area type version — new field in WID 3.0. Default is '0' (current definition).
-        Use non-zero values to retrieve data under historical vintage definitions
-        (e.g., pre-2013 MSA boundaries).
+        Area type version — new field in WID 3.0. Allows historical vintage definitions
+        of area types (especially MSAs) to coexist with current definitions.
+        Version '0' represents the current definition.
+
+        **If omitted, no filter is applied on this field** — records across all
+        versions are returned. This is intentional: requiring callers to know the
+        correct version upfront would be a poor default experience, and the most
+        common case (fetching current data) is achieved by also supplying
+        `areaType` values that only exist under version '0'.
+
+        Supply `areaTypeVersion=0` explicitly if you want to restrict to current
+        definitions only.
       schema:
         type: string
-        default: '0'
         example: '0'
 
     area:
       name: area
       in: query
-      description: 6-character area code (zero-padded, left-justified)
+      description: >
+        6-character geographic area code, zero-padded on the left per the WID 3.0
+        structure specification (e.g., county FIPS 41005 → `041005`).
+
+        **The API normalizes area codes server-side**: supply the bare numeric code
+        (e.g. `41005`) and the implementation will left-pad it with zeros to 6
+        characters.  Supplying the padded form (`041005`) also works.
       schema:
         type: string
         example: '041005'
@@ -1261,10 +1699,17 @@ components:
     industryCode:
       name: industryCode
       in: query
-      description: Industry classification code (left-justified, blank-filled to 10 chars)
+      description: >
+        Industry classification code.  In the WID 3.0 database this is stored as a
+        10-character field, left-justified and right-padded with blanks (ASCII 32)
+        per the WID 3.0 structure specification.
+
+        **The API normalizes codes server-side**: supply the bare code (e.g. `722511`)
+        and the implementation will right-pad it to 10 characters before querying.
+        Supplying the padded form (`722511    `) also works.
       schema:
         type: string
-        example: '722511    '
+        example: '722511'
 
     occupationCodeType:
       name: occupationCodeType
@@ -1279,10 +1724,35 @@ components:
     occupationCode:
       name: occupationCode
       in: query
-      description: Occupation classification code (left-justified, blank-filled to 10 chars)
+      description: >
+        Occupation classification code.  In the WID 3.0 database this is stored as a
+        10-character field, left-justified and right-padded with blanks (ASCII 32)
+        per the WID 3.0 structure specification.
+
+        **The API normalizes codes server-side**: supply the bare code (e.g. `35-2014`)
+        and the implementation will right-pad it to 10 characters before querying.
+        Supplying the padded form (`35-2014   `) also works.
       schema:
         type: string
-        example: '35-2014   '
+        example: '35-2014'
+
+    sort:
+      name: sort
+      in: query
+      description: >
+        Comma-separated list of fields to sort by, each with an optional direction
+        suffix (`:asc` or `:desc`).  Direction defaults to `asc` when omitted.
+
+        Examples:
+          - `sort=periodYear:desc` — most-recent year first
+          - `sort=periodYear:desc,period:asc` — descending year, then ascending period within year
+          - `sort=stFips,areaType,area` — geographic sort, all ascending
+
+        Field names must match the response schema field names for the requested
+        endpoint.  Unknown field names should return HTTP 400.
+      schema:
+        type: string
+        example: 'periodYear:desc,period:asc'
 
   # ---------------------------------------------------------------------------
   # RESPONSES
@@ -1353,6 +1823,15 @@ components:
           type: string
           description: Identifier for the source state or system
           example: 'OR-QualityInfo'
+        dataAsOf:
+          type: string
+          format: date
+          nullable: true
+          description: >
+            ISO 8601 date (YYYY-MM-DD) through which the returned data is current.
+            Reflects the most recent load date for the tables contributing to this
+            response.  `null` if the implementation does not track load dates.
+          example: '2025-03-15'
 
     Link:
       type: object
@@ -1369,13 +1848,28 @@ components:
 
     ErrorResponse:
       type: object
+      description: >
+        Standard error envelope. The `errors` array may contain multiple entries when
+        several validation problems are detected in a single request (e.g. two unknown
+        parameter names).  The `status` field echoes the HTTP status code as a string,
+        matching the HTTP response status.
+      required:
+        - errors
       properties:
-        code:
-          type: integer
-          example: 404
-        message:
-          type: string
-          example: 'Record not found'
+        errors:
+          type: array
+          items:
+            type: object
+            required: [status, detail]
+            properties:
+              status:
+                type: string
+                description: HTTP status code as a string
+                example: '400'
+              detail:
+                type: string
+                description: Human-readable explanation of the error
+                example: 'stfps is not a valid parameter name.'
 
     # ---- Geographies --------------------------------------------------------
 
@@ -1469,12 +1963,17 @@ components:
         stFips:
           type: string
           example: '41'
+          description: >
+            2-digit state FIPS code. `'00'` = United States (national data) —
+            this record is included in the table for reference but is not a state.
         stateName:
           type: string
           example: 'Oregon'
+          description: Full state name. For `stFips = '00'` this is `'United States'`.
         stateAbbrev:
           type: string
           example: 'OR'
+          description: 2-letter postal abbreviation. For `stFips = '00'` this is `'US'`.
 
     StateFipsListResponse:
       type: object
@@ -2255,6 +2754,13 @@ components:
           example: 'Full-Service Restaurants'
         subTotal:
           type: string
+          description: Sum level indicator for the matrix industry
+        ownership:
+          type: string
+          example: '50'
+          description: >
+            2-digit ownership code for this projection industry entry.
+            See `/lookups/ownerships` for valid values.
 
     IndDirectoryListResponse:
       type: object
@@ -2456,6 +2962,15 @@ components:
           description: User-defined percentile point
         userDefinedPctWage:
           type: number
+        userDefinedRangeLoPct:
+          type: integer
+          description: Low end of user-defined wage range (percentile)
+        userDefinedRangeHiPct:
+          type: integer
+          description: High end of user-defined wage range (percentile)
+        userDefinedRangeMean:
+          type: number
+          description: Mean wage within the user-defined percentile range
         wageRelativePctError:
           type: number
         empRelativePctError:
@@ -2907,6 +3422,74 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Link'
+
+    # ---- Operational --------------------------------------------------------
+
+    HealthResponse:
+      type: object
+      description: Response from the /health endpoint
+      required: [status, apiVersion]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+          example: 'ok'
+        apiVersion:
+          type: string
+          example: '3.0.0-draft'
+
+    TableStatusEntry:
+      type: object
+      description: Data availability for one table/state combination
+      required: [tableName, stFips]
+      properties:
+        tableName:
+          type: string
+          description: WID 3.0 table name
+          example: 'CES'
+        stFips:
+          type: string
+          description: State FIPS code; '00' = national aggregate
+          example: '41'
+        stateName:
+          type: string
+          example: 'Oregon'
+        dataAsOf:
+          type: string
+          format: date
+          nullable: true
+          description: >
+            ISO 8601 date (YYYY-MM-DD) through which data is current for this
+            table and state.  `null` if the table has not been loaded for this state.
+          example: '2025-03-15'
+        periodYearMin:
+          type: string
+          nullable: true
+          description: Earliest period year present in this table for this state
+          example: '2010'
+        periodYearMax:
+          type: string
+          nullable: true
+          description: Most recent period year present in this table for this state
+          example: '2024'
+
+    StatusResponse:
+      type: object
+      description: Response from the /status endpoint
+      required: [apiVersion, tables]
+      properties:
+        apiVersion:
+          type: string
+          example: '3.0.0-draft'
+        generatedAt:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when this status snapshot was generated
+          example: '2025-04-08T14:30:00Z'
+        tables:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableStatusEntry'
 
 externalDocs:
   description: Find out more about the Workforce Information Database

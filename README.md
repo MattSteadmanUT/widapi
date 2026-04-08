@@ -16,18 +16,20 @@ https://mattsteadmanut.github.io/widapi/
 
 The "Try it out" feature in Swagger UI will send requests directly from your browser to whatever server URL is set in the spec. The target API must have CORS enabled for browser-based testing to work.
 
-If the page loads but says "No API definition provided", open one of these direct URLs to verify the YAML is reachable:
+**Note:** The Swagger UI loads a JSON version of the spec for GitHub Pages compatibility. See the "[Spec format and generation](#spec-format-and-generation)" section below for details.
+
+If the page loads but says "No API definition provided", open one of these direct URLs to verify the JSON is reachable:
 
 ```
-https://mattsteadmanut.github.io/widapi/specs/wid-3.0/draft.yaml
-https://mattsteadmanut.github.io/widapi/specs/reference/oregon-wid-2.8.yaml
+https://mattsteadmanut.github.io/widapi/specs/wid-3.0/draft.json
+https://mattsteadmanut.github.io/widapi/specs/reference/oregon-wid-2.8.json
 ```
 
 You can also force which spec Swagger loads first via query param:
 
 ```
-https://mattsteadmanut.github.io/widapi/?spec=specs/wid-3.0/draft.yaml
-https://mattsteadmanut.github.io/widapi/?spec=specs/reference/oregon-wid-2.8.yaml
+https://mattsteadmanut.github.io/widapi/?spec=specs/wid-3.0/draft.json
+https://mattsteadmanut.github.io/widapi/?spec=specs/reference/oregon-wid-2.8.json
 ```
 
 ---
@@ -39,13 +41,17 @@ widapi/
 ├── index.html                        # Swagger UI entry point (GitHub Pages)
 ├── specs/
 │   ├── wid-3.0/
-│   │   └── draft.yaml                # National WID 3.0 working draft
+│   │   ├── draft.yaml                # National WID 3.0 working draft (source of truth)
+│   │   └── draft.json                # Auto-generated from YAML for GitHub Pages
 │   └── reference/
 │       ├── README.md                 # How to add a reference spec
-│       └── <state>-wid-<ver>.yaml    # State-contributed reference specs
+│       ├── <state>-wid-<ver>.yaml    # State-contributed reference specs (source of truth)
+│       └── <state>-wid-<ver>.json    # Auto-generated from YAML for GitHub Pages
 ├── docs/
 │   ├── decisions/                    # Design decisions and rationale
 │   └── field-mapping/                # WID 2.8 → 3.0 field mapping notes
+├── .github/workflows/
+│   └── sync-spec-json.yml            # GitHub Action: converts YAML → JSON on main branch pushes
 ├── vendor/swagger-ui/                # Vendored Swagger UI assets
 ├── scripts/update-vendor.js          # Helper to refresh vendored assets
 └── package.json
@@ -74,6 +80,53 @@ All changes go through pull requests — no one pushes directly to `main`.
 ### Adding a design decision record
 
 Add a Markdown file to `docs/decisions/` following the format described in that folder's README.
+
+---
+
+## Spec format and generation
+
+**YAML is the source of truth** for all OpenAPI specifications in this repository. JSON versions are automatically generated and used by GitHub Pages for Swagger UI compatibility.
+
+### Why two formats?
+
+- **YAML** is human-readable and used for collaborative editing and version control
+- **JSON** is required for GitHub Pages + Swagger UI compatibility (the YAML parser on GitHub Pages has known limitations)
+
+### The YAML → JSON workflow
+
+When YAML specs are pushed to the `main` branch, a GitHub Action automatically:
+
+1. Detects changes to `specs/**/*.yaml` files
+2. Converts each YAML file to JSON using Python's `yaml` and `json` libraries  
+3. Commits the updated JSON files back to `main` with message: `chore: sync JSON specs from YAML [skip ci]`
+
+**Action file:** `.github/workflows/sync-spec-json.yml`
+
+**Status:** The workflow will be activated once the change containing this workflow file is merged to the `main` branch. After that, JSON files will be automatically kept in sync with YAML changes.
+
+### What you should do
+
+- **Always edit YAML files directly** — never manually edit the JSON files
+- **Commit YAML changes** to your PR
+- **The JSON files will be auto-generated** when the PR is merged to `main` (once the workflow is active on main)
+
+### Manual sync (if needed)
+
+If you need to regenerate JSON manually:
+
+```bash
+python3 - <<'EOF'
+import glob, json, yaml
+for yaml_path in glob.glob('specs/**/*.yaml', recursive=True):
+    json_path = yaml_path.rsplit('.yaml', 1)[0] + '.json'
+    with open(yaml_path, 'r', encoding='utf-8') as f:
+        data = yaml.safe_load(f)
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write('\n')
+    print(f'Updated: {json_path}')
+EOF
+```
 
 ---
 
