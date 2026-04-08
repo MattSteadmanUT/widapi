@@ -23,6 +23,13 @@ and clarifications since initial release. Includes the May 2025 update that adde
 to the `CESCodes` table to handle definitional differences between state-level and
 national-level CES series codes.
 
+### Oregon WID API - Design Overview
+
+**File:** `Oregon_WID_API_Design_Overview.md`  
+**Source:** Oregon team (reference document prepared by Gary Sincick)  
+**Description:** Summary of Oregon's WID API design philosophy, endpoint patterns,
+response structure, and adaptation considerations for National WID 3.0.
+
 ## Location
 
 Both PDF files are stored in `specs/wid-3.0/` alongside the draft API specification:
