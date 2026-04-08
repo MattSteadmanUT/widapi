@@ -1505,6 +1505,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /status:
     get:
@@ -1529,6 +1531,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
 # =============================================================================
 # COMPONENTS
@@ -1609,10 +1613,10 @@ components:
       description: >
         Area type version — new field in WID 3.0. Allows historical vintage definitions
         of area types (especially MSAs) to coexist with current definitions.
-        The default vintage is '0' (current definition).
+        Version '0' represents the current definition.
 
         **If omitted, no filter is applied on this field** — records across all
-        versions are returned.  This is intentional: requiring callers to know the
+        versions are returned. This is intentional: requiring callers to know the
         correct version upfront would be a poor default experience, and the most
         common case (fetching current data) is achieved by also supplying
         `areaType` values that only exist under version '0'.
