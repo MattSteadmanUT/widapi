@@ -162,20 +162,53 @@ endpoint-level assumptions.
 
 ---
 
+## Resolved questions
+
+- **`AreaTypeVersion` default (was #1)** — Resolved: no implicit default filter applied.
+  Omitting `areaTypeVersion` returns records across all versions. Callers who want only the
+  current definition supply `areaTypeVersion=0` explicitly. Documented in the parameter
+  description in the spec.
+
+- **Industry/area code padding (was #3)** — Resolved: server-side normalization.
+  - Area codes (6 chars): accept bare numeric code, left-pad with `'0'` to 6 characters.
+  - Industry/occupation codes (10 chars): accept bare code, right-pad with blanks (ASCII 32)
+    to 10 characters per WID 3.0 structure specification.
+  - Supplying the already-padded form also works. Documented in parameter descriptions.
+
 ## Open questions / items for discussion
 
-1. **`AreaTypeVersion` default** — Should the `areaTypeVersion` parameter default to `'0'`
-   (current) or should it be required? Defaulting to `'0'` is convenient but may silently
-   return no results for states that only load data under a non-zero version.
-
-2. **Suppress field semantics** — Should suppress flags be promoted to booleans in the API
+1. **Suppress field semantics** — Should suppress flags be promoted to booleans in the API
    response even though the database stores them as char(1)? This would be friendlier for
    API consumers but creates a mismatch with the WID structure document.
 
-3. **Industry code padding** — WID 3.0 specifies 10-char left-justified blank-filled codes.
-   Should the API accept un-padded codes and normalize them server-side, or require callers
-   to pad codes themselves?
-
-4. **`empDB` table** — The Employer Database (`EmpDB`) table is a WID 3.0 core table but was
+2. **`empDB` table** — The Employer Database (`EmpDB`) table is a WID 3.0 core table but was
    omitted from this draft because it contains employer-level data with significant PII
    considerations. Should a read-only aggregate or suppressed view be included?
+
+3. **Query parameter names vs. response schema field names for industry/occupation codes** —
+   The WID 3.0 database uses `IndCodeType` / `IndCode` / `OccCodeType` / `OccCode`.  The
+   current API spec uses the more readable `industryCodeType` / `industryCode` /
+   `occupationCodeType` / `occupationCode` as query parameter names, but the response
+   schemas use the abbreviated DB names (`indCodeType` / `indCode` / `occCodeType` /
+   `occCode`).  This inconsistency means a developer filters by `industryCodeType` but
+   receives `indCodeType` in the response.
+
+   **Options:**
+   - **Option A — Defer to DB spec everywhere:** rename query params to match DB abbreviations
+     (`indCodeType`, `indCode`, `occCodeType`, `occCode`).  Consistent with DB, less readable.
+   - **Option B — Use readable names everywhere:** rename schema fields to match the current
+     query params (`industryCodeType`, `industryCode`, `occupationCodeType`, `occupationCode`).
+     Consistent with the "clarity" design goal, diverges from DB field names.
+
+   Recommendation for group discussion: Option B is more consistent with the stated design
+   philosophy ("avoid abbreviations") and produces a better developer experience.  Since the
+   API layer is explicitly allowed to improve on DB naming, this is an appropriate place to do so.
+
+4. **`Benchmark` field meaning** — The `Benchmark` field appears in the `CES` and `LaborForce`
+   tables (char(4), references the `Benchmark` lookup table).  Its relationship to BLS benchmark
+   revision cycles and how it should be used by API consumers is not clearly documented in the
+   current draft.  The group should clarify:
+   - What does a specific `Benchmark` value (e.g., `'2023'`) mean for a CES record?
+   - Should the API expose `benchmark` as a filterable parameter on `/ces` and `/laborForce`?
+   - Is the `/lookups/benchmarks` endpoint sufficient, or does the spec need more explanation
+     of how benchmark revisions affect time-series continuity?

@@ -1,0 +1,66 @@
+name: Sync spec JSON from YAML
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'specs/**/*.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Use a token that can push back to main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Convert all YAML specs to JSON
+        run: |
+          python3 - <<'EOF'
+          import glob, json, sys
+          try:
+              import yaml
+          except ImportError:
+              import subprocess
+              subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pyyaml', '-q'])
+              import yaml
+
+          changed = []
+          for yaml_path in glob.glob('specs/**/*.yaml', recursive=True):
+              json_path = yaml_path.rsplit('.yaml', 1)[0] + '.json'
+              with open(yaml_path, 'r', encoding='utf-8') as f:
+                  data = yaml.safe_load(f)
+              new_json = json.dumps(data, indent=2, ensure_ascii=False) + '\n'
+              try:
+                  with open(json_path, 'r', encoding='utf-8') as f:
+                      existing = f.read()
+              except FileNotFoundError:
+                  existing = None
+              if existing != new_json:
+                  with open(json_path, 'w', encoding='utf-8') as f:
+                      f.write(new_json)
+                  changed.append(json_path)
+                  print(f'Updated: {json_path}')
+              else:
+                  print(f'Unchanged: {json_path}')
+
+          if not changed:
+              print('No JSON files needed updating.')
+          EOF
+
+      - name: Commit updated JSON files
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add specs/**/*.json
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "chore: sync JSON specs from YAML [skip ci]"
+            git push
+          fi
