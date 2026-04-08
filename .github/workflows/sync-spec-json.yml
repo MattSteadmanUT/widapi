@@ -1,10 +1,14 @@
 name: Sync spec JSON from YAML
 
 on:
+  pull_request:
+    paths:
+      - 'specs/**/*.yaml'
   push:
     branches: [main]
     paths:
       - 'specs/**/*.yaml'
+      - '.gitignore'
   workflow_dispatch:
 
 permissions:
@@ -90,16 +94,26 @@ jobs:
                   f.write(j + '\n')
           EOF
 
-      - name: Update .gitignore if JSON list changed
+      - name: Verify all YAML files parse cleanly
         run: |
-          git add .gitignore
-          if git diff --cached --quiet .gitignore; then
-            echo ".gitignore unchanged"
-          else
-            echo ".gitignore was updated"
-          fi
+          python3 - <<'EOF'
+          import glob, yaml, sys
+          errors = []
+          for yaml_path in glob.glob('specs/**/*.yaml', recursive=True):
+              try:
+                  with open(yaml_path, 'r', encoding='utf-8') as f:
+                      yaml.safe_load(f)
+                  print(f'OK: {yaml_path}')
+              except yaml.YAMLError as e:
+                  errors.append(f'FAIL: {yaml_path}: {e}')
+          if errors:
+              for err in errors:
+                  print(err, file=sys.stderr)
+              sys.exit(1)
+          EOF
 
       - name: Commit updated JSON files and .gitignore
+        if: github.event_name == 'push'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
