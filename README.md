@@ -4,6 +4,8 @@ A collaborative repository for developing the national **Workforce Information D
 
 For background on the WID standard, see [widcenter.org](https://widcenter.org).
 
+The End goal of this API spec is to use it to build an API connected to an automated National WID database to assist states in populating their own WID and enable other future collaborations 
+
 ---
 
 ## Viewing the API docs
