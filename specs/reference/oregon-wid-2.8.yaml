@@ -6,7 +6,12 @@ servers:
     description: Oregon Employment Dept WID API
 info:
   description: |
-    This is a demo API for the Workforce Information Database.  
+    This is a demo of the WID API that was provided by Oregon. 
+    The API was developed under WID 2.8 and is based on the OpenAPI 3.0 specification. 
+    The API provides access to a variety of workforce data, including Current Employment 
+    Statistics (CES), Quarterly Census of Employment and Wages (QCEW), and industry-occupation 
+    matrix data. The API is designed to be flexible and allows users to query data by various 
+    parameters such as area, period, industry code, etc.
   version: "1.0.0-oas3"
   title: Workforce Information Database 2.8 API
   contact:
