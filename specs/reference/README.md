@@ -13,4 +13,4 @@ reference material for the WID 3.0 working draft.
 
 | State  | Version | File                    | Notes                                      |
 |--------|---------|-------------------------|--------------------------------------------|
-| Oregon | 2.8     | *(pending)*             | Oregon's WID 2.8-compatible API — to be added |
+| Oregon | 2.8     | `oregon-wid-2.8.yaml`   | Oregon's WID 2.8-compatible API (reference) |
