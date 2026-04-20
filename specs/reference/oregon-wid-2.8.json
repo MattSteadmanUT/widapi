@@ -1,0 +1,2677 @@
+{
+  "openapi": "3.0.0",
+  "servers": [
+    {
+      "url": "https://qualityinfo.org/widapi/services",
+      "description": "Oregon Employment Dept WID API"
+    }
+  ],
+  "info": {
+    "description": "This is a demo of the WID API that was provided by Oregon. \nThe API was developed under WID 2.8 and is based on the OpenAPI 3.0 specification. \nThe API provides access to a variety of workforce data, including Current Employment \nStatistics (CES), Quarterly Census of Employment and Wages (QCEW), and industry-occupation \nmatrix data. The API is designed to be flexible and allows users to query data by various \nparameters such as area, period, industry code, etc.\n",
+    "version": "1.0.0-oas3",
+    "title": "Workforce Information Database 2.8 API",
+    "contact": {
+      "email": "gary.m.sincick@oregon.gov"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "tags": [
+    {
+      "name": "data",
+      "description": "All WID data table functions",
+      "externalDocs": {
+        "description": "Find out more about the WID structure",
+        "url": "http://www.widcenter.org/structure-2/"
+      }
+    },
+    {
+      "name": "lookup",
+      "description": "All WID lookup table functions",
+      "externalDocs": {
+        "description": "Find out more about the WID structure",
+        "url": "http://www.widcenter.org/structure-2/"
+      }
+    },
+    {
+      "name": "ces",
+      "description": "Access to Current Employment Statistics data"
+    },
+    {
+      "name": "labforce",
+      "description": "Access to local area unemployment and labor force data"
+    }
+  ],
+  "paths": {
+    "/wid/data/ces/employment": {
+      "get": {
+        "tags": [
+          "ces",
+          "data"
+        ],
+        "summary": "Get Current Employment Statistics",
+        "operationId": "getCesEmployment",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "object",
+                      "items": {
+                        "$ref": "#/components/schemas/CesEmploymentDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "links": {
+              "listAreas": {
+                "description": "get the associated areas for a given set of CES data",
+                "operationId": "listCesAreas",
+                "parameters": {
+                  "stfips": "$request.query.stfips",
+                  "areatype": "$response.body#/areatype",
+                  "area": "$response.body#/area",
+                  "periodyear": "$response.body#/periodyear",
+                  "periodtype": "$response.body#/periodtype",
+                  "period": "$response.body#/period",
+                  "seriescode": "$response.body#/seriescode",
+                  "adjusted": "$response.body#/adjusted"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/minyear"
+          },
+          {
+            "$ref": "#/components/parameters/maxyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/seriescode"
+          },
+          {
+            "$ref": "#/components/parameters/adjusted"
+          }
+        ]
+      }
+    },
+    "/wid/data/ces/employment/listAreas": {
+      "get": {
+        "tags": [
+          "ces",
+          "data"
+        ],
+        "summary": "Get valid areas for CES data. Returns data from WID.GEOG table",
+        "operationId": "getCesAreas",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AreaDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/seriescode"
+          },
+          {
+            "$ref": "#/components/parameters/adjusted"
+          },
+          {
+            "$ref": "#/components/parameters/minyear"
+          },
+          {
+            "$ref": "#/components/parameters/maxyear"
+          }
+        ]
+      }
+    },
+    "/wid/data/ces/employment/listYears": {
+      "get": {
+        "tags": [
+          "ces",
+          "data"
+        ],
+        "summary": "Get all years for CES data",
+        "operationId": "getCesYears",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PeriodDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/minyear"
+          },
+          {
+            "$ref": "#/components/parameters/maxyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/seriescode"
+          },
+          {
+            "$ref": "#/components/parameters/adjusted"
+          }
+        ]
+      }
+    },
+    "/wid/data/ces/employment/maxPeriod": {
+      "get": {
+        "tags": [
+          "ces",
+          "data"
+        ],
+        "summary": "Get most recent period for CES data",
+        "operationId": "getCesMaxPeriod",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PeriodDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/minyear"
+          },
+          {
+            "$ref": "#/components/parameters/maxyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/seriescode"
+          },
+          {
+            "$ref": "#/components/parameters/adjusted"
+          }
+        ]
+      }
+    },
+    "/wid/data/ces/employment/minPeriod": {
+      "get": {
+        "tags": [
+          "ces",
+          "data"
+        ],
+        "summary": "Get oldest period for CES data",
+        "operationId": "getCesMinPeriod",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PeriodDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/minyear"
+          },
+          {
+            "$ref": "#/components/parameters/maxyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/seriescode"
+          },
+          {
+            "$ref": "#/components/parameters/adjusted"
+          }
+        ]
+      }
+    },
+    "/wid/data/ces/employment/listIndustrySeries": {
+      "get": {
+        "tags": [
+          "ces",
+          "data"
+        ],
+        "summary": "Get valid industry series codes for CES data",
+        "operationId": "getCesIndustrySeries",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CesIndustrySeriesDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/minyear"
+          },
+          {
+            "$ref": "#/components/parameters/maxyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/seriescode"
+          }
+        ]
+      }
+    },
+    "/wid/data/industry": {
+      "get": {
+        "tags": [
+          "industry",
+          "data"
+        ],
+        "summary": "Get QCEW employment and payroll data by industry",
+        "operationId": "getIndustryData",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/industryDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/indcodty"
+          },
+          {
+            "$ref": "#/components/parameters/indcode"
+          }
+        ]
+      }
+    },
+    "/wid/data/industry/listAreas": {
+      "get": {
+        "tags": [
+          "industry",
+          "data"
+        ],
+        "summary": "Get valid areas for QCEW data",
+        "operationId": "getQcewAreas",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AreaDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/indcodty"
+          },
+          {
+            "$ref": "#/components/parameters/indcode"
+          }
+        ]
+      }
+    },
+    "/wid/data/industry/maxPeriod": {
+      "get": {
+        "tags": [
+          "industry",
+          "data"
+        ],
+        "summary": "Get most recent period for QCEW data",
+        "operationId": "getQcewMaxPeriod",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PeriodDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/indcodty"
+          },
+          {
+            "$ref": "#/components/parameters/indcode"
+          }
+        ]
+      }
+    },
+    "/wid/data/industry/minPeriod": {
+      "get": {
+        "tags": [
+          "industry",
+          "data"
+        ],
+        "summary": "Get oldest period for QCEW data",
+        "operationId": "getQcewMinPeriod",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PeriodDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/indcodty"
+          },
+          {
+            "$ref": "#/components/parameters/indcode"
+          }
+        ]
+      }
+    },
+    "/wid/data/industry/listIndustries": {
+      "get": {
+        "tags": [
+          "industry",
+          "data"
+        ],
+        "summary": "Get valid industry codes for QCEW data",
+        "operationId": "getQcewIndustryCodes",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "industrycode": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/IndustryCode"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/indcodty"
+          },
+          {
+            "$ref": "#/components/parameters/indcode"
+          }
+        ]
+      }
+    },
+    "/wid/data/ioMatrix": {
+      "get": {
+        "tags": [
+          "iomatrix",
+          "data"
+        ],
+        "summary": "Get industry and/or occupational employment and projections",
+        "operationId": "getIomatrixData",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "object",
+                      "items": {
+                        "$ref": "#/components/schemas/IoMatrixDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodid"
+          },
+          {
+            "$ref": "#/components/parameters/matincode"
+          },
+          {
+            "$ref": "#/components/parameters/matoccode"
+          }
+        ]
+      }
+    },
+    "/wid/data/ioMatrix/listAreas": {
+      "get": {
+        "tags": [
+          "iomatrix",
+          "data"
+        ],
+        "summary": "Get iomatrix areas",
+        "operationId": "getIomatrixAreas",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AreaDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodid"
+          },
+          {
+            "$ref": "#/components/parameters/matincode"
+          },
+          {
+            "$ref": "#/components/parameters/matoccode"
+          }
+        ]
+      }
+    },
+    "/wid/data/ioMatrix/listIndustries": {
+      "get": {
+        "tags": [
+          "iomatrix",
+          "data"
+        ],
+        "summary": "Get iomatrix industries",
+        "operationId": "getIomatrixIndustryCodes",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "inddir": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MatrixIndustryCodeDataWrapper"
+                      }
+                    },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Link"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodid"
+          },
+          {
+            "$ref": "#/components/parameters/matincode"
+          },
+          {
+            "$ref": "#/components/parameters/matoccode"
+          }
+        ]
+      }
+    },
+    "/wid/data/ioMatrix/listOccupations": {
+      "get": {
+        "tags": [
+          "iomatrix",
+          "data"
+        ],
+        "summary": "Get ioMatrix occupations",
+        "operationId": "getIomatrixOccupationCodes",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "metadata": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "occdir": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MatrixOccupationCode"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodid"
+          },
+          {
+            "$ref": "#/components/parameters/matincode"
+          },
+          {
+            "$ref": "#/components/parameters/matoccode"
+          }
+        ]
+      }
+    },
+    "/wid/data/laborForce": {
+      "get": {
+        "tags": [
+          "labor force",
+          "data"
+        ],
+        "summary": "Get local area labor force and unemployment statistics",
+        "operationId": "getLaborForceData",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "metadata": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "labforce": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LaborForce"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/adjusted"
+          },
+          {
+            "$ref": "#/components/parameters/minyear"
+          },
+          {
+            "$ref": "#/components/parameters/maxyear"
+          }
+        ]
+      }
+    },
+    "/wid/data/laborForce/listAreas": {
+      "get": {
+        "tags": [
+          "labor force",
+          "data"
+        ],
+        "summary": "Get valid areas for labor force and unemployment data",
+        "operationId": "getLaborForceAreas",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "metadata": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "geog": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Area"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/adjusted"
+          }
+        ]
+      }
+    },
+    "/wid/data/wages": {
+      "get": {
+        "tags": [
+          "wages",
+          "data"
+        ],
+        "summary": "Get wage data",
+        "operationId": "getWageData",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "metadata": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "iowage": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Wage"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/indcode"
+          },
+          {
+            "$ref": "#/components/parameters/occcode"
+          },
+          {
+            "$ref": "#/components/parameters/wagesource"
+          },
+          {
+            "$ref": "#/components/parameters/ratetype"
+          }
+        ]
+      }
+    },
+    "/wid/data/wages/listAreas": {
+      "get": {
+        "tags": [
+          "wages",
+          "data"
+        ],
+        "summary": "Get wage areas",
+        "operationId": "getWageAreas",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "metadata": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "geog": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Area"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/indcode"
+          },
+          {
+            "$ref": "#/components/parameters/occcode"
+          },
+          {
+            "$ref": "#/components/parameters/wagesource"
+          },
+          {
+            "$ref": "#/components/parameters/ratetype"
+          }
+        ]
+      }
+    },
+    "/wid/data/wages/listOccupations": {
+      "get": {
+        "tags": [
+          "wages",
+          "data"
+        ],
+        "summary": "Get ioMatrix occupations",
+        "operationId": "getWageOccupationCodes",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "metadata": {
+                      "$ref": "#/components/schemas/Metadata"
+                    },
+                    "occdir": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MatrixOccupationCode"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/indcode"
+          },
+          {
+            "$ref": "#/components/parameters/occcode"
+          },
+          {
+            "$ref": "#/components/parameters/wagesource"
+          },
+          {
+            "$ref": "#/components/parameters/ratetype"
+          }
+        ]
+      }
+    },
+    "/wid/data/laborForce/maxPeriod": {
+      "get": {
+        "tags": [
+          "labor force",
+          "data"
+        ],
+        "summary": "Get most recent period for CES data",
+        "operationId": "getLaborForceMaxPeriod",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Period"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/seriescode"
+          },
+          {
+            "$ref": "#/components/parameters/adjusted"
+          }
+        ]
+      }
+    },
+    "/wid/data/laborForce/minPeriod": {
+      "get": {
+        "tags": [
+          "labor force",
+          "data"
+        ],
+        "summary": "Get oldest period for CES data",
+        "operationId": "getLaborForceMinPeriod",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Period"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNum"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/stfips"
+          },
+          {
+            "$ref": "#/components/parameters/areatype"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodyear"
+          },
+          {
+            "$ref": "#/components/parameters/periodtype"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/seriescode"
+          },
+          {
+            "$ref": "#/components/parameters/adjusted"
+          }
+        ]
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Find out more about the Workforce Information Database",
+    "url": "http://www.widcenter.org"
+  },
+  "components": {
+    "parameters": {
+      "pageNum": {
+        "name": "pageNum",
+        "in": "query",
+        "description": "page number of results",
+        "schema": {
+          "type": "integer",
+          "default": 1
+        }
+      },
+      "pageSize": {
+        "name": "pageSize",
+        "in": "query",
+        "description": "number of records returned in each page",
+        "schema": {
+          "type": "integer",
+          "default": 100
+        }
+      },
+      "stfips": {
+        "name": "stateFips",
+        "in": "query",
+        "description": "2-digit state FIPS code\n  * '00' - United States\n  * '41' - Oregon\n",
+        "schema": {
+          "type": "string",
+          "nullable": true,
+          "example": "41",
+          "enum": [
+            "00",
+            "41"
+          ]
+        }
+      },
+      "addressty": {
+        "name": "addressty",
+        "in": "query",
+        "description": "1-digit code indicating type of address",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "areatype": {
+        "name": "areaType",
+        "in": "query",
+        "description": "2-digit code indicating type of area\n  * '00' - National\n  * '01' - State\n  * '04' - County\n  * '21' - MSA\n",
+        "schema": {
+          "type": "string",
+          "nullable": true,
+          "enum": [
+            "00",
+            "01",
+            "21",
+            "04"
+          ]
+        }
+      },
+      "area": {
+        "name": "area",
+        "in": "query",
+        "description": "Code corresponding to specific area",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "periodyear": {
+        "name": "year",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "periodtype": {
+        "name": "periodType",
+        "in": "query",
+        "description": "Code indicating the type of period (monthly, annual, etc)\n   * '01' - Annual\n   * '03' - Monthly\n",
+        "schema": {
+          "type": "string",
+          "nullable": true,
+          "enum": [
+            "01",
+            "03"
+          ]
+        }
+      },
+      "period": {
+        "name": "period",
+        "in": "query",
+        "description": "2-digit code representing specific period.  \n  Zero-padded number corresponding to time period (e.g. month, quarter).  Use 00 for annual data.\n",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "periodid": {
+        "name": "periodId",
+        "in": "query",
+        "description": "code used to look up the base and projection years",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "indcodty": {
+        "name": "industryCodeType",
+        "in": "query",
+        "description": "code describing the industry code type \n  * '05' - SIC\n  * '10' - NAICS\n",
+        "schema": {
+          "type": "string",
+          "nullable": true,
+          "enum": [
+            "05",
+            "10"
+          ]
+        }
+      },
+      "indcode": {
+        "name": "industry",
+        "in": "query",
+        "description": "industry code",
+        "schema": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "occodetype": {
+        "name": "occupationCodeType",
+        "in": "query",
+        "description": "code describing the occupation code type \n  * '19' - SOC 2018\n  * '45' - Wage Occupations\n",
+        "schema": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "occcode": {
+        "name": "occupation",
+        "in": "query",
+        "description": "occupational classification code",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "wagesource": {
+        "name": "wageSource",
+        "in": "query",
+        "description": "code representing the source of the wage data",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "ratetype": {
+        "name": "rateType",
+        "in": "query",
+        "description": "code identifying the type of wage rate",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "matincode": {
+        "name": "industry",
+        "in": "query",
+        "description": "io matrix industry code",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "matoccode": {
+        "name": "occupation",
+        "in": "query",
+        "description": "io matrix occupational code",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "seriescode": {
+        "name": "industrySeries",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "CES industry series code"
+      },
+      "adjusted": {
+        "name": "seasonallyAdjusted",
+        "in": "query",
+        "description": "flag indicating whether the data are seasonally adjusted or not",
+        "schema": {
+          "type": "boolean",
+          "enum": [
+            true,
+            false
+          ]
+        }
+      },
+      "minyear": {
+        "name": "minYear",
+        "in": "query",
+        "description": "earliest data year",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "maxyear": {
+        "name": "maxYear",
+        "in": "query",
+        "description": "latest data year",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "schemas": {
+      "Metadata": {
+        "type": "object",
+        "properties": {
+          "widVersion": {
+            "type": "string"
+          },
+          "apiVersion": {
+            "type": "string"
+          },
+          "totalCount": {
+            "type": "integer"
+          },
+          "pageNum": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "dataSource": {
+            "type": "string"
+          }
+        }
+      },
+      "Link": {
+        "type": "object",
+        "properties": {
+          "href": {
+            "type": "string"
+          },
+          "rel": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "AddressType": {
+        "type": "object",
+        "properties": {
+          "addressty": {
+            "type": "string",
+            "example": "41"
+          },
+          "addresdesc": {
+            "type": "string",
+            "example": "00000000"
+          }
+        }
+      },
+      "AreaType": {
+        "type": "object",
+        "properties": {
+          "stateFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          }
+        }
+      },
+      "CesEmploymentDataWrapper": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "ces"
+          },
+          "id": {
+            "type": "string",
+            "example": "41-04-000001-2019-03-01-00000000-0"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CesEmployment"
+            }
+          }
+        }
+      },
+      "CesIndustrySeriesDataWrapper": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "cesSeries"
+          },
+          "id": {
+            "type": "string",
+            "example": "41-00000000-0"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CesIndustrySeries"
+            }
+          }
+        }
+      },
+      "AreaDataWrapper": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "area"
+          },
+          "id": {
+            "type": "string",
+            "example": "41-04-000001"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Area"
+            }
+          }
+        }
+      },
+      "PeriodDataWrapper": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "period"
+          },
+          "id": {
+            "type": "string",
+            "example": "03-2020-12"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Period"
+            }
+          }
+        }
+      },
+      "YearDataWrapper": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "year"
+          },
+          "id": {
+            "type": "string",
+            "example": "2020"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Year"
+            }
+          }
+        }
+      },
+      "IoMatrixDataWrapper": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "ioMatrix"
+          },
+          "id": {
+            "type": "string",
+            "example": "41-15-000015-10-1029-419022"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IoMatrix"
+            }
+          }
+        }
+      },
+      "MatrixIndustryCodeDataWrapper": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "ioMatrixIndustryCode"
+          },
+          "id": {
+            "type": "string",
+            "example": "41-721100"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MatrixIndustryCode"
+            }
+          }
+        }
+      },
+      "MatrixOccupationCodeDataWrapper": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "ioMatrixOccupationCode"
+          },
+          "id": {
+            "type": "string",
+            "example": "41-721100"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MatrixOccupationCode"
+            }
+          }
+        }
+      },
+      "CesHoursAndEarnings": {
+        "type": "object",
+        "description": "The CES object represents an employment estimate from the Current Employment Statistics program for a particular time period, industry, and area.",
+        "properties": {
+          "stateFips": {
+            "type": "string",
+            "example": "41",
+            "description": "2-digit FIPS code representing the state."
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01",
+            "description": "2-digit code representing the type of area.  Common values include 00=US, 01=state, 04=county, 21=MSA"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001",
+            "description": "6-digit FIPS code for the indiviual area"
+          },
+          "year": {
+            "type": "string",
+            "example": "2018"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "03",
+            "description": "2-digit code representing the type of period. 01=Annual, 03=monthly"
+          },
+          "period": {
+            "type": "string",
+            "example": "01"
+          },
+          "industrySeriesCode": {
+            "type": "string",
+            "example": "00000000",
+            "description": "8-digit code used by the Current Employment Statistics program to represent a specific industry."
+          },
+          "adjusted": {
+            "type": "string",
+            "example": "1",
+            "description": "Indicates if record contains seasonally adjusted data. 1=adjusted, 0=not adjusted"
+          },
+          "benchmarkYear": {
+            "type": "string",
+            "example": "2017",
+            "description": "Year that the data were last benchmarked"
+          },
+          "preliminary": {
+            "type": "string",
+            "example": "0",
+            "description": "Preliminary/revised flag. 0=not preliminary, 1=preliminary"
+          },
+          "productionWorkerEmployment": {
+            "type": "integer",
+            "example": 0,
+            "description": "Number of production workers"
+          },
+          "femaleEmployment": {
+            "type": "integer",
+            "example": 0,
+            "description": "Number of female workers employed"
+          },
+          "weeklyHours": {
+            "type": "integer",
+            "example": 0,
+            "description": "Average hours worked per week for production workers"
+          },
+          "weeklyEarnings": {
+            "type": "integer",
+            "example": 0,
+            "description": "Average weekly earnings for production workers"
+          },
+          "hourlyEarnings": {
+            "type": "integer",
+            "example": 0,
+            "description": "Average hourly earnings for production workers"
+          },
+          "suppressRecord": {
+            "type": "string",
+            "example": "0",
+            "description": "Suppress total record. 1=suppressed, 0=not suppressed"
+          },
+          "supppressHoursAndEarnings": {
+            "type": "string",
+            "example": "0",
+            "description": "Suppress hours and earnings data. 1=suppressed, 0=not suppressed"
+          },
+          "suppressProductionWorkers": {
+            "type": "string",
+            "example": "0",
+            "description": "Suppress production worker data. 1=suppressed, 0=not suppressed"
+          },
+          "suppressFemaleEmployment": {
+            "type": "string",
+            "example": "0",
+            "description": "Suppress female employment data. 1=suppressed, 0=not suppressed"
+          },
+          "hoursAllWorkers": {
+            "type": "integer",
+            "example": 0,
+            "description": "Average hours worked per week for all workers"
+          },
+          "weeklyEarningsAllWorkers": {
+            "type": "number",
+            "example": 0
+          },
+          "hourlyEarningsAllWorkers": {
+            "type": "number",
+            "example": 0
+          },
+          "suppressAllWorkers": {
+            "type": "string",
+            "example": "0"
+          }
+        }
+      },
+      "CesEmployment": {
+        "type": "object",
+        "description": "The CES object represents an estimate from the Current Employment Statistics program for a particular time period, industry, and area.  It contains an estimate of employment, and potentially other workforce indicators.",
+        "properties": {
+          "stateFips": {
+            "type": "string",
+            "example": "41",
+            "description": "2-digit FIPS code representing the state."
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01",
+            "description": "2-digit code representing the type of area.  Common values include 00=US, 01=state, 04=county, 21=MSA"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001",
+            "description": "6-digit FIPS code for the indiviual area"
+          },
+          "year": {
+            "type": "string",
+            "example": "2018"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "03",
+            "description": "2-digit code representing the type of period. 01=Annual, 03=monthly"
+          },
+          "period": {
+            "type": "string",
+            "example": "01"
+          },
+          "industrySeries": {
+            "type": "string",
+            "example": "00000000",
+            "description": "8-digit code used by the Current Employment Statistics program to represent a specific industry."
+          },
+          "seasonallyAdjusted": {
+            "type": "string",
+            "example": "1",
+            "description": "Indicates if record contains seasonally adjusted data. 1=adjusted, 0=not adjusted"
+          },
+          "benchmarkYear": {
+            "type": "string",
+            "example": "2017",
+            "description": "Year that the data were last benchmarked"
+          },
+          "preliminary": {
+            "type": "string",
+            "example": "0",
+            "description": "Preliminary/revised flag. 0=not preliminary, 1=preliminary"
+          },
+          "employment": {
+            "type": "integer",
+            "example": 123456,
+            "description": "Number employed by place of work; actual number, not in thousands."
+          }
+        }
+      },
+      "CesIndustrySeries": {
+        "type": "object",
+        "properties": {
+          "stateFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "industrySeries": {
+            "type": "string",
+            "example": "00000000"
+          },
+          "description": {
+            "type": "string"
+          },
+          "shortTitle": {
+            "type": "string"
+          },
+          "longTitle": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "example": "0"
+          }
+        }
+      },
+      "Area": {
+        "type": "object",
+        "properties": {
+          "stateFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "name": {
+            "type": "string",
+            "example": "Oregon"
+          },
+          "description": {
+            "type": "string",
+            "example": "State of Oregon"
+          },
+          "latitude": {
+            "type": "number",
+            "example": 0
+          },
+          "longitude": {
+            "type": "number",
+            "example": 0
+          },
+          "geoPrecisionCode": {
+            "type": "string",
+            "example": "0"
+          }
+        }
+      },
+      "IndustryCode": {
+        "type": "object",
+        "properties": {
+          "stateFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "codeType": {
+            "type": "string",
+            "example": "10"
+          },
+          "code": {
+            "type": "string",
+            "example": "451212"
+          }
+        }
+      },
+      "industryDataWrapper": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "industry"
+          },
+          "id": {
+            "type": "string",
+            "example": "41-15-000015-10-1029-419022"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Industry"
+            }
+          }
+        }
+      },
+      "Industry": {
+        "type": "object",
+        "properties": {
+          "stateFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "year": {
+            "type": "string",
+            "example": "2018"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "03"
+          },
+          "period": {
+            "type": "string",
+            "example": "01"
+          },
+          "industryCodeType": {
+            "type": "string",
+            "example": "10"
+          },
+          "industryCode": {
+            "type": "string",
+            "example": "451212"
+          },
+          "ownership": {
+            "type": "string",
+            "example": "50"
+          },
+          "preliminary": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ]
+          },
+          "firms": {
+            "type": "integer"
+          },
+          "establishments": {
+            "type": "integer"
+          },
+          "employmentAverage": {
+            "type": "integer"
+          },
+          "employmentMonth1": {
+            "type": "integer"
+          },
+          "employmentMonth2": {
+            "type": "integer"
+          },
+          "employmentMonth3": {
+            "type": "integer"
+          },
+          "employmentTopEmployer": {
+            "type": "integer"
+          },
+          "wagesTotal": {
+            "type": "integer"
+          },
+          "wagesAverageWeekly": {
+            "type": "integer"
+          },
+          "wagesTaxable": {
+            "type": "integer"
+          },
+          "contributions": {
+            "type": "integer"
+          },
+          "suppress": {
+            "type": "string",
+            "enum": [
+              "0",
+              "1"
+            ]
+          }
+        }
+      },
+      "IoMatrix": {
+        "type": "object",
+        "properties": {
+          "stfips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areatype": {
+            "type": "string",
+            "example": "01"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "periodid": {
+            "type": "string",
+            "example": "01"
+          },
+          "matincode": {
+            "type": "string",
+            "example": null
+          },
+          "matoccode": {
+            "type": "string",
+            "example": null
+          },
+          "estemp": {
+            "type": "integer"
+          },
+          "projemp": {
+            "type": "integer"
+          },
+          "pctestind": {
+            "type": "number"
+          },
+          "pctestocc": {
+            "type": "number"
+          },
+          "pctprojind": {
+            "type": "number"
+          },
+          "pctprojocc": {
+            "type": "number"
+          },
+          "nchg": {
+            "type": "integer"
+          },
+          "pchg": {
+            "type": "number"
+          },
+          "growrate": {
+            "type": "number"
+          },
+          "growcode": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2
+          },
+          "aopeng": {
+            "type": "number"
+          },
+          "aopenr": {
+            "type": "number"
+          },
+          "aopent": {
+            "type": "number"
+          },
+          "exits": {
+            "type": "integer"
+          },
+          "annualexits": {
+            "type": "integer"
+          },
+          "annualtranfers": {
+            "type": "integer"
+          },
+          "change": {
+            "type": "integer"
+          },
+          "annualchange": {
+            "type": "integer"
+          },
+          "openings": {
+            "type": "integer"
+          },
+          "annualopenings": {
+            "type": "integer"
+          },
+          "suppress": {
+            "type": "string",
+            "maxLength": 1
+          }
+        }
+      },
+      "Wage": {
+        "type": "object",
+        "properties": {
+          "stateFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "year": {
+            "type": "string",
+            "example": "2018"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "03"
+          },
+          "period": {
+            "type": "string",
+            "example": "01"
+          },
+          "industryCodeType": {
+            "type": "string",
+            "example": "10"
+          },
+          "industryCode": {
+            "type": "string",
+            "example": ""
+          },
+          "occupationCodeType": {
+            "type": "string",
+            "example": "08"
+          },
+          "occupationCode": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "example": "3"
+          },
+          "rateType": {
+            "type": "string",
+            "example": "1"
+          },
+          "employmentCount": {
+            "type": "integer"
+          },
+          "response": {
+            "type": "integer"
+          },
+          "mean": {
+            "type": "number"
+          },
+          "entryWage": {
+            "type": "number"
+          },
+          "experience": {
+            "type": "number"
+          },
+          "percentile10": {
+            "type": "number"
+          },
+          "percentile25": {
+            "type": "number"
+          },
+          "median": {
+            "type": "number"
+          },
+          "percentile75": {
+            "type": "number"
+          },
+          "percentile90": {
+            "type": "number"
+          }
+        }
+      },
+      "MatrixIndustryCode": {
+        "type": "object",
+        "properties": {
+          "stateFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "industryCode": {
+            "type": "string",
+            "example": "xx"
+          },
+          "periodId": {
+            "type": "string"
+          },
+          "industryCodeType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "maxLength": 1
+          }
+        }
+      },
+      "LaborForce": {
+        "type": "object",
+        "properties": {
+          "stateFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "01"
+          },
+          "area": {
+            "type": "string",
+            "example": "000001"
+          },
+          "year": {
+            "type": "string",
+            "example": "2018"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "03"
+          },
+          "period": {
+            "type": "string",
+            "example": "01"
+          },
+          "seasonallyAdjusted": {
+            "type": "string",
+            "example": "1"
+          },
+          "benchmarkYear": {
+            "type": "string",
+            "example": "2017"
+          },
+          "preliminary": {
+            "type": "string",
+            "example": "0"
+          },
+          "laborForce": {
+            "type": "integer",
+            "example": 2074335
+          },
+          "employment": {
+            "type": "integer",
+            "example": 197682
+          },
+          "unemployment": {
+            "type": "integer",
+            "example": 86653
+          },
+          "unemploymentRate": {
+            "type": "number",
+            "example": 4.2
+          },
+          "clfPopulationRatio": {
+            "type": "number",
+            "example": 75.3
+          },
+          "employmentPopulatinRatio": {
+            "type": "number",
+            "example": 67.3
+          }
+        }
+      },
+      "MatrixOccupationCode": {
+        "type": "object",
+        "properties": {
+          "stfips": {
+            "type": "string",
+            "example": "41"
+          },
+          "matoccode": {
+            "type": "string",
+            "example": "xx"
+          },
+          "periodid": {
+            "type": "string"
+          },
+          "matoccodtyp": {
+            "type": "string"
+          },
+          "matoctitle": {
+            "type": "string"
+          },
+          "subtot": {
+            "type": "string",
+            "maxLength": 1
+          }
+        }
+      },
+      "Period": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "string",
+            "example": "2018"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "03"
+          },
+          "period": {
+            "type": "string",
+            "example": "01"
+          }
+        }
+      },
+      "Year": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "string",
+            "example": "2018"
+          }
+        }
+      }
+    }
+  }
+}
