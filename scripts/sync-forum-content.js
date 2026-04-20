@@ -35,7 +35,7 @@ const specOut = path.join(
 );
 
 const args = parseArgs(process.argv.slice(2));
-const awsProfile = args.profile || process.env.AWS_PROFILE || "GovProd";
+const awsProfile = args.profile || "GovProd";
 const s3Source = args.source || "s3://ulmita-forum-content/nationalwid/";
 
 function parseArgs(argv) {
