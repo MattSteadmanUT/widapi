@@ -53,7 +53,7 @@ widapi/
 │   ├── decisions/                    # Design decisions and rationale
 │   └── field-mapping/                # WID 2.8 → 3.0 field mapping notes
 ├── .github/workflows/
-│   └── sync-spec-json.yml            # GitHub Action: converts YAML → JSON on main branch pushes
+│   └── sync-spec-json.yml            # GitHub Action: converts YAML → JSON on pull requests
 ├── vendor/swagger-ui/                # Vendored Swagger UI assets
 ├── scripts/update-vendor.js          # Helper to refresh vendored assets
 └── package.json
@@ -96,21 +96,19 @@ Add a Markdown file to `docs/decisions/` following the format described in that 
 
 ### The YAML → JSON workflow
 
-When YAML specs are pushed to the `main` branch, a GitHub Action automatically:
+When a pull request targeting `main` contains changes to `specs/**/*.yaml`, a GitHub Action automatically:
 
-1. Detects changes to `specs/**/*.yaml` files
-2. Converts each YAML file to JSON using Python's `yaml` and `json` libraries  
-3. Commits the updated JSON files back to `main` with message: `chore: sync JSON specs from YAML [skip ci]`
+1. Detects the YAML changes in the PR
+2. Converts each YAML file to JSON using Python's `yaml` and `json` libraries
+3. Commits the updated JSON files back to the **PR branch** so they are included in the merge
 
 **Action file:** `.github/workflows/sync-spec-json.yml`
-
-**Status:** The workflow will be activated once the change containing this workflow file is merged to the `main` branch. After that, JSON files will be automatically kept in sync with YAML changes.
 
 ### What you should do
 
 - **Always edit YAML files directly** — never manually edit the JSON files
-- **Commit YAML changes** to your PR
-- **The JSON files will be auto-generated** when the PR is merged to `main` (once the workflow is active on main)
+- **Commit only your YAML changes** to your PR branch — the action will add the JSON automatically
+- **Wait for the action to complete** before merging so the JSON on `main` stays in sync
 
 ### Manual sync (if needed)
 
