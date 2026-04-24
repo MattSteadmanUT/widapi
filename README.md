@@ -147,12 +147,17 @@ This repo includes a local sync utility to pull discussion posts from the
 national WID forum S3 location and materialize them as reviewable artifacts in
 both docs and spec-supporting JSON.
 
+The forum source is private. Most contributors do not need access to it, and
+lack of access should never block normal pull request work.
+
 ### Source
 
 - S3 prefix: `s3://ulmita-forum-content/nationalwid/`
 - AWS profile used by default: `GovProd`
 
 ### Run manually
+
+Manual sync requires AWS credentials that can read the source bucket.
 
 ```bash
 npm run sync:forum
@@ -174,6 +179,9 @@ indentation and explicit `Reply to` lines.
 
 ### Run automatically before pushes (local machine)
 
+This is an optional maintainer convenience for people with access to the
+private forum source. External contributors can ignore it.
+
 Install the pre-push hook once:
 
 ```bash
@@ -182,7 +190,25 @@ npm run install:hooks
 
 After this, each `git push` from this local clone will:
 
-1. Run forum sync
-2. Block push if forum-derived files changed and are not yet committed
+1. Check whether the AWS CLI and configured forum source are available
+2. Skip forum sync and continue the push when the private source is not available
+3. Run forum sync when access is available
+4. Block push only if forum-derived files changed and are not yet committed
+
+The hook uses these defaults:
+
+- S3 source: `s3://ulmita-forum-content/nationalwid/`
+- AWS profile: `GovProd`
+
+Optional environment overrides:
+
+```bash
+WID_FORUM_SOURCE=s3://example-bucket/path/
+WID_FORUM_AWS_PROFILE=YourProfile
+WID_FORUM_SYNC_ON_PUSH=0
+```
+
+`WID_FORUM_SYNC_ON_PUSH=0` disables the hook's forum sync check for that push
+environment while leaving the hook installed.
 
 To disable, remove `.git/hooks/pre-push`.
