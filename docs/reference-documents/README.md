@@ -50,5 +50,10 @@ These are produced by running:
 npm run sync:forum
 ```
 
+The source forum lives in a private S3 location. Contributors without access do
+not need to run this sync. If they have installed the optional pre-push hook, it
+checks for AWS/S3 access first and exits without blocking the push when the
+private source is unavailable.
+
 The Markdown format is thread-oriented and shows which posts reply to which
 parent posts.
