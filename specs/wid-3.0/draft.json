@@ -983,6 +983,93 @@
         }
       }
     },
+    "/ces/metadata": {
+      "get": {
+        "tags": [
+          "ces"
+        ],
+        "summary": "Query CES data-coverage metadata",
+        "description": "Returns table-scoped metadata for CES records that match the supplied filters. This endpoint provides a standardized way to retrieve listAreas/listYears/minPeriod/maxPeriod-style information without pulling full CES datasets.\n",
+        "operationId": "getCesMetadata",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "name": "seriesCodeType",
+            "in": "query",
+            "description": "Industry code type for CES series (e.g. '10' for NAICS)",
+            "schema": {
+              "type": "string",
+              "example": "10"
+            }
+          },
+          {
+            "name": "seriesCode",
+            "in": "query",
+            "description": "8-character CES industry series code",
+            "schema": {
+              "type": "string",
+              "example": "00000000"
+            }
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "description": "'1' for seasonally adjusted, '0' for unadjusted",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/metadataFields"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableMetadataResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
     "/laborForce": {
       "get": {
         "tags": [
@@ -1060,6 +1147,75 @@
                 "schema": {
                   "type": "string",
                   "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/laborForce/metadata": {
+      "get": {
+        "tags": [
+          "laborForce"
+        ],
+        "summary": "Query LaborForce data-coverage metadata",
+        "description": "Returns table-scoped metadata for LaborForce records that match the supplied filters. This endpoint provides a standardized way to retrieve listAreas/listYears/minPeriod/maxPeriod-style information without pulling full LaborForce datasets.\n",
+        "operationId": "getLaborForceMetadata",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "description": "'1' for seasonally adjusted, '0' for not adjusted",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/metadataFields"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableMetadataResponse"
                 }
               }
             }
@@ -1160,6 +1316,78 @@
         }
       }
     },
+    "/industry/metadata": {
+      "get": {
+        "tags": [
+          "industry"
+        ],
+        "summary": "Query Industry data-coverage metadata",
+        "description": "Returns table-scoped metadata for Industry (QCEW) records that match the supplied filters. This endpoint provides a standardized way to retrieve listAreas/listYears/minPeriod/maxPeriod-style information without pulling full Industry datasets.\n",
+        "operationId": "getIndustryMetadata",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "$ref": "#/components/parameters/industryCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/industryCode"
+          },
+          {
+            "name": "ownership",
+            "in": "query",
+            "description": "Ownership code (e.g. '50'=Private, '10'=Total)",
+            "schema": {
+              "type": "string",
+              "example": "50"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/metadataFields"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableMetadataResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
     "/projections": {
       "get": {
         "tags": [
@@ -1244,6 +1472,82 @@
                 "schema": {
                   "type": "string",
                   "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/projections/metadata": {
+      "get": {
+        "tags": [
+          "projections"
+        ],
+        "summary": "Query Projections data-coverage metadata",
+        "description": "Returns table-scoped metadata for ProjectionsMatrix records that match the supplied filters. This endpoint provides a standardized way to retrieve listAreas/listYears/minPeriod/maxPeriod-style information without pulling full projections datasets.\n",
+        "operationId": "getProjectionsMetadata",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "name": "projectedYear",
+            "in": "query",
+            "description": "Target/projected calendar year",
+            "schema": {
+              "type": "string",
+              "example": "2032"
+            }
+          },
+          {
+            "name": "matrixIndCode",
+            "in": "query",
+            "description": "IO matrix industry code (from `IndDirectories`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "matrixOccCode",
+            "in": "query",
+            "description": "IO matrix occupation code (from `OccDirectories`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/metadataFields"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableMetadataResponse"
                 }
               }
             }
@@ -1623,6 +1927,95 @@
                 "schema": {
                   "type": "string",
                   "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/wages/metadata": {
+      "get": {
+        "tags": [
+          "wages"
+        ],
+        "summary": "Query IOWage data-coverage metadata",
+        "description": "Returns table-scoped metadata for IOWage records that match the supplied filters. This endpoint provides a standardized way to retrieve listAreas/listYears/minPeriod/maxPeriod-style information without pulling full wage datasets.\n",
+        "operationId": "getWagesMetadata",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "$ref": "#/components/parameters/industryCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/industryCode"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCode"
+          },
+          {
+            "name": "wageSource",
+            "in": "query",
+            "description": "Wage data source code (see `/lookups/wageSources`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rateType",
+            "in": "query",
+            "description": "Rate type code: '1'=hourly, '2'=annual",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1",
+                "2"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/metadataFields"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableMetadataResponse"
                 }
               }
             }
@@ -2638,6 +3031,32 @@
           "type": "string",
           "example": "periodYear:desc,period:asc"
         }
+      },
+      "metadataFields": {
+        "name": "metadataFields",
+        "in": "query",
+        "description": "Comma-separated list of metadata facets to return for table-scoped metadata endpoints. If omitted, all supported facets are returned.\nSupported values:\n  - `areas` (listAreas-style distinct geography keys)\n  - `years` (listYears-style distinct period years)\n  - `periods` (distinct periodType+period combinations)\n  - `minPeriod` (earliest matching period)\n  - `maxPeriod` (latest matching period)\n  - `projectedYears` (distinct projection target years when applicable)\n",
+        "style": "form",
+        "explode": false,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "areas",
+              "years",
+              "periods",
+              "minPeriod",
+              "maxPeriod",
+              "projectedYears"
+            ]
+          },
+          "example": [
+            "areas",
+            "years",
+            "maxPeriod"
+          ]
+        }
       }
     },
     "responses": {
@@ -3016,6 +3435,105 @@
             "items": {
               "$ref": "#/components/schemas/Link"
             }
+          }
+        }
+      },
+      "AreaKey": {
+        "type": "object",
+        "description": "Distinct geography key present in a filtered dataset.",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "04"
+          },
+          "areaTypeVersion": {
+            "type": "string",
+            "example": "0"
+          },
+          "area": {
+            "type": "string",
+            "example": "041005"
+          }
+        }
+      },
+      "PeriodPoint": {
+        "type": "object",
+        "description": "Identifies a single point in a WID period dimension.",
+        "properties": {
+          "periodYear": {
+            "type": "string",
+            "example": "2024"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "03"
+          },
+          "period": {
+            "type": "string",
+            "example": "06"
+          }
+        }
+      },
+      "TableMetadata": {
+        "type": "object",
+        "description": "Table-scoped metadata derived from records matching the supplied filters. Supports listAreas/listYears/minPeriod/maxPeriod-style discovery without returning full data rows.\n",
+        "properties": {
+          "areas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AreaKey"
+            }
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "2024"
+            }
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Period"
+            }
+          },
+          "minPeriod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodPoint"
+              }
+            ],
+            "nullable": true
+          },
+          "maxPeriod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodPoint"
+              }
+            ],
+            "nullable": true
+          },
+          "projectedYears": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "2032"
+            }
+          }
+        }
+      },
+      "TableMetadataResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TableMetadata"
           }
         }
       },
