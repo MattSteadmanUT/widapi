@@ -18,6 +18,10 @@ info:
        The envelope supports both page-number and cursor pagination.
     5. **State-agnostic** — `stFips` is never hardcoded; the spec supports all 50 states plus
        national data.
+     6. **Composable filtering** — string filter parameters may accept comma-separated values
+       for OR-style matching (for example `stFips=49,53`). Code-like filters may additionally
+       support a single wildcard character `*` for prefix/suffix/contains matching
+       (for example `occCode=11*`, `occCode=*11`, `occCode=*11*`).
 
     ## Key structural changes from WID 2.8 / Oregon reference spec
 
@@ -1785,9 +1789,11 @@ components:
       description: >
         2-digit state FIPS code. Use '00' for national data.
         All 50 states are supported — this parameter is never restricted to a single state.
+
+        Comma-separated values are allowed to request multiple states in one call
+        (for example `stFips=49,53`).
       schema:
         type: string
-        pattern: '^\d{2}$'
         example: '41'
 
     areaType:
@@ -1831,6 +1837,8 @@ components:
         **The API normalizes area codes server-side**: supply the bare numeric code
         (e.g. `41005`) and the implementation will left-pad it with zeros to 6
         characters.  Supplying the padded form (`041005`) also works.
+
+        Comma-separated values are allowed (for example `area=41005,53033`).
       schema:
         type: string
         example: '041005'
@@ -1901,6 +1909,10 @@ components:
         **The API normalizes codes server-side**: supply the bare code (e.g. `722511`)
         and the implementation will right-pad it to 10 characters before querying.
         Supplying the padded form (`722511    `) also works.
+
+        Comma-separated values are allowed (for example `industryCode=31,32`).
+        Wildcard `*` is supported at the beginning and/or end for code-pattern
+        matching (for example `industryCode=31*`, `industryCode=*11`, `industryCode=*31*`).
       schema:
         type: string
         example: '722511'
@@ -1926,6 +1938,10 @@ components:
         **The API normalizes codes server-side**: supply the bare code (e.g. `35-2014`)
         and the implementation will right-pad it to 10 characters before querying.
         Supplying the padded form (`35-2014   `) also works.
+
+        Comma-separated values are allowed (for example `occupationCode=11-1011,11-1021`).
+        Wildcard `*` is supported at the beginning and/or end for code-pattern
+        matching (for example `occupationCode=11*`, `occupationCode=*11`, `occupationCode=*11*`).
       schema:
         type: string
         example: '35-2014'
@@ -2049,6 +2065,14 @@ components:
             Reflects the most recent load date for the tables contributing to this
             response.  `null` if the implementation does not track load dates.
           example: '2025-03-15'
+        message:
+          type: string
+          nullable: true
+          description: >
+            Optional informational message about the current result set.
+            Implementations should set this when no rows match supplied filters,
+            for example "No records found with the supplied filters."
+          example: 'No records found with the supplied filters.'
 
     Link:
       type: object

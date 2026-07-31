@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "WID 3.0 API — National Draft",
-    "description": "Working draft of the national **Workforce Information Database (WID) 3.0** API specification.\nThis specification is being developed collaboratively by multiple state workforce agencies\nunder the Analyst Resource Center (ARC) consortium.\n\n## Design philosophy\n\n1. **Table-native endpoints** — every WID 3.0 core table is exposed as a queryable resource\n   at its own path with filter parameters that mirror the table's columns exactly.\n2. **View endpoints** — cross-table views join related tables and return enriched records\n   (e.g., CES employment with resolved geography names and series titles).\n3. **Consistent naming** — all API field names use `camelCase` equivalents of the WID 3.0\n   column names (e.g., `StFips` → `stFips`, `AreaTypeVersion` → `areaTypeVersion`).\n4. **Standard envelope** — every list response wraps results in `{ meta, data, links }`.\n   The envelope supports both page-number and cursor pagination.\n5. **State-agnostic** — `stFips` is never hardcoded; the spec supports all 50 states plus\n   national data.\n\n## Key structural changes from WID 2.8 / Oregon reference spec\n\n- `AreaTypeVersion` is a new field in WID 3.0 that is part of the geography primary key.\n  It allows historical vintages of area definitions (especially MSAs) to coexist.\n- CES is a **single table** containing employment, production-worker stats, and\n  hours/earnings.  The Oregon spec split these into separate endpoints, which is a 2.8-era\n  design choice not needed in 3.0.\n- `SeriesCodeType` is part of the CES primary key alongside `SeriesCode` (to support\n  multiple industry classification systems).\n- Lookup tables such as `IndDirectories` and `OccDirectories` now serve as the canonical\n  directory of projection-period matrix codes, replacing the ad-hoc listIndustries /\n  listOccupations sub-endpoints in the Oregon spec.\n- Licensing tables (`License`, `LicenseAuthorities`, `LicenseHistory`, `LicenseXOcc`)\n  are new in WID 3.0 with no equivalent in WID 2.8.\n\n## Reference documents\n\n- [WID 3.0 Structure (Nov 2025)](../WID-3.0-Structure-20251120.pdf)\n- [WID v3.0 Addenda](../WID-v30-Addenda.pdf)\n- [Oregon WID 2.8 reference spec](../../reference/oregon-wid-2.8.yaml)\n\nFor background on the WID standard see https://widcenter.org.\nThis is a living document — open a pull request to propose changes.\n",
+    "description": "Working draft of the national **Workforce Information Database (WID) 3.0** API specification.\nThis specification is being developed collaboratively by multiple state workforce agencies\nunder the Analyst Resource Center (ARC) consortium.\n\n## Design philosophy\n\n1. **Table-native endpoints** — every WID 3.0 core table is exposed as a queryable resource\n   at its own path with filter parameters that mirror the table's columns exactly.\n2. **View endpoints** — cross-table views join related tables and return enriched records\n   (e.g., CES employment with resolved geography names and series titles).\n3. **Consistent naming** — all API field names use `camelCase` equivalents of the WID 3.0\n   column names (e.g., `StFips` → `stFips`, `AreaTypeVersion` → `areaTypeVersion`).\n4. **Standard envelope** — every list response wraps results in `{ meta, data, links }`.\n   The envelope supports both page-number and cursor pagination.\n5. **State-agnostic** — `stFips` is never hardcoded; the spec supports all 50 states plus\n   national data.\n 6. **Composable filtering** — string filter parameters may accept comma-separated values\n   for OR-style matching (for example `stFips=49,53`). Code-like filters may additionally\n   support a single wildcard character `*` for prefix/suffix/contains matching\n   (for example `occCode=11*`, `occCode=*11`, `occCode=*11*`).\n\n## Key structural changes from WID 2.8 / Oregon reference spec\n\n- `AreaTypeVersion` is a new field in WID 3.0 that is part of the geography primary key.\n  It allows historical vintages of area definitions (especially MSAs) to coexist.\n- CES is a **single table** containing employment, production-worker stats, and\n  hours/earnings.  The Oregon spec split these into separate endpoints, which is a 2.8-era\n  design choice not needed in 3.0.\n- `SeriesCodeType` is part of the CES primary key alongside `SeriesCode` (to support\n  multiple industry classification systems).\n- Lookup tables such as `IndDirectories` and `OccDirectories` now serve as the canonical\n  directory of projection-period matrix codes, replacing the ad-hoc listIndustries /\n  listOccupations sub-endpoints in the Oregon spec.\n- Licensing tables (`License`, `LicenseAuthorities`, `LicenseHistory`, `LicenseXOcc`)\n  are new in WID 3.0 with no equivalent in WID 2.8.\n\n## Reference documents\n\n- [WID 3.0 Structure (Nov 2025)](../WID-3.0-Structure-20251120.pdf)\n- [WID v3.0 Addenda](../WID-v30-Addenda.pdf)\n- [Oregon WID 2.8 reference spec](../../reference/oregon-wid-2.8.yaml)\n\nFor background on the WID standard see https://widcenter.org.\nThis is a living document — open a pull request to propose changes.\n",
     "version": "3.0.0-draft",
     "contact": {
       "name": "WID 3.0 Working Group"
@@ -2908,10 +2908,9 @@
       "stFips": {
         "name": "stFips",
         "in": "query",
-        "description": "2-digit state FIPS code. Use '00' for national data. All 50 states are supported — this parameter is never restricted to a single state.\n",
+        "description": "2-digit state FIPS code. Use '00' for national data. All 50 states are supported — this parameter is never restricted to a single state.\nComma-separated values are allowed to request multiple states in one call (for example `stFips=49,53`).\n",
         "schema": {
           "type": "string",
-          "pattern": "^\\d{2}$",
           "example": "41"
         }
       },
@@ -2936,7 +2935,7 @@
       "area": {
         "name": "area",
         "in": "query",
-        "description": "6-character geographic area code, zero-padded on the left per the WID 3.0 structure specification (e.g., county FIPS 41005 → `041005`).\n**The API normalizes area codes server-side**: supply the bare numeric code (e.g. `41005`) and the implementation will left-pad it with zeros to 6 characters.  Supplying the padded form (`041005`) also works.\n",
+        "description": "6-character geographic area code, zero-padded on the left per the WID 3.0 structure specification (e.g., county FIPS 41005 → `041005`).\n**The API normalizes area codes server-side**: supply the bare numeric code (e.g. `41005`) and the implementation will left-pad it with zeros to 6 characters.  Supplying the padded form (`041005`) also works.\nComma-separated values are allowed (for example `area=41005,53033`).\n",
         "schema": {
           "type": "string",
           "example": "041005"
@@ -2999,7 +2998,7 @@
       "industryCode": {
         "name": "industryCode",
         "in": "query",
-        "description": "Industry classification code.  In the WID 3.0 database this is stored as a 10-character field, left-justified and right-padded with blanks (ASCII 32) per the WID 3.0 structure specification.\n**The API normalizes codes server-side**: supply the bare code (e.g. `722511`) and the implementation will right-pad it to 10 characters before querying. Supplying the padded form (`722511    `) also works.\n",
+        "description": "Industry classification code.  In the WID 3.0 database this is stored as a 10-character field, left-justified and right-padded with blanks (ASCII 32) per the WID 3.0 structure specification.\n**The API normalizes codes server-side**: supply the bare code (e.g. `722511`) and the implementation will right-pad it to 10 characters before querying. Supplying the padded form (`722511    `) also works.\nComma-separated values are allowed (for example `industryCode=31,32`). Wildcard `*` is supported at the beginning and/or end for code-pattern matching (for example `industryCode=31*`, `industryCode=*11`, `industryCode=*31*`).\n",
         "schema": {
           "type": "string",
           "example": "722511"
@@ -3017,7 +3016,7 @@
       "occupationCode": {
         "name": "occupationCode",
         "in": "query",
-        "description": "Occupation classification code.  In the WID 3.0 database this is stored as a 10-character field, left-justified and right-padded with blanks (ASCII 32) per the WID 3.0 structure specification.\n**The API normalizes codes server-side**: supply the bare code (e.g. `35-2014`) and the implementation will right-pad it to 10 characters before querying. Supplying the padded form (`35-2014   `) also works.\n",
+        "description": "Occupation classification code.  In the WID 3.0 database this is stored as a 10-character field, left-justified and right-padded with blanks (ASCII 32) per the WID 3.0 structure specification.\n**The API normalizes codes server-side**: supply the bare code (e.g. `35-2014`) and the implementation will right-pad it to 10 characters before querying. Supplying the padded form (`35-2014   `) also works.\nComma-separated values are allowed (for example `occupationCode=11-1011,11-1021`). Wildcard `*` is supported at the beginning and/or end for code-pattern matching (for example `occupationCode=11*`, `occupationCode=*11`, `occupationCode=*11*`).\n",
         "schema": {
           "type": "string",
           "example": "35-2014"
@@ -3144,6 +3143,12 @@
             "nullable": true,
             "description": "ISO 8601 date (YYYY-MM-DD) through which the returned data is current. Reflects the most recent load date for the tables contributing to this response.  `null` if the implementation does not track load dates.\n",
             "example": "2025-03-15"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional informational message about the current result set. Implementations should set this when no rows match supplied filters, for example \"No records found with the supplied filters.\"\n",
+            "example": "No records found with the supplied filters."
           }
         }
       },
