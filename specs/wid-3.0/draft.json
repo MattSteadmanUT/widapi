@@ -3502,12 +3502,14 @@
             }
           },
           "minPeriod": {
-            "allOf": [
+            "oneOf": [
               {
                 "$ref": "#/components/schemas/PeriodPoint"
+              },
+              {
+                "type": "null"
               }
-            ],
-            "nullable": true
+            ]
           },
           "maxPeriod": {
             "allOf": [
