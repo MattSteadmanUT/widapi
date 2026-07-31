@@ -2352,6 +2352,10 @@ components:
           $ref: '#/components/schemas/Metadata'
         data:
           $ref: '#/components/schemas/TableMetadata'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
 
     # ---- Code lookups -------------------------------------------------------
 
