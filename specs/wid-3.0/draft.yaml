@@ -2332,9 +2332,9 @@ components:
           items:
             $ref: '#/components/schemas/Period'
         minPeriod:
-          allOf:
+          oneOf:
             - $ref: '#/components/schemas/PeriodPoint'
-          nullable: true
+            - type: 'null'
         maxPeriod:
           allOf:
             - $ref: '#/components/schemas/PeriodPoint'
