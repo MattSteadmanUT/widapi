@@ -98,20 +98,21 @@ serialising char fields from legacy database drivers. Consumers that prefer bool
 
 ---
 
-## Decision 7: Projections use `IndDirectories` / `OccDirectories`, not `MatrixXInd` / `MatrixXOcc`
+## Decision 7: Directory lookups use `/lookups/*-directories`; crosswalks remain in `/projections/*`
 
-**Decision:** The code enumeration endpoints for projections are `/projections/indDirectories`
-and `/projections/occDirectories`, which map directly to the `IndDirectories` and `OccDirectories`
-WID 3.0 lookup tables. The `MatrixXInd` / `MatrixXOcc` crosswalk tables are also exposed at
-`/projections/matrixXInd` and `/projections/matrixXOcc`.
+**Decision:** The code enumeration endpoints for projection directories are
+`/lookups/ind-directories` and `/lookups/occ-directories`, which map directly to the
+`IndDirectories` and `OccDirectories` WID 3.0 lookup tables. The `MatrixXInd` / `MatrixXOcc`
+crosswalk tables remain exposed at `/projections/matrixXInd` and `/projections/matrixXOcc`.
 
 **Context:** The Oregon spec used `ioMatrix/listIndustries` and `ioMatrix/listOccupations` as
 ad-hoc sub-endpoints with no clear WID table backing. WID 3.0 formalises the directory concept
 with `IndDirectories` and `OccDirectories`, and separately has crosswalk tables (`MatrixXInd`,
 `MatrixXOcc`) that map matrix codes to standard industry/occupation codes.
 
-**Rationale:** Exposing all four tables keeps the native structure accessible, and their distinct
-purposes are now clear from the endpoint names.
+**Rationale:** Keeping directory tables under `/lookups/*` aligns with the current implementation
+and with the broader table-native pattern where directory/reference sets are queried as lookups,
+while projection-specific crosswalks remain under `/projections/*`.
 
 ---
 

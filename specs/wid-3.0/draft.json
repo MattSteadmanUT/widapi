@@ -878,6 +878,156 @@
         }
       }
     },
+    "/lookups/ind-directories": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the IndDirectories lookup table",
+        "description": "Returns projection industry directory records from `IndDirectories`. This is the canonical lookup endpoint for matrix industry directory entries in the current National WID implementation.\n",
+        "operationId": "getLookupIndDirectories",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "name": "projPeriod",
+            "in": "query",
+            "description": "Projection span (for example `2022-2032`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "indCodeType",
+            "in": "query",
+            "description": "Industry code type used by projection directory rows",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "indCode",
+            "in": "query",
+            "description": "Industry code value",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndDirectoryListResponse"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/lookups/occ-directories": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the OccDirectories lookup table",
+        "description": "Returns projection occupation directory records from `OccDirectories`. This is the canonical lookup endpoint for matrix occupation directory entries in the current National WID implementation.\n",
+        "operationId": "getLookupOccDirectories",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "name": "projPeriod",
+            "in": "query",
+            "description": "Projection span (for example `2022-2032`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "occCodeType",
+            "in": "query",
+            "description": "Occupation code type used by projection directory rows",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "occCode",
+            "in": "query",
+            "description": "Occupation code value",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccDirectoryListResponse"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
     "/ces": {
       "get": {
         "tags": [
@@ -1548,150 +1698,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TableMetadataResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          }
-        }
-      }
-    },
-    "/projections/indDirectories": {
-      "get": {
-        "tags": [
-          "projections"
-        ],
-        "summary": "Query IndDirectories — matrix industry code directory",
-        "description": "Returns the directory of MicroMatrix industry codes valid for a given projection run (periodYear / periodType / period / projectedYear). Use this to enumerate available industry codes before querying `/projections`. Replaces the Oregon-style `ioMatrix/listIndustries` sub-endpoint.\n",
-        "operationId": "getIndDirectories",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/page"
-          },
-          {
-            "$ref": "#/components/parameters/pageSize"
-          },
-          {
-            "$ref": "#/components/parameters/cursor"
-          },
-          {
-            "$ref": "#/components/parameters/limit"
-          },
-          {
-            "$ref": "#/components/parameters/sort"
-          },
-          {
-            "$ref": "#/components/parameters/periodType"
-          },
-          {
-            "$ref": "#/components/parameters/periodYear"
-          },
-          {
-            "$ref": "#/components/parameters/period"
-          },
-          {
-            "name": "projectedYear",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "example": "2032"
-            }
-          },
-          {
-            "name": "matrixIndCode",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IndDirectoryListResponse"
-                }
-              },
-              "text/csv": {
-                "schema": {
-                  "type": "string",
-                  "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          }
-        }
-      }
-    },
-    "/projections/occDirectories": {
-      "get": {
-        "tags": [
-          "projections"
-        ],
-        "summary": "Query OccDirectories — matrix occupation code directory",
-        "description": "Returns the directory of MicroMatrix occupation codes valid for a given projection run.  Replaces the Oregon-style `ioMatrix/listOccupations` sub-endpoint.\n",
-        "operationId": "getOccDirectories",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/page"
-          },
-          {
-            "$ref": "#/components/parameters/pageSize"
-          },
-          {
-            "$ref": "#/components/parameters/cursor"
-          },
-          {
-            "$ref": "#/components/parameters/limit"
-          },
-          {
-            "$ref": "#/components/parameters/sort"
-          },
-          {
-            "$ref": "#/components/parameters/periodType"
-          },
-          {
-            "$ref": "#/components/parameters/periodYear"
-          },
-          {
-            "$ref": "#/components/parameters/period"
-          },
-          {
-            "name": "projectedYear",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "example": "2032"
-            }
-          },
-          {
-            "name": "matrixOccCode",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OccDirectoryListResponse"
-                }
-              },
-              "text/csv": {
-                "schema": {
-                  "type": "string",
-                  "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
                 }
               }
             }
@@ -4318,11 +4324,11 @@
           },
           "matrixIndCode": {
             "type": "string",
-            "description": "MicroMatrix industry code; see `/projections/indDirectories`"
+            "description": "MicroMatrix industry code; see `/lookups/ind-directories`"
           },
           "matrixOccCode": {
             "type": "string",
-            "description": "MicroMatrix occupation code; see `/projections/occDirectories`"
+            "description": "MicroMatrix occupation code; see `/lookups/occ-directories`"
           },
           "projectedYear": {
             "type": "string",
@@ -4441,39 +4447,27 @@
       },
       "IndDirectory": {
         "type": "object",
-        "description": "A MicroMatrix industry code entry from `IndDirectories`",
+        "description": "A projection industry directory entry from `IndDirectories`",
         "properties": {
-          "matrixIndCode": {
-            "type": "string"
-          },
-          "periodYear": {
-            "type": "string",
-            "example": "2022"
-          },
-          "periodType": {
-            "type": "string",
-            "example": "01"
-          },
-          "period": {
+          "stFips": {
             "type": "string",
             "example": "00"
           },
-          "projectedYear": {
+          "projPeriod": {
             "type": "string",
-            "example": "2032"
+            "example": "2022-2032"
           },
-          "matrixIndTitle": {
+          "indCodeType": {
+            "type": "string",
+            "example": "10"
+          },
+          "indCode": {
+            "type": "string",
+            "example": "722511"
+          },
+          "indTitle": {
             "type": "string",
             "example": "Full-Service Restaurants"
-          },
-          "subTotal": {
-            "type": "string",
-            "description": "Sum level indicator for the matrix industry"
-          },
-          "ownership": {
-            "type": "string",
-            "example": "50",
-            "description": "2-digit ownership code for this projection industry entry. See `/lookups/ownerships` for valid values.\n"
           }
         }
       },
@@ -4499,33 +4493,27 @@
       },
       "OccDirectory": {
         "type": "object",
-        "description": "A MicroMatrix occupation code entry from `OccDirectories`",
+        "description": "A projection occupation directory entry from `OccDirectories`",
         "properties": {
-          "matrixOccCode": {
-            "type": "string"
-          },
-          "periodYear": {
-            "type": "string",
-            "example": "2022"
-          },
-          "periodType": {
-            "type": "string",
-            "example": "01"
-          },
-          "period": {
+          "stFips": {
             "type": "string",
             "example": "00"
           },
-          "projectedYear": {
+          "projPeriod": {
             "type": "string",
-            "example": "2032"
+            "example": "2022-2032"
           },
-          "matrixOccTitle": {
+          "occCodeType": {
             "type": "string",
-            "example": "Cooks, Restaurant"
+            "example": "19"
           },
-          "subTotal": {
-            "type": "string"
+          "occCode": {
+            "type": "string",
+            "example": "15-1256"
+          },
+          "occTitle": {
+            "type": "string",
+            "example": "Software Developers and Testers"
           }
         }
       },
