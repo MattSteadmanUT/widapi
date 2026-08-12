@@ -580,6 +580,9 @@ docs/                     # Architecture, ingestion pipeline, schema, deployment
 | [docs/ingestion-pipeline.md](docs/ingestion-pipeline.md) | Every ingestor's source, quirks, scheduling, and idempotency mechanism |
 | [docs/database-schema.md](docs/database-schema.md) | Full table inventory and migration-by-migration history, including corrective migrations |
 | [docs/deployment-and-operations.md](docs/deployment-and-operations.md) | AWS resources, `justfile` tasks, deployment profile contents, runbook |
+| [docs/first-deployment-playbook.md](docs/first-deployment-playbook.md) | The ordered, concrete runbook from an empty AWS account to a populated dev environment |
+| [docs/iam-deployer-policy.md](docs/iam-deployer-policy.md) | A starting-point least-privilege IAM policy for whoever runs `just deploy` |
+| [docs/spec-contract-drift.md](docs/spec-contract-drift.md) | Where this API and the WID 3.0 spec disagree — read before trusting the spec as ground truth |
 | [docs/testing.md](docs/testing.md) | What's covered by automated tests and what isn't |
 | [docs/known-issues-and-gaps.md](docs/known-issues-and-gaps.md) | The honest "what's not done" list |
 | [docs/table-data-audit.md](docs/table-data-audit.md) | Per-table data coverage audit |

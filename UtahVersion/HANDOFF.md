@@ -74,8 +74,15 @@ against current source.
 - **17 sequential, idempotent SQL migrations** building the full WID 3.0 schema plus deliberate,
   documented deviations from spec where the real data didn't fit it cleanly. See
   [database-schema.md](./fed-national-wid/docs/database-schema.md).
-- **A full API-contract parity pass** against `widapi/specs/wid-3.0/draft.yaml` — no known
-  endpoint-level gaps as of the last parity-closure review.
+- ~~A full API-contract parity pass against `widapi/specs/wid-3.0/draft.yaml` — no known
+  endpoint-level gaps~~ **— this claim, from Utah's own prior parity-closure review, turned out to
+  be wrong.** A direct side-by-side read of the current spec against all 11 controllers (done as
+  part of this handoff) found real, concrete drift: CPI and API keys entirely undocumented in the
+  spec, a routing mismatch on the projections directory endpoints, and an architectural mismatch in
+  how `ProjectionsMatrix` is keyed. See
+  [spec-contract-drift.md](./fed-national-wid/docs/spec-contract-drift.md) for the full findings —
+  read it before building any client code against the spec, and don't take Utah's prior parity
+  documents at face value going forward.
 - **Real integration tests** exist for the API's core query/pagination/auth behavior (104 tests
   passing across both test projects as of Utah's last local run — re-verify this yourself as part
   of your first build, don't take the number on faith). See
@@ -99,12 +106,17 @@ NC's early attention:
 2. **The database password is stored in a plaintext SSM `String` parameter**, not `SecureString` —
    confirmed in `cloud-deployment/lambda.template`. Small, well-scoped fix; do it before NC's first
    deploy.
-3. **`LicenseHistory` is empty** and can't be fixed in code — no upstream source currently
+3. **CPI is the one dataset that requires no authentication at all.** `CpiController`'s four
+   endpoints carry `[AllowAnonymous]`, overriding both the controller's own `[Authorize]` and the
+   API-wide `RequireAuthenticatedUser()` policy. Every other dataset requires auth. Nothing in the
+   code or history explains whether this was deliberate; confirm intent before relying on it either
+   way.
+4. **`LicenseHistory` is empty** and can't be fixed in code — no upstream source currently
    publishes it.
-4. **Six of the seven ingestors have zero dedicated unit tests** at the ingestor-class level (only
+5. **Six of the seven ingestors have zero dedicated unit tests** at the ingestor-class level (only
    CPI does). If NC's first priority is "make this pipeline trustworthy," this is the highest-value
    place to start.
-5. Several smaller, concretely-scoped items (a hardcoded Utah contact in outbound BLS request
+6. Several smaller, concretely-scoped items (a hardcoded Utah contact in outbound BLS request
    headers, one upsert with a possible column-name mismatch, an env-var leak risk in the
    force-refresh flag) are listed with exact file locations in known-issues-and-gaps.md.
 
@@ -141,12 +153,17 @@ checklist form:
       3. **Use any other OIDC-compliant identity provider** — Auth0, Okta, Azure AD B2C, Keycloak,
          a self-hosted IdP, whatever NC already runs or prefers. As part of this handoff,
          `Program.cs` was generalized to accept an `Oidc:Authority` configuration value that
-         overrides its Cognito-shaped default issuer-URL construction, so this is **also just a
-         configuration decision, not a code change** — see
+         overrides its Cognito-shaped default issuer-URL construction, so the *application code*
+         needs no change for this path — see
          [architecture.md](./fed-national-wid/docs/architecture.md#auth-dual-scheme-jwt-by-default-api-key-as-a-fallback)
          and [deployment-and-operations.md](./fed-national-wid/docs/deployment-and-operations.md#platform-portability--whats-aws-specific-vs-portable).
+         **This path does still require a small SAM template edit**, though: API Gateway's own
+         native JWT authorizer (`lambda.template`) is hardcoded to Cognito's issuer URL shape with
+         no equivalent override, so a genuinely non-Cognito provider means updating that
+         authorizer block, not just the deployment profile. Paths 1 and 2 (any Cognito pool) need
+         no template change at all — only path 3 does.
 
-      None of these three require touching the C# source — `Program.cs`'s JWT validation reads
+      Paths 1 and 2 require no C# source changes at all — `Program.cs`'s JWT validation reads
       `Cognito:*`/`Oidc:Authority` entirely from configuration, with zero hardcoded identity-provider
       values anywhere in the source; those only ever appear in the per-environment deployment
       profiles, which are meant to be edited per deployment regardless. The one genuinely

@@ -19,7 +19,11 @@
     "tagDept":                  { "Type": "String", "Default": "dws" },
     "tagDivision":              { "Type": "String", "Default": "wra" },
     "tagContact":               { "Type": "String", "Default": "MattSteadman@utah.gov" },
-    "tagEnv":                   { "Type": "String" }
+    "tagEnv":                   { "Type": "String" },
+    "appCorsOrigin1":           { "Type": "String", "Default": "" },
+    "appCorsOrigin2":           { "Type": "String", "Default": "" },
+    "appCorsOrigin3":           { "Type": "String", "Default": "http://localhost:4200" },
+    "appCorsOrigin4":           { "Type": "String", "Default": "https://localhost:4200" }
   },
 
   "Conditions": {
@@ -116,7 +120,7 @@
             "UlmitaCognito": {
               "JwtConfiguration": {
                 "issuer": {
-                  "Fn::Sub": "https://cognito-idp.us-gov-west-1.amazonaws.com/${appCognitoUserPoolId}"
+                  "Fn::Sub": "https://cognito-idp.${AWS::Region}.amazonaws.com/${appCognitoUserPoolId}"
                 },
                 "audience": {
                   "Fn::If": [
@@ -157,8 +161,8 @@
           }]
         },
         "ManagedPolicyArns": [
-          "arn:aws-us-gov:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-          "arn:aws-us-gov:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+          { "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" },
+          { "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole" }
         ]
       }
     },
@@ -176,8 +180,8 @@
           }]
         },
         "ManagedPolicyArns": [
-          "arn:aws-us-gov:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-          "arn:aws-us-gov:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+          { "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" },
+          { "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole" }
         ],
         "Policies": [{
           "PolicyName": "ReadNationalWidParameters",
@@ -224,7 +228,7 @@
                 { "Ref": "AWS::NoValue" }
               ]
             },
-            "Cognito__Region":        "us-gov-west-1",
+            "Cognito__Region":        { "Ref": "AWS::Region" },
             "ConnectionStrings__WidDb": {
               "Fn::Sub": [
                 "Host=${Host};Database=${DB};Username=widadmin;Password={{resolve:secretsmanager:${Secret}:SecretString:password}}",
@@ -235,10 +239,10 @@
                 }
               ]
             },
-            "Cors__AllowedOrigins__0": "https://dev.ulmita.org",
-            "Cors__AllowedOrigins__1": "https://ulmita.org",
-            "Cors__AllowedOrigins__2": "http://localhost:4200",
-            "Cors__AllowedOrigins__3": "https://localhost:4200"
+            "Cors__AllowedOrigins__0": { "Ref": "appCorsOrigin1" },
+            "Cors__AllowedOrigins__1": { "Ref": "appCorsOrigin2" },
+            "Cors__AllowedOrigins__2": { "Ref": "appCorsOrigin3" },
+            "Cors__AllowedOrigins__3": { "Ref": "appCorsOrigin4" }
           }
         },
         "VpcConfig": {

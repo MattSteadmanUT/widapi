@@ -196,12 +196,20 @@
             <div class="form-group">
                 <label>API Base URL</label>
                 <input type="url" id="baseUrl" value="https://uk6y6uz1il.execute-api.us-gov-west-1.amazonaws.com" placeholder="e.g., https://api.example.com">
+                <div class="endpoint-info">Prefilled with Utah's dev environment as an example — replace with your own deployment's URL.</div>
             </div>
-            
+
             <div class="form-group">
-                <label>Bearer Token (ULMITA JWT)</label>
-                <textarea id="token" placeholder="Paste your Cognito JWT token here..."></textarea>
+                <label>Bearer Token</label>
+                <textarea id="token" placeholder="Paste your JWT access token here (or leave blank and use an ApiKey header instead)..."></textarea>
                 <div id="tokenDetails" class="endpoint-info" style="display:none;"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Expected Token Issuer / Client IDs (for the debug panel only — does not block requests)</label>
+                <input type="text" id="expectedIssuer" value="https://cognito-idp.us-gov-west-1.amazonaws.com/us-gov-west-1_OGMbjPhYh" placeholder="Your OIDC issuer URL">
+                <input type="text" id="expectedClientIds" value="1151pibjvfgecq8d761drjcmu8,57k8c86o5fidijcjjnubrsudf5" placeholder="Comma-separated allowed client/audience IDs" style="margin-top:6px;">
+                <div class="endpoint-info">Prefilled with Utah's dev Cognito pool as an example — replace with your own identity provider's issuer and client ID(s). This only affects the "matches expected issuer" note in the token debug panel below, never whether a request is actually sent.</div>
             </div>
             
             <div class="button-group">
@@ -212,25 +220,38 @@
             <div class="form-group">
                 <label>Endpoint</label>
                 <select id="endpoint" onchange="updateEndpointInfo()">
-                    <optgroup label="Data Endpoints (require auth)">
+                    <optgroup label="Core Data Endpoints (require auth)">
                         <option value="/ces">GET /ces - Current Employment Statistics</option>
                         <option value="/labor-force">GET /labor-force - Labor Force (LAUS)</option>
                         <option value="/industry">GET /industry - Industry Data (QCEW)</option>
-                        <option value="/wages">GET /wages - Wages (OES)</option>
+                        <option value="/wages">GET /wages - Wages (OEWS)</option>
                         <option value="/projections">GET /projections - Employment Projections</option>
+                    </optgroup>
+                    <optgroup label="Licensing Endpoints (require auth)">
+                        <option value="/licensing/licenses">GET /licensing/licenses</option>
+                        <option value="/licensing/authorities">GET /licensing/authorities</option>
+                        <option value="/licensing/history">GET /licensing/history</option>
+                        <option value="/licensing/occupationCrosswalks">GET /licensing/occupationCrosswalks</option>
                     </optgroup>
                     <optgroup label="Lookup Endpoints (require auth)">
                         <option value="/lookups/geographies">GET /lookups/geographies</option>
-                        <option value="/lookups/period-years">GET /lookups/period-years</option>
-                        <option value="/lookups/ces-codes">GET /lookups/ces-codes</option>
+                        <option value="/lookups/periodYears">GET /lookups/periodYears</option>
+                        <option value="/lookups/cesCodes">GET /lookups/cesCodes</option>
                         <option value="/lookups/ind-directories">GET /lookups/ind-directories</option>
                         <option value="/lookups/occ-directories">GET /lookups/occ-directories</option>
+                    </optgroup>
+                    <optgroup label="CPI Endpoints (no auth required -- see docs/known-issues-and-gaps.md)">
+                        <option value="/cpi">GET /cpi</option>
+                        <option value="/cpi/metadata">GET /cpi/metadata</option>
+                        <option value="/cpi/items">GET /cpi/items</option>
+                        <option value="/cpi/areas">GET /cpi/areas</option>
                     </optgroup>
                     <optgroup label="Public Endpoints (no auth)">
                         <option value="/health">GET /health</option>
                         <option value="/status">GET /status</option>
                     </optgroup>
                 </select>
+                <div class="endpoint-info">This is not the full endpoint catalog -- see the README's API Reference for everything (Views, all 16 lookup tables, API key management). This tool only lists the ones most useful for a quick connectivity/auth smoke test.</div>
             </div>
             
             <div id="endpointInfo" class="endpoint-info"></div>
@@ -265,8 +286,16 @@
     </div>
     
     <script>
-        const expectedIssuer = 'https://cognito-idp.us-gov-west-1.amazonaws.com/us-gov-west-1_OGMbjPhYh';
-        const expectedClientIds = ['1151pibjvfgecq8d761drjcmu8', '57k8c86o5fidijcjjnubrsudf5'];
+        function getExpectedIssuer() {
+            return (document.getElementById('expectedIssuer').value || '').trim();
+        }
+
+        function getExpectedClientIds() {
+            return (document.getElementById('expectedClientIds').value || '')
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean);
+        }
 
         const commonParams = {
             '/ces': ['stFips', 'areaType', 'area', 'seriesCode', 'sort', 'page', 'pageSize'],
@@ -274,19 +303,35 @@
             '/industry': ['stFips', 'areaType', 'area', 'indCode', 'sort', 'page', 'pageSize'],
             '/wages': ['stFips', 'areaType', 'area', 'occCode', 'indCode', 'sort', 'page', 'pageSize'],
             '/projections': ['stFips', 'areaType', 'area', 'indCode', 'occCode', 'sort', 'page', 'pageSize'],
+            '/licensing/licenses': ['stFips', 'licAuthID', 'licenseID', 'licenseType', 'sort', 'page', 'pageSize'],
+            '/licensing/authorities': ['stFips', 'areaType', 'area', 'licAuthID', 'sort', 'page', 'pageSize'],
+            '/licensing/history': ['stFips', 'areaType', 'area', 'periodYear', 'licenseID', 'sort', 'page', 'pageSize'],
+            '/licensing/occupationCrosswalks': ['stFips', 'occCode', 'licenseID', 'sort', 'page', 'pageSize'],
             '/lookups/geographies': ['stFips', 'areaType', 'area', 'sort', 'page', 'pageSize'],
-            '/lookups/period-years': ['stFips', 'periodType', 'sort', 'page', 'pageSize'],
-            '/lookups/ces-codes': ['stFips', 'seriesCode', 'sort', 'page', 'pageSize'],
+            '/lookups/periodYears': ['stFips', 'periodType', 'sort', 'page', 'pageSize'],
+            '/lookups/cesCodes': ['stFips', 'seriesCode', 'sort', 'page', 'pageSize'],
             '/lookups/ind-directories': ['stFips', 'indCode', 'sort', 'page', 'pageSize'],
             '/lookups/occ-directories': ['stFips', 'occCode', 'sort', 'page', 'pageSize'],
+            '/cpi': ['seriesId', 'year', 'period', 'areaCode', 'itemCode', 'seasonalCode', 'sort', 'page', 'pageSize'],
+            '/cpi/metadata': ['areaCode', 'itemCode', 'seasonalCode', 'sort', 'page', 'pageSize'],
+            '/cpi/items': ['itemCode', 'sort', 'page', 'pageSize'],
+            '/cpi/areas': ['areaCode', 'sort', 'page', 'pageSize'],
         };
-        
+
         const endpointDescriptions = {
             '/ces': 'Current Employment Statistics - monthly employment data. Supports comma-separated filter values and wildcard code filters (for example seriesCode=11*).',
             '/labor-force': 'Labor Force - LAUS national/state unemployment data. Supports comma-separated filter values.',
             '/industry': 'Industry Employment - quarterly QCEW data. Supports comma-separated filter values and wildcard code filters (for example indCode=31*).',
-            '/wages': 'Wages & Employment - OES occupational wage data. Supports comma-separated filter values and wildcard code filters (for example occCode=11*).',
+            '/wages': 'Wages & Employment - OEWS occupational wage data. Supports comma-separated filter values and wildcard code filters (for example occCode=11*).',
             '/projections': 'Employment Projections - industry/occupation projections. Supports comma-separated filter values and wildcard code filters.',
+            '/licensing/licenses': 'Occupational license records, sourced from WID Center / CareerOneStop exports.',
+            '/licensing/authorities': 'Licensing board/agency contact records.',
+            '/licensing/history': 'Historical license counts by area/period -- currently empty for every state, see docs/known-issues-and-gaps.md (source-constrained, not a bug).',
+            '/licensing/occupationCrosswalks': 'Maps licenses to SOC occupation codes.',
+            '/cpi': 'CPI observation values. Does NOT require authentication -- see docs/known-issues-and-gaps.md for why this endpoint family is the one exception.',
+            '/cpi/metadata': 'CPI series metadata joined with area/item names. No authentication required.',
+            '/cpi/items': 'CPI item (price basket component) code reference. No authentication required.',
+            '/cpi/areas': 'CPI geographic area code reference. No authentication required.',
             '/health': 'Health check - returns {status: "healthy"}',
             '/status': 'Service status - data freshness from last ingestion',
         };
@@ -344,8 +389,8 @@
             const issuer = payload.iss || '(missing)';
             const audience = payload.aud || payload.client_id || '(missing)';
             const expiresAt = formatEpochSeconds(payload.exp);
-            const matchesIssuer = issuer === expectedIssuer;
-            const matchesAudience = expectedClientIds.includes(audience);
+            const matchesIssuer = issuer === getExpectedIssuer();
+            const matchesAudience = getExpectedClientIds().includes(audience);
 
             details.style.display = 'block';
             details.textContent = [
@@ -353,7 +398,7 @@
                 `iss: ${issuer}`,
                 `aud/client_id: ${audience}`,
                 `exp: ${expiresAt}`,
-                `expected client ids: ${expectedClientIds.join(', ')}`,
+                `expected client ids: ${getExpectedClientIds().join(', ')}`,
                 payload['custom:stFips'] ? `custom:stFips: ${payload['custom:stFips']}` : 'custom:stFips: (missing)'
             ].join('\n');
 
@@ -475,8 +520,8 @@
                             debugLines.push(`token_use: ${payload.token_use || '(missing)'}`);
                             debugLines.push(`aud: ${payload.aud || '(missing)'}`);
                             debugLines.push(`client_id: ${payload.client_id || '(missing)'}`);
-                            debugLines.push(`expected issuer: ${expectedIssuer}`);
-                            debugLines.push(`expected client ids: ${expectedClientIds.join(', ')}`);
+                            debugLines.push(`expected issuer: ${getExpectedIssuer()}`);
+                            debugLines.push(`expected client ids: ${getExpectedClientIds().join(', ')}`);
                         }
 
                         displayText += '\n' + debugLines.join('\n');

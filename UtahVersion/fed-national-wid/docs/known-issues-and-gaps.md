@@ -26,6 +26,14 @@ true as of this handoff (2026-08-12, repo HEAD `6b47131`).
 
 ## Still genuinely open — pick these up first
 
+0. **The WID 3.0 spec (`specs/wid-3.0/draft.yaml`, this repo's root) has real drift from this
+   implementation, and Utah's own "no remaining gaps" parity claim is wrong.** This is significant
+   enough to get its own document — see
+   [spec-contract-drift.md](./spec-contract-drift.md) before building anything against the spec.
+   Short version: CPI and API keys are entirely undocumented in the spec, the projections
+   directory endpoints live at a different URL than the spec says, and `ProjectionsMatrix`'s key
+   structure is architecturally different from what the spec describes.
+
 1. **`LicenseHistory` is empty.** Not a bug — every currently published per-state license-history
    export from WID Center has zero rows, and the CareerOneStop `COSFlatExport` doesn't carry
    history either. No alternate machine-readable source was identified. This can't be "fixed" in
@@ -112,6 +120,61 @@ true as of this handoff (2026-08-12, repo HEAD `6b47131`).
     workflow, which may not match whatever branching strategy NC adopts for wherever this ends up
     hosted on GitHub. If NC wants an equivalent branch-protection rule, it's a small, easy workflow
     to recreate — the original is on GitHub at `utahdws/fed-national-wid` if a reference is useful.
+
+14. **The `tagElcid`/`tagDept`/`tagDivision`/`tagContact`/`tagEnv` template parameters are never
+    actually applied to any AWS resource.** Confirmed by grepping `lambda.template`: these
+    parameters exist and flow in from both deployment profiles, but zero `"Tags"` properties
+    reference them anywhere in `Resources`. If NC's account has cost-allocation-tag or tag-policy
+    enforcement, this template currently doesn't tag anything despite looking like it has a
+    tagging convention built in. Either wire these into the actual resource definitions or drop
+    the unused parameters — as shipped, they're dead configuration.
+
+15. **`--capabilities CAPABILITY_NAMED_IAM` is not passed to `dotnet lambda deploy-serverless`**
+    in `dev-scripts/Deploy.ps1`, and the template names its IAM roles explicitly
+    (`${appEnvironment}-national-wid-api-role`, etc.), which CloudFormation normally requires that
+    capability acknowledgment for. **This was deliberately left unfixed rather than guessed at** —
+    `dotnet lambda deploy-serverless` (Amazon.Lambda.Tools) may handle this differently than the
+    raw AWS CLI's `cloudformation deploy`, and asserting the wrong flag syntax risks breaking the
+    script worse than leaving it. Before NC's first `just deploy dev`, run
+    `dotnet lambda deploy-serverless --help` to check the actual current syntax, or be prepared to
+    add whatever capability-acknowledgment flag it requires if the deploy fails or prompts
+    interactively (which would hang in a non-interactive/CI run).
+
+16. **Aurora's cluster identifier is deterministic** (`${appEnvironment}-national-wid`, not
+    unique per deploy attempt), and the cluster has `DeletionPolicy`/`UpdateReplacePolicy:
+    Snapshot`. If a first deploy attempt fails and the stack gets rolled back or deleted, or if NC
+    tears down and redeploys dev while iterating, CloudFormation will attempt to snapshot the
+    cluster under a system-generated identifier tied to that deterministic cluster ID. It's
+    untested whether a second `CREATE_COMPLETE` attempt at the same `appEnvironment` value could
+    collide with a leftover snapshot from a prior failed attempt, requiring manual snapshot
+    cleanup. Watch for this if an early deploy attempt fails and a retry behaves unexpectedly.
+
+17. **Unregistered-BLS-key rate limits are undocumented against the actual recurring schedule.**
+    `ParameterStoreService.GetParameterOrDefaultAsync` correctly doesn't throw if no BLS API key is
+    configured (see [first-deployment-playbook.md](./first-deployment-playbook.md)), but nothing
+    documents what BLS's unregistered-key rate limits actually are, or whether the 7 scheduled
+    EventBridge invocations — two of them (`laus`, `ces`) clustered at the identical time on every
+    weekday — would exceed an anonymous quota on an ongoing basis, as opposed to the one-time
+    manual backfill the deployment playbook walks through. Register a real BLS API key before
+    relying on the schedules long-term, not just for the initial bootstrap.
+
+18. **Minor script robustness gaps**, not urgent: `dev-scripts/Tail-Logs.ps1`'s `-Function all`
+    mode starts two background jobs and polls `Receive-Job` without checking for job failures — if
+    one job fails to start (e.g. tailing a log group that doesn't exist yet because nothing's been
+    invoked), the failure won't surface clearly. `dev-scripts/Run-Migrations.ps1` throws if the
+    Lambda response lacks a `tableChecks` field, which only happens if an *older* ingestion Lambda
+    build (predating that field) is deployed — not a risk for a true first deploy, but worth
+    knowing if a future rollback ever mixes an old Lambda build with this script.
+
+19. **Two independent CORS layers exist with different policies, which can be confusing to debug.**
+    API Gateway's own CORS configuration (`lambda.template`'s `HttpApi` resource) allows all
+    origins (`AllowOrigins: ["*"]`); the actual restriction to specific frontend origins happens one
+    layer deeper, in the ASP.NET Core app itself via the `Cors__AllowedOrigins__N` environment
+    variables (now template-parameterized as `appCorsOrigin1`-`4` — see
+    [deployment-and-operations.md](./deployment-and-operations.md)). This isn't a bug — app-level
+    CORS is the real gatekeeper and API Gateway's wide-open setting is harmless on its own — but if
+    NC ever debugs a CORS rejection, check the app-level config first; the API Gateway layer will
+    never be the thing blocking a request.
 
 ## Needs a live check NC will have to do themselves
 

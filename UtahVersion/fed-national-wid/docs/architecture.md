@@ -89,9 +89,14 @@ the right one per-request:
    By default the issuer URL is built from `Cognito:Region`/`Cognito:UserPoolId` in Cognito's
    URL shape (`https://cognito-idp.{region}.amazonaws.com/{userPoolId}`), which is what Utah's
    deployment uses today. An explicit `Oidc:Authority` configuration value — added as part of this
-   handoff — overrides that construction entirely, so pointing this at Auth0, Okta, Azure AD B2C,
-   Keycloak, a self-hosted IdP, or any other OIDC-compliant provider is a **configuration change,
-   not a code change**. Validation itself happens against that issuer's OIDC discovery document
+   handoff — overrides that construction entirely, so pointing *this application code* at Auth0,
+   Okta, Azure AD B2C, Keycloak, a self-hosted IdP, or any other OIDC-compliant provider is a
+   **configuration change, not a code change**. As deployed on AWS today, though, API Gateway's own
+   native JWT authorizer sits in front of this code and validates independently with a
+   Cognito-only issuer shape hardcoded into `lambda.template` — that layer *does* need a template
+   edit for a non-Cognito provider, even though `Program.cs` doesn't. See
+   [deployment-and-operations.md](./deployment-and-operations.md#platform-portability--whats-aws-specific-vs-portable)
+   for the full picture of which layer needs what. Validation itself happens against that issuer's OIDC discovery document
    (`{issuer}/.well-known/openid-configuration`), with one small Cognito-specific fallback in the
    `AudienceValidator` — Cognito *access* tokens (as opposed to ID tokens) carry the app client ID
    in a `client_id` claim rather than the standard `aud` claim, so that claim is checked as a

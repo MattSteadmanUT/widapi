@@ -39,6 +39,11 @@
     "tagDept": "dws",
     "tagDivision": "wra",
     "tagContact": "MattSteadman@utah.gov",
-    "tagEnv": "prod"
+    "tagEnv": "prod",
+
+    "appCorsOrigin1": "TODO_SET_PROD_FRONTEND_ORIGIN",
+    "appCorsOrigin2": "",
+    "appCorsOrigin3": "",
+    "appCorsOrigin4": ""
   }
 }

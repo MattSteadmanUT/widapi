@@ -38,6 +38,11 @@
     "tagDept": "dws",
     "tagDivision": "wra",
     "tagContact": "MattSteadman@utah.gov",
-    "tagEnv": "dev"
+    "tagEnv": "dev",
+
+    "appCorsOrigin1": "https://dev.ulmita.org",
+    "appCorsOrigin2": "https://ulmita.org",
+    "appCorsOrigin3": "http://localhost:4200",
+    "appCorsOrigin4": "https://localhost:4200"
   }
 }

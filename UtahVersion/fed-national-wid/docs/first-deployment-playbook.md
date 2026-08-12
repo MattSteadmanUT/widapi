@@ -89,12 +89,24 @@ just validate-deploy dev   # sam validate against the merged template first
 just deploy dev
 ```
 
+The template names its IAM roles explicitly, which CloudFormation deploys normally require an
+explicit capability acknowledgment for. `Deploy.ps1` doesn't currently pass one — if the deploy
+fails or hangs on a capability prompt, run `dotnet lambda deploy-serverless --help` to check the
+current flag syntax for your installed tool version (see
+[known-issues-and-gaps.md](./known-issues-and-gaps.md) item 15 for why this wasn't guessed at and
+pre-fixed here). See item 3 in Step 1 for the IAM permissions the deploying identity itself needs —
+there's a starting-point policy at [iam-deployer-policy.md](./iam-deployer-policy.md).
+
 This single command provisions the Aurora Serverless v2 cluster (with the `nationalwid` — or
 whatever `appAuroraDbName` is set to — database created automatically as part of cluster creation),
 both Lambdas, the API Gateway HTTP API with its Cognito/OIDC authorizer, the 7 EventBridge
 schedules, the IAM roles, the Secrets Manager-generated DB password, and the SSM parameter that
 assembles the full connection string from it. **Nothing is populated yet** — the database exists
-but is empty (no tables).
+but is empty (no tables), and there's no dependency in the template that blocks this step from
+"succeeding": `just deploy dev` will report success while the API Lambda is already live and will
+return 500s on every data-touching route until you complete Step 7 below. That gap between "deploy
+succeeded" and "API actually works" isn't enforced by the tooling — treat Step 7 as mandatory
+before testing anything beyond `GET /health`.
 
 ## Step 6: BLS API key (optional but recommended)
 

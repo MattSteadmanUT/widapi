@@ -59,11 +59,11 @@ $lastStatus = $null
 Write-Host "Watching stack '$StackName' in $Region (profile: $Profile)" -ForegroundColor Cyan
 
 while ($true) {
-    $stack = aws cloudformation describe-stacks \
-        --stack-name $StackName \
-        --profile $Profile \
-        --region $Region \
-        --query 'Stacks[0].{Status:StackStatus,Reason:StackStatusReason}' \
+    $stack = aws cloudformation describe-stacks `
+        --stack-name $StackName `
+        --profile $Profile `
+        --region $Region `
+        --query 'Stacks[0].{Status:StackStatus,Reason:StackStatusReason}' `
         --output json | ConvertFrom-Json
 
     $status = [string]$stack.Status
@@ -98,12 +98,12 @@ while ($true) {
         Write-Host "Terminal failure state reached: $status" -ForegroundColor Red
         Write-Host "Most recent failed resources:" -ForegroundColor Red
 
-        aws cloudformation describe-stack-events \
-            --stack-name $StackName \
-            --profile $Profile \
-            --region $Region \
-            --max-items 50 \
-            --query "StackEvents[?contains(ResourceStatus, 'FAILED')].[Timestamp,ResourceStatus,LogicalResourceId,ResourceType,ResourceStatusReason]" \
+        aws cloudformation describe-stack-events `
+            --stack-name $StackName `
+            --profile $Profile `
+            --region $Region `
+            --max-items 50 `
+            --query "StackEvents[?contains(ResourceStatus, 'FAILED')].[Timestamp,ResourceStatus,LogicalResourceId,ResourceType,ResourceStatusReason]" `
             --output table
 
         exit 2
@@ -113,12 +113,12 @@ while ($true) {
         Write-Host "Timed out waiting for terminal stack state." -ForegroundColor Red
         Write-Host "Current status: $status" -ForegroundColor Red
         Write-Host "Recent events:" -ForegroundColor Red
-        aws cloudformation describe-stack-events \
-            --stack-name $StackName \
-            --profile $Profile \
-            --region $Region \
-            --max-items 20 \
-            --query "StackEvents[].[Timestamp,ResourceStatus,LogicalResourceId,ResourceType,ResourceStatusReason]" \
+        aws cloudformation describe-stack-events `
+            --stack-name $StackName `
+            --profile $Profile `
+            --region $Region `
+            --max-items 20 `
+            --query "StackEvents[].[Timestamp,ResourceStatus,LogicalResourceId,ResourceType,ResourceStatusReason]" `
             --output table
         exit 3
     }

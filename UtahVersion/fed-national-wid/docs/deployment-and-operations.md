@@ -37,17 +37,27 @@ breakdown, verified against the actual code rather than assumed:
   `just run`/`dotnet watch run` already runs it locally as an ordinary web server, no Lambda
   runtime present. It will run unmodified on any container host, PaaS, VM, or on-prem server that
   can host a .NET 8 web app.
-- **Authentication.** Standard ASP.NET Core `JwtBearer`/OIDC middleware — Cognito is simply the
-  identity provider Utah configured, not a requirement baked into the code. `Program.cs` builds
-  its OIDC issuer URL from `Cognito:Region`/`Cognito:UserPoolId` by default (matching Cognito's
-  URL shape), but an explicit `Oidc:Authority` configuration value — added as part of this handoff
-  — overrides that construction entirely. Point `Oidc:Authority` at Auth0, Okta, Azure AD B2C,
-  Keycloak, a self-hosted IdP, or a second Cognito pool under a different AWS account, and it
-  works with **zero code changes**, as long as the provider is OIDC-compliant and issues standard
-  JWTs. The one Cognito-specific quirk (`AudienceValidator`'s `client_id`-claim fallback, since
-  Cognito access tokens don't populate the standard `aud` claim) is additive and harmless against
-  any provider that doesn't set that claim — it doesn't need to be removed for a non-Cognito
-  provider to work.
+- **Authentication — at the application layer only.** Standard ASP.NET Core `JwtBearer`/OIDC
+  middleware — Cognito is simply the identity provider Utah configured, not a requirement baked
+  into the C# code. `Program.cs` builds its OIDC issuer URL from
+  `Cognito:Region`/`Cognito:UserPoolId` by default (matching Cognito's URL shape), but an explicit
+  `Oidc:Authority` configuration value — added as part of this handoff — overrides that
+  construction entirely, with **zero code changes**, as long as the provider is OIDC-compliant and
+  issues standard JWTs. The one Cognito-specific quirk (`AudienceValidator`'s `client_id`-claim
+  fallback, since Cognito access tokens don't populate the standard `aud` claim) is additive and
+  harmless against any provider that doesn't set that claim.
+
+  **This does not mean switching identity providers is template-free, though** — as currently
+  deployed on AWS, API Gateway's own native JWT authorizer (`lambda.template`'s `HttpApi` resource,
+  the `UlmitaCognito` authorizer block) sits in front of the Lambda and validates the token
+  *before* `Program.cs` ever sees it. That authorizer's issuer URL is built from
+  `appCognitoUserPoolId` in Cognito's specific URL shape, with no `Oidc:Authority`-equivalent
+  parameter — it has no way to point at a non-Cognito provider without editing the SAM template's
+  `Auth.Authorizers` block directly (or replacing it with a Lambda authorizer, a larger change).
+  So: swapping to a different Cognito pool (Utah's or NC's own) is template-free: same URL shape,
+  different pool ID, all via the deployment profile. Swapping to a genuinely different OIDC
+  provider (Auth0, Okta, Azure AD B2C, Keycloak) requires editing `lambda.template`'s authorizer
+  block, even though `Program.cs` itself needs no change either way.
 - **The database.** Plain PostgreSQL 16 via Npgsql/EF Core (`ConnectionStrings:WidDb`). Aurora
   Serverless v2 is Utah's hosting choice, not a dependency — any managed or self-hosted Postgres
   instance works.

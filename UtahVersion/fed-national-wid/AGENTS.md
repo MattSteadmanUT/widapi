@@ -60,9 +60,12 @@ Public (unauthenticated) endpoints: `GET /health`, `GET /status`, `GET /status/h
 The WID 3.0 spec lives in this repository's sibling location (two directories up from this file):
 `../../specs/wid-3.0/draft.yaml` (OpenAPI 3.1) and `../../specs/wid-3.0/WID-3.0-Structure-20251120.md`
 (structure document). See the "Cross-Repo API Contract Governance" section below for how this
-implementation and that spec are supposed to stay in sync — and `docs/known-issues-and-gaps.md`
-for where that governance process itself has open questions for NC (e.g. no automated OpenAPI
-generation currently exists in this API to diff against the spec).
+implementation and that spec are *supposed* to stay in sync — in practice, as of this handoff they
+have drifted apart in real, concrete ways. **Read `docs/spec-contract-drift.md` before treating the
+spec as ground truth for anything** — it documents exactly where they disagree (CPI and API keys
+entirely undocumented in the spec, a routing mismatch on the projections directory endpoints, an
+architectural mismatch in `ProjectionsMatrix`'s key structure) and corrects a prior "no remaining
+gaps" claim from Utah's own parity review that turned out to be wrong.
 
 ### Core tables
 | WID Table | API Path | Source |
@@ -201,7 +204,12 @@ paths have changed now that both live in one repository.
 1. If implementation temporarily diverges from the spec, record the drift explicitly and create a
    follow-up task to close the gap.
 2. Prefer spec-first or same-PR synchronization over deferred backfill.
-3. Governance-process question for NC: with Utah stepping back, who is the maintainer/approver for
+3. **This policy was not followed consistently before this handoff** — `docs/spec-contract-drift.md`
+   documents the real, current drift that resulted (CPI and API keys undocumented, a projections
+   routing mismatch, an architectural mismatch in `ProjectionsMatrix`). Read it, and don't rely on
+   `docs/api-contract-parity-closure-2026-07-31.md`'s "no remaining gaps" conclusion — it's
+   superseded and wrong.
+4. Governance-process question for NC: with Utah stepping back, who is the maintainer/approver for
    `specs/wid-3.0/draft.yaml` now? Is there still an active ARC-consortium review process for spec
    changes? This isn't answerable from the code — resolve it directly with the ARC consortium
    before assuming any particular approval process still applies.
