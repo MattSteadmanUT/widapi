@@ -1,0 +1,23 @@
+name: Enforce dev-only PRs into prod
+
+on:
+  pull_request:
+    branches:
+      - prod
+
+jobs:
+  enforce-dev-source-branch:
+    name: Allow only dev as source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if source branch is not dev
+        run: |
+          echo "Base branch: ${{ github.base_ref }}"
+          echo "Source branch: ${{ github.head_ref }}"
+          
+          if [ "${{ github.head_ref }}" != "dev" ]; then
+            echo "ERROR: Only pull requests from the 'dev' branch may be merged into 'prod'."
+            exit 1
+          fi
+          
+          echo "OK: Pull request is from 'dev' into 'prod'."

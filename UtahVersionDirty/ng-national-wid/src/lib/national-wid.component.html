@@ -1,0 +1,1401 @@
+<div class="wid-portal">
+
+  <!-- ===== Header ===== -->
+  <div class="wid-header w3-govopso">
+    <div class="wid-header-inner">
+      <div>
+        <h2 class="wid-title">National WID 3.0 Portal</h2>
+        <p class="wid-subtitle">Nationally-available labor market data &mdash; BLS / ETA sources</p>
+      </div>
+      <a class="w3-button w3-govopsb w3-round wid-back-btn" (click)="routeBack()">
+        &larr; My Resources
+      </a>
+    </div>
+  </div>
+
+  <!-- ===== Tab Bar ===== -->
+  <div class="wid-tabs w3-bar w3-theme-l4">
+    <button class="w3-bar-item w3-button wid-tab"
+      [class.wid-tab-active]="activeTab === 'status'"
+      (click)="selectTab('status')">
+      <i class="fa-solid fa-circle-dot"></i> Status
+    </button>
+    <button class="w3-bar-item w3-button wid-tab"
+      [class.wid-tab-active]="activeTab === 'laus'"
+      (click)="selectTab('laus')">
+      <i class="fa-solid fa-people-group"></i> LAUS
+    </button>
+    <button class="w3-bar-item w3-button wid-tab"
+      [class.wid-tab-active]="activeTab === 'ces'"
+      (click)="selectTab('ces')">
+      <i class="fa-solid fa-chart-line"></i> CES
+    </button>
+    <button class="w3-bar-item w3-button wid-tab"
+      [class.wid-tab-active]="activeTab === 'industry'"
+      (click)="selectTab('industry')">
+      <i class="fa-solid fa-industry"></i> Industry (QCEW)
+    </button>
+    <button class="w3-bar-item w3-button wid-tab"
+      [class.wid-tab-active]="activeTab === 'wages'"
+      (click)="selectTab('wages')">
+      <i class="fa-solid fa-dollar-sign"></i> Wages (OEWS)
+    </button>
+    <button class="w3-bar-item w3-button wid-tab"
+      [class.wid-tab-active]="activeTab === 'projections'"
+      (click)="selectTab('projections')">
+      <i class="fa-solid fa-arrow-trend-up"></i> Projections
+    </button>
+    <button class="w3-bar-item w3-button wid-tab"
+      [class.wid-tab-active]="activeTab === 'licensing'"
+      (click)="selectTab('licensing')">
+      <i class="fa-solid fa-id-card"></i> Licensing
+    </button>
+    <button class="w3-bar-item w3-button wid-tab"
+      [class.wid-tab-active]="activeTab === 'cpi'"
+      (click)="selectTab('cpi')">
+      <i class="fa-solid fa-chart-column"></i> CPI
+    </button>
+    <button class="w3-bar-item w3-button wid-tab"
+      [class.wid-tab-active]="activeTab === 'nonCoreLookups'"
+      (click)="selectTab('nonCoreLookups')">
+      <i class="fa-solid fa-table-cells"></i> Non-Core Lookups
+    </button>
+    <button class="w3-bar-item w3-button wid-tab"
+      [class.wid-tab-active]="activeTab === 'nonCoreViews'"
+      (click)="selectTab('nonCoreViews')">
+      <i class="fa-solid fa-layer-group"></i> Non-Core Views
+    </button>
+  </div>
+
+  <div class="wid-content">
+
+    <!-- ===================== STATUS TAB ===================== -->
+    @if (activeTab === 'status') {
+      <div class="wid-section">
+        <div class="wid-section-header w3-theme">
+          <h3>API &amp; Dataset Status</h3>
+          <button class="w3-button w3-white w3-round w3-small" (click)="loadStatus()">
+            <i class="fa-solid fa-rotate"></i> Refresh
+          </button>
+        </div>
+
+        @if (statusLoading) {
+          <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</p>
+        }
+        @if (statusError) {
+          <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ statusError }}</p></div>
+        }
+        @if (!statusLoading && statusData) {
+          <p>
+            <span class="w3-tag w3-round" [class.w3-green]="statusData.status === 'healthy'" [class.w3-orange]="statusData.status !== 'healthy'">
+              {{ statusData.status | uppercase }}
+            </span>
+            &nbsp;Generated {{ statusData.generatedAt | date:'medium' }}
+          </p>
+          <h4 class="wid-subhead">Core Tables</h4>
+          <div class="wid-scroll">
+            <table class="w3-table w3-bordered w3-striped wid-table">
+              <thead><tr class="w3-theme-l3">
+                <th>Dataset</th><th>Class</th><th>Last Checked</th><th>Last Changed</th><th>Total Records</th><th>Records Changed (Last Update)</th><th>Records Added (Last Update)</th><th>Status</th><th>History</th><th>Notes</th>
+              </tr></thead>
+              <tbody>
+                @for (ds of coreDatasets; track ds.dataSet) {
+                  <tr>
+                    <td>
+                      <button class="wid-dataset-link" type="button" (click)="goToDatasetControls(ds)">
+                        {{ ds.dataSet }}
+                      </button>
+                    </td>
+                    <td><span class="w3-tag w3-round w3-small w3-blue">{{ ds.tableClass ?? 'core' }}</span></td>
+                    <td>{{ ds.lastCheckedAt ? (ds.lastCheckedAt | date:'medium') : '—' }}</td>
+                    <td>{{ ds.lastChangedAt ? (ds.lastChangedAt | date:'medium') : '—' }}</td>
+                    <td>{{ fNum(ds.totalRecords) }}</td>
+                    <td>{{ fNum(ds.recordsChanged) }}</td>
+                    <td>{{ fNum(ds.recordsAdded) }}</td>
+                    <td>
+                      <span class="w3-tag w3-round w3-small"
+                        [class.w3-green]="ds.lastStatus === 'ok' || ds.lastStatus === 'completed'"
+                        [class.w3-orange]="ds.lastStatus !== 'ok' && ds.lastStatus !== 'completed'">
+                        {{ ds.lastStatus ?? 'unknown' }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="w3-button w3-border w3-round w3-small" type="button" (click)="toggleStatusHistory(ds)">
+                        {{ isStatusHistoryOpen(ds) ? 'Hide' : 'View' }}
+                      </button>
+                    </td>
+                    <td class="w3-text-grey w3-small">
+                      @if (ds.sourceUrl) {
+                        <div><a [href]="ds.sourceUrl" target="_blank" rel="noopener noreferrer">{{ ds.sourceUrl }}</a></div>
+                      }
+                      @if (ds.errorMessage) {
+                        <div class="w3-text-red">{{ ds.errorMessage }}</div>
+                      }
+                    </td>
+                  </tr>
+                  @if (isStatusHistoryOpen(ds)) {
+                    <tr>
+                      <td colspan="10" class="w3-small">
+                        @if (statusHistoryLoading) {
+                          <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading history&hellip;</p>
+                        }
+                        @if (statusHistoryError) {
+                          <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ statusHistoryError }}</p></div>
+                        }
+                        @if (!statusHistoryLoading && statusHistoryData?.items?.length) {
+                          <div class="wid-scroll">
+                            <table class="w3-table w3-bordered w3-striped wid-table">
+                              <thead><tr class="w3-theme-l5">
+                                <th>Run At</th><th>Last Checked</th><th>Last Changed</th><th>Status</th><th>Total</th><th>Changed</th><th>Added</th><th>Source URL</th><th>Hash</th><th>Result</th>
+                              </tr></thead>
+                              <tbody>
+                                @for (h of statusHistoryData.items; track h.runAt + h.sourceHash) {
+                                  <tr>
+                                    <td>{{ h.runAt ? (h.runAt | date:'medium') : '—' }}</td>
+                                    <td>{{ h.lastCheckedAt ? (h.lastCheckedAt | date:'medium') : '—' }}</td>
+                                    <td>{{ h.lastChangedAt ? (h.lastChangedAt | date:'medium') : '—' }}</td>
+                                    <td>{{ h.lastStatus ?? '—' }}</td>
+                                    <td>{{ fNum(h.totalRecords) }}</td>
+                                    <td>{{ fNum(h.recordsChanged) }}</td>
+                                    <td>{{ fNum(h.recordsAdded) }}</td>
+                                    <td>@if (h.sourceUrl) {<a [href]="h.sourceUrl" target="_blank" rel="noopener noreferrer">{{ h.sourceUrl }}</a>} @else {—}</td>
+                                    <td>{{ shortHash(h.sourceHash) }}</td>
+                                    <td>
+                                      @if (h.sourceChanged === true) {changed}
+                                      @else if (h.sourceChanged === false) {unchanged}
+                                      @else {—}
+                                    </td>
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                          </div>
+                        }
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <h4 class="wid-subhead">Non-Core Tables</h4>
+          <div class="wid-scroll">
+            <table class="w3-table w3-bordered w3-striped wid-table">
+              <thead><tr class="w3-theme-l3">
+                <th>Dataset</th><th>Class</th><th>Last Checked</th><th>Last Changed</th><th>Total Records</th><th>Records Changed (Last Update)</th><th>Records Added (Last Update)</th><th>Status</th><th>History</th><th>Notes</th>
+              </tr></thead>
+              <tbody>
+                @for (ds of nonCoreDatasets; track ds.dataSet) {
+                  <tr>
+                    <td>
+                      <button class="wid-dataset-link" type="button" (click)="goToDatasetControls(ds)">
+                        {{ ds.dataSet }}
+                      </button>
+                    </td>
+                    <td><span class="w3-tag w3-round w3-small w3-deep-orange">{{ ds.tableClass }}</span></td>
+                    <td>{{ ds.lastCheckedAt ? (ds.lastCheckedAt | date:'medium') : '—' }}</td>
+                    <td>{{ ds.lastChangedAt ? (ds.lastChangedAt | date:'medium') : '—' }}</td>
+                    <td>{{ fNum(ds.totalRecords) }}</td>
+                    <td>{{ fNum(ds.recordsChanged) }}</td>
+                    <td>{{ fNum(ds.recordsAdded) }}</td>
+                    <td>
+                      <span class="w3-tag w3-round w3-small"
+                        [class.w3-green]="ds.lastStatus === 'ok' || ds.lastStatus === 'completed'"
+                        [class.w3-orange]="ds.lastStatus !== 'ok' && ds.lastStatus !== 'completed'">
+                        {{ ds.lastStatus ?? 'available' }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="w3-button w3-border w3-round w3-small" type="button" (click)="toggleStatusHistory(ds)">
+                        {{ isStatusHistoryOpen(ds) ? 'Hide' : 'View' }}
+                      </button>
+                    </td>
+                    <td class="w3-text-grey w3-small">
+                      @if (ds.sourceUrl) {
+                        <div><a [href]="ds.sourceUrl" target="_blank" rel="noopener noreferrer">{{ ds.sourceUrl }}</a></div>
+                      }
+                      @if (ds.errorMessage) {
+                        <div class="w3-text-red">{{ ds.errorMessage }}</div>
+                      }
+                    </td>
+                  </tr>
+                  @if (isStatusHistoryOpen(ds)) {
+                    <tr>
+                      <td colspan="10" class="w3-small">
+                        @if (statusHistoryLoading) {
+                          <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading history&hellip;</p>
+                        }
+                        @if (statusHistoryError) {
+                          <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ statusHistoryError }}</p></div>
+                        }
+                        @if (!statusHistoryLoading && statusHistoryData?.items?.length) {
+                          <div class="wid-scroll">
+                            <table class="w3-table w3-bordered w3-striped wid-table">
+                              <thead><tr class="w3-theme-l5">
+                                <th>Run At</th><th>Last Checked</th><th>Last Changed</th><th>Status</th><th>Total</th><th>Changed</th><th>Added</th><th>Source URL</th><th>Hash</th><th>Result</th>
+                              </tr></thead>
+                              <tbody>
+                                @for (h of statusHistoryData.items; track h.runAt + h.sourceHash) {
+                                  <tr>
+                                    <td>{{ h.runAt ? (h.runAt | date:'medium') : '—' }}</td>
+                                    <td>{{ h.lastCheckedAt ? (h.lastCheckedAt | date:'medium') : '—' }}</td>
+                                    <td>{{ h.lastChangedAt ? (h.lastChangedAt | date:'medium') : '—' }}</td>
+                                    <td>{{ h.lastStatus ?? '—' }}</td>
+                                    <td>{{ fNum(h.totalRecords) }}</td>
+                                    <td>{{ fNum(h.recordsChanged) }}</td>
+                                    <td>{{ fNum(h.recordsAdded) }}</td>
+                                    <td>@if (h.sourceUrl) {<a [href]="h.sourceUrl" target="_blank" rel="noopener noreferrer">{{ h.sourceUrl }}</a>} @else {—}</td>
+                                    <td>{{ shortHash(h.sourceHash) }}</td>
+                                    <td>
+                                      @if (h.sourceChanged === true) {changed}
+                                      @else if (h.sourceChanged === false) {unchanged}
+                                      @else {—}
+                                    </td>
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                          </div>
+                        }
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ===================== LAUS TAB ===================== -->
+    @if (activeTab === 'laus') {
+      <div class="wid-section">
+        <div class="wid-section-header w3-theme">
+          <h3>Labor Force (LAUS)</h3>
+          <span class="w3-small w3-text-white">BLS Local Area Unemployment Statistics</span>
+        </div>
+        <div class="wid-filters" id="laus-controls">
+          <div class="wid-filter-grid">
+            <label>State FIPS
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lausParams.stFips" placeholder="Optional (e.g. 49 or 00)" />
+            </label>
+            <label>Area Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lausParams.areaType" placeholder="e.g. ST, MC" />
+            </label>
+            <label>Area Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lausParams.area" placeholder="e.g. 0000000" />
+            </label>
+            <label>Period Year
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lausParams.periodYear" placeholder="e.g. 2023" />
+            </label>
+            <label>Period Type
+              <select class="w3-input w3-border w3-round" [(ngModel)]="lausParams.periodType">
+                <option value="">All</option>
+                <option value="03">03 — Annual</option>
+                <option value="01">01 — Monthly</option>
+              </select>
+            </label>
+            <label>Seasonal Adj
+              <select class="w3-input w3-border w3-round" [(ngModel)]="lausParams.adjusted">
+                <option value="">All</option>
+                <option value="1">Seasonally Adjusted</option>
+                <option value="0">Not Adjusted</option>
+              </select>
+            </label>
+            <label>Sort
+              <select class="w3-input w3-border w3-round" [(ngModel)]="lausSort.field">
+                <option value="">Default API order</option>
+                @for (opt of lausSortFields; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </label>
+            <label>Direction
+              <select class="w3-input w3-border w3-round" [(ngModel)]="lausSort.direction" [disabled]="!lausSort.field">
+                @for (dir of sortDirections; track dir.value) {
+                  <option [value]="dir.value">{{ dir.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="wid-filter-actions">
+            <button class="w3-button w3-govopso w3-round" (click)="queryLaus()">
+              <i class="fa-solid fa-magnifying-glass"></i> Query
+            </button>
+            <span class="w3-small w3-text-grey">
+              optional: <code>stFips=00</code> for national &nbsp;|&nbsp;
+              <code>periodType=03</code> for annual &nbsp;|&nbsp;
+              <code>area=0000000</code> for statewide &nbsp;|&nbsp;
+              <code>sort=periodYear:desc,period:asc</code>
+            </span>
+          </div>
+          <div class="w3-panel w3-pale-blue w3-border w3-round">
+            <div class="wid-meta-head">
+              <strong>Coverage metadata</strong>
+              <button class="w3-button w3-round w3-small w3-border" (click)="refreshLausMetadata()">
+                <i class="fa-solid fa-layer-group"></i> Refresh metadata
+              </button>
+            </div>
+            @if (lausMetadata.loading) {
+              <p class="w3-small w3-text-grey"><i class="fa-solid fa-spinner fa-spin"></i> Loading metadata&hellip;</p>
+            }
+            @if (lausMetadata.error) {
+              <p class="w3-small w3-text-red">{{ lausMetadata.error }}</p>
+            }
+            @if (!lausMetadata.loading && lausMetadata.data) {
+              <p class="w3-small">
+                Areas: <strong>{{ lausMetadata.data.areas?.length ?? 0 }}</strong>
+                &nbsp;|&nbsp; Years: <strong>{{ metadataYearRange(lausMetadata) }}</strong>
+                &nbsp;|&nbsp; Earliest: <strong>{{ metadataPeriodPoint(lausMetadata.data.minPeriod) }}</strong>
+                &nbsp;|&nbsp; Latest: <strong>{{ metadataPeriodPoint(lausMetadata.data.maxPeriod) }}</strong>
+              </p>
+            }
+          </div>
+          <ng-container *ngTemplateOutlet="dlBarTpl; context: { state: lausState, csvFn: downloadLaus.bind(this, 'csv'), tsvFn: downloadLaus.bind(this, 'tsv'), psvFn: downloadLaus.bind(this, 'psv'), jsonFn: downloadLaus.bind(this, 'jsonfile'), xlsxFn: downloadLaus.bind(this, 'xlsx') }"></ng-container>
+        </div>
+
+        @if (lausState.loading) { <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</p> }
+        @if (lausState.error) { <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ lausState.error }}</p></div> }
+        @if (!lausState.loading && lausState.rows.length === 0 && !lausState.error) {
+          <p class="wid-empty">Set filters and click <strong>Query</strong> to load LAUS data.</p>
+        }
+        @if (!lausState.loading && lausState.rows.length > 0) {
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: lausState, fn: queryLaus.bind(this) }"></ng-container>
+          <div class="wid-scroll">
+            <table class="w3-table w3-bordered w3-striped wid-table">
+              <thead><tr class="w3-theme-l3">
+                <th>FIPS</th><th>Area Type</th><th>Area</th>
+                <th>Year</th><th>Period</th><th>Adj</th>
+                <th class="wid-num">Labor Force</th>
+                <th class="wid-num">Employed</th>
+                <th class="wid-num">Unemployed</th>
+                <th class="wid-num">Unemp Rate</th>
+                <th>Prelim</th>
+              </tr></thead>
+              <tbody>
+                @for (r of lausState.rows; track r.stFips + r.areaType + r.area + r.periodYear + r.period + r.adjusted) {
+                  <tr>
+                    <td>{{ r.stFips }}</td>
+                    <td>{{ r.areaType }}</td>
+                    <td>{{ r.area }}</td>
+                    <td>{{ r.periodYear }}</td>
+                    <td>{{ r.period }}</td>
+                    <td><span class="wid-badge">{{ fAdj(r.adjusted) }}</span></td>
+                    <td class="wid-num">{{ fNum(r.laborForce) }}</td>
+                    <td class="wid-num">{{ fNum(r.employed) }}</td>
+                    <td class="wid-num">{{ fNum(r.unemployed) }}</td>
+                    <td class="wid-num">{{ fPct(r.unempRate) }}</td>
+                    <td>{{ r.prelim === '1' ? 'P' : '' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: lausState, fn: queryLaus.bind(this) }"></ng-container>
+        }
+      </div>
+    }
+
+    <!-- ===================== CES TAB ===================== -->
+    @if (activeTab === 'ces') {
+      <div class="wid-section">
+        <div class="wid-section-header w3-theme">
+          <h3>CES — Current Employment Statistics</h3>
+          <span class="w3-small w3-text-white">BLS State and Metro Area Employment, Hours, and Earnings</span>
+        </div>
+        <div class="wid-filters" id="ces-controls">
+          <div class="wid-filter-grid">
+            <label>State FIPS
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cesParams.stFips" placeholder="Optional (e.g. 49 or 00)" />
+            </label>
+            <label>Series Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cesParams.seriesCode" placeholder="e.g. CES0000000001" />
+            </label>
+            <label>Series Code Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cesParams.seriesCodeType" placeholder="e.g. SM" />
+            </label>
+            <label>Area Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cesParams.areaType" placeholder="e.g. ST, MC" />
+            </label>
+            <label>Area Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cesParams.area" placeholder="e.g. 0000000" />
+            </label>
+            <label>Period Year
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cesParams.periodYear" placeholder="e.g. 2023" />
+            </label>
+            <label>Seasonal Adj
+              <select class="w3-input w3-border w3-round" [(ngModel)]="cesParams.adjusted">
+                <option value="">All</option>
+                <option value="1">Seasonally Adjusted</option>
+                <option value="0">Not Adjusted</option>
+              </select>
+            </label>
+            <label>Sort
+              <select class="w3-input w3-border w3-round" [(ngModel)]="cesSort.field">
+                <option value="">Default API order</option>
+                @for (opt of cesSortFields; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </label>
+            <label>Direction
+              <select class="w3-input w3-border w3-round" [(ngModel)]="cesSort.direction" [disabled]="!cesSort.field">
+                @for (dir of sortDirections; track dir.value) {
+                  <option [value]="dir.value">{{ dir.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="wid-filter-actions">
+            <button class="w3-button w3-govopso w3-round" (click)="queryCes()">
+              <i class="fa-solid fa-magnifying-glass"></i> Query
+            </button>
+            <span class="w3-small w3-text-grey">
+              Common: <code>CES0000000001</code> Total Nonfarm &nbsp;|&nbsp;
+              <code>CES0500000001</code> Construction &nbsp;|&nbsp;
+              <code>CES6500000001</code> Education &amp; Health &nbsp;|&nbsp;
+              <code>sort=periodYear:desc</code>
+            </span>
+          </div>
+          <div class="w3-panel w3-pale-blue w3-border w3-round">
+            <div class="wid-meta-head">
+              <strong>Coverage metadata</strong>
+              <button class="w3-button w3-round w3-small w3-border" (click)="refreshCesMetadata()">
+                <i class="fa-solid fa-layer-group"></i> Refresh metadata
+              </button>
+            </div>
+            @if (cesMetadata.loading) {
+              <p class="w3-small w3-text-grey"><i class="fa-solid fa-spinner fa-spin"></i> Loading metadata&hellip;</p>
+            }
+            @if (cesMetadata.error) {
+              <p class="w3-small w3-text-red">{{ cesMetadata.error }}</p>
+            }
+            @if (!cesMetadata.loading && cesMetadata.data) {
+              <p class="w3-small">
+                Areas: <strong>{{ cesMetadata.data.areas?.length ?? 0 }}</strong>
+                &nbsp;|&nbsp; Years: <strong>{{ metadataYearRange(cesMetadata) }}</strong>
+                &nbsp;|&nbsp; Earliest: <strong>{{ metadataPeriodPoint(cesMetadata.data.minPeriod) }}</strong>
+                &nbsp;|&nbsp; Latest: <strong>{{ metadataPeriodPoint(cesMetadata.data.maxPeriod) }}</strong>
+              </p>
+            }
+          </div>
+          <ng-container *ngTemplateOutlet="dlBarTpl; context: { state: cesState, csvFn: downloadCes.bind(this, 'csv'), tsvFn: downloadCes.bind(this, 'tsv'), psvFn: downloadCes.bind(this, 'psv'), jsonFn: downloadCes.bind(this, 'jsonfile'), xlsxFn: downloadCes.bind(this, 'xlsx') }"></ng-container>
+        </div>
+
+        @if (cesState.loading) { <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</p> }
+        @if (cesState.error) { <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ cesState.error }}</p></div> }
+        @if (!cesState.loading && cesState.rows.length === 0 && !cesState.error) {
+          <p class="wid-empty">Set filters and click <strong>Query</strong> to load CES data.</p>
+        }
+        @if (!cesState.loading && cesState.rows.length > 0) {
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: cesState, fn: queryCes.bind(this) }"></ng-container>
+          <div class="wid-scroll">
+            <table class="w3-table w3-bordered w3-striped wid-table">
+              <thead><tr class="w3-theme-l3">
+                <th>FIPS</th><th>Area Type</th><th>Area</th>
+                <th>Year</th><th>Period</th><th>Adj</th>
+                <th>Code Type</th><th>Series Code</th>
+                <th class="wid-num">Emp (CES)</th>
+                <th class="wid-num">Prod Workers</th>
+                <th class="wid-num">Hrs/Wk</th>
+                <th class="wid-num">Earn/Wk</th>
+                <th class="wid-num">Earn/Hr</th>
+                <th>Prelim</th>
+              </tr></thead>
+              <tbody>
+                @for (r of cesState.rows; track r.stFips + r.areaType + r.area + r.periodYear + r.period + r.seriesCode + r.adjusted) {
+                  <tr>
+                    <td>{{ r.stFips }}</td>
+                    <td>{{ r.areaType }}</td>
+                    <td>{{ r.area }}</td>
+                    <td>{{ r.periodYear }}</td>
+                    <td>{{ r.period }}</td>
+                    <td><span class="wid-badge">{{ fAdj(r.adjusted) }}</span></td>
+                    <td>{{ r.seriesCodeType }}</td>
+                    <td><code>{{ r.seriesCode }}</code></td>
+                    <td class="wid-num">{{ fNum(r.empCES) }}</td>
+                    <td class="wid-num">{{ fNum(r.empProductionWorkers) }}</td>
+                    <td class="wid-num">{{ r.hoursPerWeek ?? '—' }}</td>
+                    <td class="wid-num">{{ fCur(r.earningsPerWeek) }}</td>
+                    <td class="wid-num">{{ fCur(r.earningsPerHour) }}</td>
+                    <td>{{ r.prelim === '1' ? 'P' : '' }}{{ fSupp(r.suppRecord) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: cesState, fn: queryCes.bind(this) }"></ng-container>
+        }
+      </div>
+    }
+
+    <!-- ===================== INDUSTRY TAB ===================== -->
+    @if (activeTab === 'industry') {
+      <div class="wid-section">
+        <div class="wid-section-header w3-theme">
+          <h3>Industry Employment &amp; Wages (QCEW)</h3>
+          <span class="w3-small w3-text-white">BLS Quarterly Census of Employment and Wages</span>
+        </div>
+        <div class="wid-filters" id="industry-controls">
+          <div class="wid-filter-grid">
+            <label>State FIPS
+              <input class="w3-input w3-border w3-round" [(ngModel)]="indParams.stFips" placeholder="Optional (e.g. 49 or 00)" />
+            </label>
+            <label>Area Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="indParams.areaType" placeholder="e.g. ST" />
+            </label>
+            <label>Area Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="indParams.area" placeholder="e.g. 0000000" />
+            </label>
+            <label>Period Year
+              <input class="w3-input w3-border w3-round" [(ngModel)]="indParams.periodYear" placeholder="e.g. 2023" />
+            </label>
+            <label>Period Type
+              <select class="w3-input w3-border w3-round" [(ngModel)]="indParams.periodType">
+                <option value="">All</option>
+                <option value="02">02 — Quarterly</option>
+              </select>
+            </label>
+            <label>Ownership
+              <select class="w3-input w3-border w3-round" [(ngModel)]="indParams.ownership">
+                <option value="">All</option>
+                <option value="0">0 — Total</option>
+                <option value="5">5 — Private</option>
+                <option value="1">1 — Federal Gov</option>
+                <option value="2">2 — State Gov</option>
+                <option value="3">3 — Local Gov</option>
+              </select>
+            </label>
+            <label>Code Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="indParams.codeType" placeholder="e.g. 10 (NAICS)" />
+            </label>
+            <label>Industry Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="indParams.indCode" placeholder="e.g. 10 (Total)" />
+            </label>
+            <label>Sort
+              <select class="w3-input w3-border w3-round" [(ngModel)]="indSort.field">
+                <option value="">Default API order</option>
+                @for (opt of indSortFields; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </label>
+            <label>Direction
+              <select class="w3-input w3-border w3-round" [(ngModel)]="indSort.direction" [disabled]="!indSort.field">
+                @for (dir of sortDirections; track dir.value) {
+                  <option [value]="dir.value">{{ dir.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="wid-filter-actions">
+            <button class="w3-button w3-govopso w3-round" (click)="queryIndustry()">
+              <i class="fa-solid fa-magnifying-glass"></i> Query
+            </button>
+            <span class="w3-small w3-text-grey">
+              <code>periodType=02</code> for quarterly &nbsp;|&nbsp;
+              <code>ownership=5</code> for private sector &nbsp;|&nbsp;
+              <code>period=1</code> Q1, <code>2</code> Q2, <code>3</code> Q3, <code>4</code> Q4 &nbsp;|&nbsp;
+              <code>sort=periodYear:desc</code>
+            </span>
+          </div>
+          <div class="w3-panel w3-pale-blue w3-border w3-round">
+            <div class="wid-meta-head">
+              <strong>Coverage metadata</strong>
+              <button class="w3-button w3-round w3-small w3-border" (click)="refreshIndustryMetadata()">
+                <i class="fa-solid fa-layer-group"></i> Refresh metadata
+              </button>
+            </div>
+            @if (indMetadata.loading) {
+              <p class="w3-small w3-text-grey"><i class="fa-solid fa-spinner fa-spin"></i> Loading metadata&hellip;</p>
+            }
+            @if (indMetadata.error) {
+              <p class="w3-small w3-text-red">{{ indMetadata.error }}</p>
+            }
+            @if (!indMetadata.loading && indMetadata.data) {
+              <p class="w3-small">
+                Areas: <strong>{{ indMetadata.data.areas?.length ?? 0 }}</strong>
+                &nbsp;|&nbsp; Years: <strong>{{ metadataYearRange(indMetadata) }}</strong>
+                &nbsp;|&nbsp; Earliest: <strong>{{ metadataPeriodPoint(indMetadata.data.minPeriod) }}</strong>
+                &nbsp;|&nbsp; Latest: <strong>{{ metadataPeriodPoint(indMetadata.data.maxPeriod) }}</strong>
+              </p>
+            }
+          </div>
+          <ng-container *ngTemplateOutlet="dlBarTpl; context: { state: indState, csvFn: downloadIndustry.bind(this, 'csv'), tsvFn: downloadIndustry.bind(this, 'tsv'), psvFn: downloadIndustry.bind(this, 'psv'), jsonFn: downloadIndustry.bind(this, 'jsonfile'), xlsxFn: downloadIndustry.bind(this, 'xlsx') }"></ng-container>
+        </div>
+
+        @if (indState.loading) { <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</p> }
+        @if (indState.error) { <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ indState.error }}</p></div> }
+        @if (!indState.loading && indState.rows.length === 0 && !indState.error) {
+          <p class="wid-empty">Set filters and click <strong>Query</strong> to load QCEW data.</p>
+        }
+        @if (!indState.loading && indState.rows.length > 0) {
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: indState, fn: queryIndustry.bind(this) }"></ng-container>
+          <div class="wid-scroll">
+            <table class="w3-table w3-bordered w3-striped wid-table">
+              <thead><tr class="w3-theme-l3">
+                <th>FIPS</th><th>Area</th>
+                <th>Year</th><th>Period Type</th><th>Period</th>
+                <th>Ownership</th><th>Code Type</th><th>Ind Code</th>
+                <th class="wid-num">Avg Monthly Emp</th>
+                <th class="wid-num">Total Wages</th>
+                <th class="wid-num">Weekly Wage</th>
+                <th class="wid-num">Establishments</th>
+                <th>Prelim</th>
+              </tr></thead>
+              <tbody>
+                @for (r of indState.rows; track r.stFips + r.areaType + r.area + r.periodYear + r.period + r.ownership + r.indCode) {
+                  <tr>
+                    <td>{{ r.stFips }}</td>
+                    <td>{{ r.area }}</td>
+                    <td>{{ r.periodYear }}</td>
+                    <td>{{ r.periodType }}</td>
+                    <td>{{ r.period }}</td>
+                    <td>{{ r.ownership }}</td>
+                    <td>{{ r.codeType }}</td>
+                    <td>{{ r.indCode }}</td>
+                    <td class="wid-num">{{ fNum(r.avgMonthlyEmp) }}</td>
+                    <td class="wid-num">{{ fCur(r.totalWages) }}</td>
+                    <td class="wid-num">{{ fCur(r.weeklyWage) }}</td>
+                    <td class="wid-num">{{ fNum(r.empCount) }}</td>
+                    <td>{{ r.prelim === '1' ? 'P' : '' }}{{ fSupp(r.suppRecord) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: indState, fn: queryIndustry.bind(this) }"></ng-container>
+        }
+      </div>
+    }
+
+    <!-- ===================== WAGES TAB ===================== -->
+    @if (activeTab === 'wages') {
+      <div class="wid-section">
+        <div class="wid-section-header w3-theme">
+          <h3>Occupational Wages (OEWS)</h3>
+          <span class="w3-small w3-text-white">BLS Occupational Employment and Wage Statistics</span>
+        </div>
+        <div class="wid-filters" id="wages-controls">
+          <div class="wid-filter-grid">
+            <label>State FIPS
+              <input class="w3-input w3-border w3-round" [(ngModel)]="wageParams.stFips" placeholder="Optional (e.g. 49 or 00)" />
+            </label>
+            <label>Period Year
+              <input class="w3-input w3-border w3-round" [(ngModel)]="wageParams.periodYear" placeholder="e.g. 2023" />
+            </label>
+            <label>Occ Code Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="wageParams.occCodeType" placeholder="e.g. SOC" />
+            </label>
+            <label>Occ Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="wageParams.occCode" placeholder="e.g. 00-0000" />
+            </label>
+            <label>Ind Code Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="wageParams.indCodeType" placeholder="e.g. NAICS" />
+            </label>
+            <label>Ind Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="wageParams.indCode" placeholder="e.g. 000000" />
+            </label>
+            <label>Area Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="wageParams.areaType" placeholder="e.g. ST" />
+            </label>
+            <label>Area Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="wageParams.area" placeholder="e.g. 0000000" />
+            </label>
+            <label>Sort
+              <select class="w3-input w3-border w3-round" [(ngModel)]="wageSort.field">
+                <option value="">Default API order</option>
+                @for (opt of wageSortFields; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </label>
+            <label>Direction
+              <select class="w3-input w3-border w3-round" [(ngModel)]="wageSort.direction" [disabled]="!wageSort.field">
+                @for (dir of sortDirections; track dir.value) {
+                  <option [value]="dir.value">{{ dir.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="wid-filter-actions">
+            <button class="w3-button w3-govopso w3-round" (click)="queryWages()">
+              <i class="fa-solid fa-magnifying-glass"></i> Query
+            </button>
+            <span class="w3-small w3-text-grey">
+              <code>occCode=00-0000</code> all occupations &nbsp;|&nbsp;
+              <code>occCode=15-0000</code> Computer &amp; Math &nbsp;|&nbsp;
+              optional: <code>stFips=00</code> national &nbsp;|&nbsp;
+              <code>sort=periodYear:desc,occCode:asc</code>
+            </span>
+          </div>
+          <div class="w3-panel w3-pale-blue w3-border w3-round">
+            <div class="wid-meta-head">
+              <strong>Coverage metadata</strong>
+              <button class="w3-button w3-round w3-small w3-border" (click)="refreshWagesMetadata()">
+                <i class="fa-solid fa-layer-group"></i> Refresh metadata
+              </button>
+            </div>
+            @if (wageMetadata.loading) {
+              <p class="w3-small w3-text-grey"><i class="fa-solid fa-spinner fa-spin"></i> Loading metadata&hellip;</p>
+            }
+            @if (wageMetadata.error) {
+              <p class="w3-small w3-text-red">{{ wageMetadata.error }}</p>
+            }
+            @if (!wageMetadata.loading && wageMetadata.data) {
+              <p class="w3-small">
+                Areas: <strong>{{ wageMetadata.data.areas?.length ?? 0 }}</strong>
+                &nbsp;|&nbsp; Years: <strong>{{ metadataYearRange(wageMetadata) }}</strong>
+                &nbsp;|&nbsp; Earliest: <strong>{{ metadataPeriodPoint(wageMetadata.data.minPeriod) }}</strong>
+                &nbsp;|&nbsp; Latest: <strong>{{ metadataPeriodPoint(wageMetadata.data.maxPeriod) }}</strong>
+              </p>
+            }
+          </div>
+          <ng-container *ngTemplateOutlet="dlBarTpl; context: { state: wageState, csvFn: downloadWages.bind(this, 'csv'), tsvFn: downloadWages.bind(this, 'tsv'), psvFn: downloadWages.bind(this, 'psv'), jsonFn: downloadWages.bind(this, 'jsonfile'), xlsxFn: downloadWages.bind(this, 'xlsx') }"></ng-container>
+        </div>
+
+        @if (wageState.loading) { <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</p> }
+        @if (wageState.error) { <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ wageState.error }}</p></div> }
+        @if (!wageState.loading && wageState.rows.length === 0 && !wageState.error) {
+          <p class="wid-empty">Set filters and click <strong>Query</strong> to load OEWS wage data.</p>
+        }
+        @if (!wageState.loading && wageState.rows.length > 0) {
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: wageState, fn: queryWages.bind(this) }"></ng-container>
+          <div class="wid-scroll">
+            <table class="w3-table w3-bordered w3-striped wid-table">
+              <thead><tr class="w3-theme-l3">
+                <th>FIPS</th><th>Area</th><th>Year</th>
+                <th>Occ Type</th><th>Occ Code</th>
+                <th>Ind Type</th><th>Ind Code</th>
+                <th class="wid-num">Employment</th>
+                <th class="wid-num">10th Pct</th>
+                <th class="wid-num">25th Pct</th>
+                <th class="wid-num">Median</th>
+                <th class="wid-num">Mean</th>
+                <th class="wid-num">75th Pct</th>
+                <th class="wid-num">90th Pct</th>
+                <th class="wid-num">Mean Hourly</th>
+              </tr></thead>
+              <tbody>
+                @for (r of wageState.rows; track r.stFips + r.areaType + r.area + r.periodYear + r.occCode + r.indCode) {
+                  <tr>
+                    <td>{{ r.stFips }}</td>
+                    <td>{{ r.area }}</td>
+                    <td>{{ r.periodYear }}</td>
+                    <td>{{ r.occCodeType }}</td>
+                    <td>{{ r.occCode }}</td>
+                    <td>{{ r.indCodeType }}</td>
+                    <td>{{ r.indCode }}</td>
+                    <td class="wid-num">{{ fNum(r.empCount) }}</td>
+                    <td class="wid-num">{{ fCur(r.pct10) }}</td>
+                    <td class="wid-num">{{ fCur(r.pct25) }}</td>
+                    <td class="wid-num wid-highlight">{{ fCur(r.medianWage) }}</td>
+                    <td class="wid-num">{{ fCur(r.meanWage) }}</td>
+                    <td class="wid-num">{{ fCur(r.pct75) }}</td>
+                    <td class="wid-num">{{ fCur(r.pct90) }}</td>
+                    <td class="wid-num">{{ fCur(r.meanHourly) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: wageState, fn: queryWages.bind(this) }"></ng-container>
+        }
+      </div>
+    }
+
+    <!-- ===================== PROJECTIONS TAB ===================== -->
+    @if (activeTab === 'projections') {
+      <div class="wid-section">
+        <div class="wid-section-header w3-theme">
+          <h3>Employment Projections</h3>
+          <span class="w3-small w3-text-white">ETA / BLS Occupational and Industry Projections</span>
+        </div>
+        <div class="wid-filters" id="projections-controls">
+          <div class="wid-filter-grid">
+            <label>State FIPS
+              <input class="w3-input w3-border w3-round" [(ngModel)]="projParams.stFips" placeholder="Optional (e.g. 49 or 00)" />
+            </label>
+            <label>Projections Period
+              <input class="w3-input w3-border w3-round" [(ngModel)]="projParams.projectionsPeriod" placeholder="e.g. 2022-2032" />
+            </label>
+            <label>Occ Code Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="projParams.occCodeType" placeholder="e.g. SOC" />
+            </label>
+            <label>Occ Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="projParams.occCode" placeholder="e.g. 00-0000" />
+            </label>
+            <label>Ind Code Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="projParams.indCodeType" placeholder="e.g. NAICS" />
+            </label>
+            <label>Ind Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="projParams.indCode" placeholder="e.g. 000000" />
+            </label>
+            <label>Area Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="projParams.areaType" placeholder="e.g. ST" />
+            </label>
+            <label>Area Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="projParams.area" placeholder="e.g. 0000000" />
+            </label>
+            <label>Sort
+              <select class="w3-input w3-border w3-round" [(ngModel)]="projSort.field">
+                <option value="">Default API order</option>
+                @for (opt of projSortFields; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </label>
+            <label>Direction
+              <select class="w3-input w3-border w3-round" [(ngModel)]="projSort.direction" [disabled]="!projSort.field">
+                @for (dir of sortDirections; track dir.value) {
+                  <option [value]="dir.value">{{ dir.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="wid-filter-actions">
+            <button class="w3-button w3-govopso w3-round" (click)="queryProjections()">
+              <i class="fa-solid fa-magnifying-glass"></i> Query
+            </button>
+            <span class="w3-small w3-text-grey">
+              <code>occCode=00-0000</code> all occupations &nbsp;|&nbsp;
+              optional: <code>stFips=00</code> national &nbsp;|&nbsp;
+              <code>sort=projectionsPeriod:desc,occCode:asc</code>
+            </span>
+          </div>
+          <div class="w3-panel w3-pale-blue w3-border w3-round">
+            <div class="wid-meta-head">
+              <strong>Coverage metadata</strong>
+              <button class="w3-button w3-round w3-small w3-border" (click)="refreshProjectionsMetadata()">
+                <i class="fa-solid fa-layer-group"></i> Refresh metadata
+              </button>
+            </div>
+            @if (projMetadata.loading) {
+              <p class="w3-small w3-text-grey"><i class="fa-solid fa-spinner fa-spin"></i> Loading metadata&hellip;</p>
+            }
+            @if (projMetadata.error) {
+              <p class="w3-small w3-text-red">{{ projMetadata.error }}</p>
+            }
+            @if (!projMetadata.loading && projMetadata.data) {
+              <p class="w3-small">
+                Areas: <strong>{{ projMetadata.data.areas?.length ?? 0 }}</strong>
+                &nbsp;|&nbsp; Base Years: <strong>{{ metadataYearRange(projMetadata) }}</strong>
+                &nbsp;|&nbsp; Projected Years: <strong>{{ (projMetadata.data.projectedYears ?? []).join(', ') || '—' }}</strong>
+              </p>
+            }
+          </div>
+          <ng-container *ngTemplateOutlet="dlBarTpl; context: { state: projState, csvFn: downloadProjections.bind(this, 'csv'), tsvFn: downloadProjections.bind(this, 'tsv'), psvFn: downloadProjections.bind(this, 'psv'), jsonFn: downloadProjections.bind(this, 'jsonfile'), xlsxFn: downloadProjections.bind(this, 'xlsx') }"></ng-container>
+        </div>
+
+        @if (projState.loading) { <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</p> }
+        @if (projState.error) { <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ projState.error }}</p></div> }
+        @if (!projState.loading && projState.rows.length === 0 && !projState.error) {
+          <p class="wid-empty">Set filters and click <strong>Query</strong> to load projections data.</p>
+        }
+        @if (!projState.loading && projState.rows.length > 0) {
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: projState, fn: queryProjections.bind(this) }"></ng-container>
+          <div class="wid-scroll">
+            <table class="w3-table w3-bordered w3-striped wid-table">
+              <thead><tr class="w3-theme-l3">
+                <th>FIPS</th><th>Area</th><th>Period</th>
+                <th>Occ Type</th><th>Occ Code</th>
+                <th>Ind Type</th><th>Ind Code</th>
+                <th class="wid-num">Base Emp</th>
+                <th class="wid-num">Proj Emp</th>
+                <th class="wid-num">Change</th>
+                <th class="wid-num">% Change</th>
+                <th class="wid-num">Openings</th>
+              </tr></thead>
+              <tbody>
+                @for (r of projState.rows; track r.stFips + r.areaType + r.area + r.projectionsPeriod + r.occCode + r.indCode) {
+                  <tr>
+                    <td>{{ r.stFips }}</td>
+                    <td>{{ r.area }}</td>
+                    <td>{{ r.projectionsPeriod }}</td>
+                    <td>{{ r.occCodeType }}</td>
+                    <td>{{ r.occCode }}</td>
+                    <td>{{ r.indCodeType }}</td>
+                    <td>{{ r.indCode }}</td>
+                    <td class="wid-num">{{ fNum(r.baseYearEmp) }}</td>
+                    <td class="wid-num">{{ fNum(r.projectedEmp) }}</td>
+                    <td class="wid-num" [class.wid-pos]="r.change > 0" [class.wid-neg]="r.change < 0">
+                      {{ r.change != null ? (r.change > 0 ? '+' : '') + fNum(r.change) : '—' }}
+                    </td>
+                    <td class="wid-num" [class.wid-pos]="r.pctChange > 0" [class.wid-neg]="r.pctChange < 0">
+                      {{ r.pctChange != null ? (r.pctChange > 0 ? '+' : '') + fPct(r.pctChange) : '—' }}
+                    </td>
+                    <td class="wid-num">{{ fNum(r.openings) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: projState, fn: queryProjections.bind(this) }"></ng-container>
+        }
+      </div>
+    }
+
+    <!-- ===================== LICENSING TAB ===================== -->
+    @if (activeTab === 'licensing') {
+      <div class="wid-section">
+        <div class="wid-section-header w3-theme">
+          <h3>Licensing</h3>
+          <span class="w3-small w3-text-white">Core license records and related tables</span>
+        </div>
+        <div class="wid-filters" id="licensing-controls">
+          <div class="wid-filter-grid">
+            <label>Licensing Endpoint
+              <select class="w3-input w3-border w3-round" [(ngModel)]="licensingParams.endpoint">
+                @for (v of licensingEndpoints; track v.value) {
+                  <option [value]="v.value">{{ v.label }}</option>
+                }
+              </select>
+            </label>
+            <label>State FIPS
+              <input class="w3-input w3-border w3-round" [(ngModel)]="licensingParams.stFips" placeholder="Optional (e.g. 49 or 00)" />
+            </label>
+            <label>Lic Auth ID
+              <input class="w3-input w3-border w3-round" [(ngModel)]="licensingParams.licAuthID" placeholder="e.g. 0001" />
+            </label>
+            <label>License ID
+              <input class="w3-input w3-border w3-round" [(ngModel)]="licensingParams.licenseID" placeholder="e.g. 1" />
+            </label>
+            <label>License Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="licensingParams.licenseType" placeholder="e.g. A" />
+            </label>
+            <label>Sort
+              <select class="w3-input w3-border w3-round" [(ngModel)]="licensingSort.field">
+                <option value="">Default API order</option>
+                @for (opt of licensingSortFields; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </label>
+            <label>Direction
+              <select class="w3-input w3-border w3-round" [(ngModel)]="licensingSort.direction" [disabled]="!licensingSort.field">
+                @for (dir of sortDirections; track dir.value) {
+                  <option [value]="dir.value">{{ dir.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="wid-filter-actions">
+            <button class="w3-button w3-govopso w3-round" (click)="queryLicensing()">
+              <i class="fa-solid fa-magnifying-glass"></i> Query
+            </button>
+          </div>
+          <ng-container *ngTemplateOutlet="dlBarTpl; context: { state: licensingState, csvFn: downloadLicensing.bind(this, 'csv'), tsvFn: downloadLicensing.bind(this, 'tsv'), psvFn: downloadLicensing.bind(this, 'psv'), jsonFn: downloadLicensing.bind(this, 'jsonfile'), xlsxFn: downloadLicensing.bind(this, 'xlsx') }"></ng-container>
+        </div>
+
+        @if (licensingState.loading) { <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</p> }
+        @if (licensingState.error) { <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ licensingState.error }}</p></div> }
+        @if (!licensingState.loading && licensingState.rows.length === 0 && !licensingState.error) {
+          <p class="wid-empty">Select a licensing endpoint and click <strong>Query</strong> to load records.</p>
+        }
+        @if (!licensingState.loading && licensingState.rows.length > 0) {
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: licensingState, fn: queryLicensing.bind(this) }"></ng-container>
+          <div class="wid-scroll">
+            @if (licensingParams.endpoint === 'licensing/licenses') {
+              <table class="w3-table w3-bordered w3-striped wid-table">
+                <thead><tr class="w3-theme-l3">
+                  <th>FIPS</th><th>License ID</th><th>Title</th><th>Type</th><th>Authority</th><th>Updated</th><th>URL</th>
+                </tr></thead>
+                <tbody>
+                  @for (r of licensingState.rows; track r.stFips + r.licenseID) {
+                    <tr>
+                      <td>{{ r.stFips }}</td>
+                      <td>{{ r.licenseID }}</td>
+                      <td>{{ r.licenseTitle ?? '—' }}</td>
+                      <td>{{ r.licenseType ?? '—' }}</td>
+                      <td>{{ r.licAuthID ?? '—' }}</td>
+                      <td>{{ r.licenseUpdatedDate ? (r.licenseUpdatedDate | date:'mediumDate') : (r.licenseUpdated ?? '—') }}</td>
+                      <td>@if (r.licenseURL) {<a [href]="r.licenseURL" target="_blank" rel="noopener noreferrer">{{ r.licenseURL }}</a>} @else {—}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            } @else {
+              <table class="w3-table w3-bordered w3-striped wid-table">
+                <thead>
+                  <tr class="w3-theme-l3">
+                    @for (col of objectKeys(licensingState.rows[0]); track col) {
+                      <th>{{ col }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (r of licensingState.rows; track $index) {
+                    <tr>
+                      @for (col of objectKeys(licensingState.rows[0]); track col) {
+                        <td>{{ r[col] ?? '—' }}</td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: licensingState, fn: queryLicensing.bind(this) }"></ng-container>
+        }
+      </div>
+    }
+
+    <!-- ===================== CPI TAB ===================== -->
+    @if (activeTab === 'cpi') {
+      <div class="wid-section">
+        <div class="wid-section-header w3-theme">
+          <h3>Consumer Price Index (CPI)</h3>
+          <span class="w3-small w3-text-white">BLS time series observations and reference tables</span>
+        </div>
+        <div class="wid-filters" id="cpi-controls">
+          <div class="wid-filter-grid">
+            <label>CPI Endpoint
+              <select class="w3-input w3-border w3-round" [(ngModel)]="cpiParams.endpoint">
+                @for (v of cpiEndpoints; track v.value) {
+                  <option [value]="v.value">{{ v.label }}</option>
+                }
+              </select>
+            </label>
+            <label>Series ID
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cpiParams.seriesId" placeholder="e.g. CUSR0000SA0" />
+            </label>
+            <label>Year
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cpiParams.year" placeholder="e.g. 2024" />
+            </label>
+            <label>Period
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cpiParams.period" placeholder="e.g. M13" />
+            </label>
+            <label>Area Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cpiParams.areaCode" placeholder="e.g. 0000" />
+            </label>
+            <label>Item Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cpiParams.itemCode" placeholder="e.g. SA0" />
+            </label>
+            <label>Seasonal Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="cpiParams.seasonalCode" placeholder="e.g. S or U" />
+            </label>
+            <label>Sort
+              <select class="w3-input w3-border w3-round" [(ngModel)]="cpiSort.field">
+                <option value="">Default API order</option>
+                @for (opt of cpiSortFields; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </label>
+            <label>Direction
+              <select class="w3-input w3-border w3-round" [(ngModel)]="cpiSort.direction" [disabled]="!cpiSort.field">
+                @for (dir of sortDirections; track dir.value) {
+                  <option [value]="dir.value">{{ dir.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="wid-filter-actions">
+            <button class="w3-button w3-govopso w3-round" (click)="queryCpi()">
+              <i class="fa-solid fa-magnifying-glass"></i> Query
+            </button>
+          </div>
+          <ng-container *ngTemplateOutlet="dlBarTpl; context: { state: cpiState, csvFn: downloadCpi.bind(this, 'csv'), tsvFn: downloadCpi.bind(this, 'tsv'), psvFn: downloadCpi.bind(this, 'psv'), jsonFn: downloadCpi.bind(this, 'jsonfile'), xlsxFn: downloadCpi.bind(this, 'xlsx') }"></ng-container>
+        </div>
+
+        @if (cpiState.loading) { <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</p> }
+        @if (cpiState.error) { <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ cpiState.error }}</p></div> }
+        @if (!cpiState.loading && cpiState.rows.length === 0 && !cpiState.error) {
+          <p class="wid-empty">Select a CPI endpoint and click <strong>Query</strong> to load data.</p>
+        }
+        @if (!cpiState.loading && cpiState.rows.length > 0) {
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: cpiState, fn: queryCpi.bind(this) }"></ng-container>
+          <div class="wid-scroll">
+            <table class="w3-table w3-bordered w3-striped wid-table">
+              <thead>
+                <tr class="w3-theme-l3">
+                  @for (col of objectKeys(cpiState.rows[0]); track col) {
+                    <th>{{ col }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of cpiState.rows; track $index) {
+                  <tr>
+                    @for (col of objectKeys(cpiState.rows[0]); track col) {
+                      <td>{{ r[col] ?? '—' }}</td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: cpiState, fn: queryCpi.bind(this) }"></ng-container>
+        }
+      </div>
+    }
+
+    <!-- ===================== NON-CORE LOOKUPS TAB ===================== -->
+    @if (activeTab === 'nonCoreLookups') {
+      <div class="wid-section">
+        <div class="wid-section-header w3-theme">
+          <h3>Non-Core Lookups</h3>
+          <span class="w3-small w3-text-white">Browse lookup/reference tables directly</span>
+        </div>
+        <div class="wid-filters" id="non-core-lookups-controls">
+          <div class="wid-filter-grid">
+            <label>Lookup Endpoint
+              <select class="w3-input w3-border w3-round" [(ngModel)]="lookupParams.endpoint">
+                @for (v of nonCoreLookupEndpoints; track v.value) {
+                  <option [value]="v.value">{{ v.label }}</option>
+                }
+              </select>
+            </label>
+            <label>State FIPS
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lookupParams.stFips" placeholder="Optional (e.g. 49 or 00)" />
+            </label>
+            <label>Area Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lookupParams.areaType" placeholder="e.g. 01" />
+            </label>
+            <label>Area Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lookupParams.area" placeholder="e.g. 0000000" />
+            </label>
+            <label>Period Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lookupParams.periodType" placeholder="e.g. 03" />
+            </label>
+            <label>Period Year
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lookupParams.periodYear" placeholder="e.g. 2024" />
+            </label>
+            <label>Code Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lookupParams.codeType" placeholder="e.g. 10" />
+            </label>
+            <label>Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lookupParams.code" placeholder="industry/occupation code" />
+            </label>
+            <label>Series Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lookupParams.seriesCode" placeholder="CES series code" />
+            </label>
+            <label>Ownership
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lookupParams.ownership" placeholder="e.g. 5" />
+            </label>
+            <label>Growth Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="lookupParams.growthCode" placeholder="e.g. AA" />
+            </label>
+            <label>Sort
+              <select class="w3-input w3-border w3-round" [(ngModel)]="lookupSort.field">
+                <option value="">Default API order</option>
+                @for (opt of nonCoreLookupSortFields; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </label>
+            <label>Direction
+              <select class="w3-input w3-border w3-round" [(ngModel)]="lookupSort.direction" [disabled]="!lookupSort.field">
+                @for (dir of sortDirections; track dir.value) {
+                  <option [value]="dir.value">{{ dir.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="wid-filter-actions">
+            <button class="w3-button w3-govopso w3-round" (click)="queryNonCoreLookups()">
+              <i class="fa-solid fa-magnifying-glass"></i> Query
+            </button>
+          </div>
+          <ng-container *ngTemplateOutlet="dlBarTpl; context: { state: lookupState, csvFn: downloadNonCoreLookups.bind(this, 'csv'), tsvFn: downloadNonCoreLookups.bind(this, 'tsv'), psvFn: downloadNonCoreLookups.bind(this, 'psv'), jsonFn: downloadNonCoreLookups.bind(this, 'jsonfile'), xlsxFn: downloadNonCoreLookups.bind(this, 'xlsx') }"></ng-container>
+        </div>
+
+        @if (lookupState.loading) { <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</p> }
+        @if (lookupState.error) { <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ lookupState.error }}</p></div> }
+        @if (!lookupState.loading && lookupState.rows.length === 0 && !lookupState.error) {
+          <p class="wid-empty">Select a lookup endpoint and click <strong>Query</strong> to browse non-core lookup data.</p>
+        }
+        @if (!lookupState.loading && lookupState.rows.length > 0) {
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: lookupState, fn: queryNonCoreLookups.bind(this) }"></ng-container>
+          <div class="wid-scroll">
+            <table class="w3-table w3-bordered w3-striped wid-table">
+              <thead>
+                <tr class="w3-theme-l3">
+                  @for (col of objectKeys(lookupState.rows[0]); track col) {
+                    <th>{{ col }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of lookupState.rows; track $index) {
+                  <tr>
+                    @for (col of objectKeys(lookupState.rows[0]); track col) {
+                      <td>{{ r[col] ?? '—' }}</td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: lookupState, fn: queryNonCoreLookups.bind(this) }"></ng-container>
+        }
+      </div>
+    }
+
+    <!-- ===================== NON-CORE VIEWS TAB ===================== -->
+    @if (activeTab === 'nonCoreViews') {
+      <div class="wid-section">
+        <div class="wid-section-header w3-theme">
+          <h3>Non-Core Views</h3>
+          <span class="w3-small w3-text-white">Joined view endpoints with geography/title context</span>
+        </div>
+        <div class="wid-filters" id="non-core-views-controls">
+          <div class="wid-filter-grid">
+            <label>View Endpoint
+              <select class="w3-input w3-border w3-round" [(ngModel)]="viewParams.endpoint">
+                @for (v of nonCoreViewEndpoints; track v.value) {
+                  <option [value]="v.value">{{ v.label }}</option>
+                }
+              </select>
+            </label>
+            <label>State FIPS
+              <input class="w3-input w3-border w3-round" [(ngModel)]="viewParams.stFips" placeholder="Optional (e.g. 49 or 00)" />
+            </label>
+            <label>Area Type
+              <input class="w3-input w3-border w3-round" [(ngModel)]="viewParams.areaType" placeholder="e.g. 01" />
+            </label>
+            <label>Area Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="viewParams.area" placeholder="e.g. 0000000" />
+            </label>
+            <label>Period Year
+              <input class="w3-input w3-border w3-round" [(ngModel)]="viewParams.periodYear" placeholder="e.g. 2024" />
+            </label>
+            <label>Projections Period
+              <input class="w3-input w3-border w3-round" [(ngModel)]="viewParams.projectionsPeriod" placeholder="e.g. 2022-2032" />
+            </label>
+            <label>Series Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="viewParams.seriesCode" placeholder="CES series code" />
+            </label>
+            <label>Occupation Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="viewParams.occCode" placeholder="e.g. 15-0000" />
+            </label>
+            <label>Industry Code
+              <input class="w3-input w3-border w3-round" [(ngModel)]="viewParams.indCode" placeholder="e.g. 7225" />
+            </label>
+            <label>Sort
+              <select class="w3-input w3-border w3-round" [(ngModel)]="viewSort.field">
+                <option value="">Default API order</option>
+                @for (opt of nonCoreViewSortFields; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </label>
+            <label>Direction
+              <select class="w3-input w3-border w3-round" [(ngModel)]="viewSort.direction" [disabled]="!viewSort.field">
+                @for (dir of sortDirections; track dir.value) {
+                  <option [value]="dir.value">{{ dir.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="wid-filter-actions">
+            <button class="w3-button w3-govopso w3-round" (click)="queryNonCoreViews()">
+              <i class="fa-solid fa-magnifying-glass"></i> Query
+            </button>
+          </div>
+          <ng-container *ngTemplateOutlet="dlBarTpl; context: { state: viewState, csvFn: downloadNonCoreViews.bind(this, 'csv'), tsvFn: downloadNonCoreViews.bind(this, 'tsv'), psvFn: downloadNonCoreViews.bind(this, 'psv'), jsonFn: downloadNonCoreViews.bind(this, 'jsonfile'), xlsxFn: downloadNonCoreViews.bind(this, 'xlsx') }"></ng-container>
+        </div>
+
+        @if (viewState.loading) { <p class="wid-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</p> }
+        @if (viewState.error) { <div class="w3-panel w3-pale-red w3-border-red w3-leftbar"><p>{{ viewState.error }}</p></div> }
+        @if (!viewState.loading && viewState.rows.length === 0 && !viewState.error) {
+          <p class="wid-empty">Select a non-core view and click <strong>Query</strong> to load data.</p>
+        }
+        @if (!viewState.loading && viewState.rows.length > 0) {
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: viewState, fn: queryNonCoreViews.bind(this) }"></ng-container>
+          <div class="wid-scroll">
+            <table class="w3-table w3-bordered w3-striped wid-table">
+              <thead>
+                <tr class="w3-theme-l3">
+                  @for (col of objectKeys(viewState.rows[0]); track col) {
+                    <th>{{ col }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of viewState.rows; track $index) {
+                  <tr>
+                    @for (col of objectKeys(viewState.rows[0]); track col) {
+                      <td>{{ r[col] ?? '—' }}</td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <ng-container *ngTemplateOutlet="pagerTpl; context: { state: viewState, fn: queryNonCoreViews.bind(this) }"></ng-container>
+        }
+      </div>
+    }
+
+  </div><!-- /wid-content -->
+
+</div><!-- /wid-portal -->
+
+<!-- ===== Shared pager template ===== -->
+<ng-template #pagerTpl let-state="state" let-fn="fn">
+  <div class="wid-pager">
+    <span class="w3-small w3-text-grey">
+      {{ state.total | number }} records &mdash; page {{ state.page }} of {{ totalPages(state) }}
+    </span>
+    <div class="wid-pager-btns">
+      <button class="w3-button w3-round w3-border w3-small" [disabled]="!canPrev(state)" (click)="goPrev(state, fn)">
+        &laquo; Prev
+      </button>
+      <button class="w3-button w3-round w3-border w3-small" [disabled]="!canNext(state)" (click)="goNext(state, fn)">
+        Next &raquo;
+      </button>
+    </div>
+    <div class="wid-page-size">
+      <label class="w3-small">Page size:
+        <select class="w3-select w3-border w3-round w3-small" [(ngModel)]="state.pageSize" (change)="fn(1)">
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+        </select>
+      </label>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ===== Download bar template ===== -->
+<ng-template #dlBarTpl let-state="state" let-csvFn="csvFn" let-tsvFn="tsvFn" let-psvFn="psvFn" let-jsonFn="jsonFn" let-xlsxFn="xlsxFn">
+  <div class="wid-dl-bar">
+    <span class="w3-small w3-text-grey">Download all matching rows (up to 100k):</span>
+    <button class="w3-button w3-round w3-border w3-small wid-dl-btn" title="Comma-separated values"
+      [disabled]="state.downloading" (click)="csvFn()">
+      @if (state.downloading) { <i class="fa-solid fa-spinner fa-spin"></i> }
+      @if (!state.downloading) { <i class="fa-solid fa-file-csv"></i> }
+      CSV
+    </button>
+    <button class="w3-button w3-round w3-border w3-small wid-dl-btn" title="Tab-separated values"
+      [disabled]="state.downloading" (click)="tsvFn()">
+      @if (state.downloading) { <i class="fa-solid fa-spinner fa-spin"></i> }
+      @if (!state.downloading) { <i class="fa-solid fa-table"></i> }
+      TSV
+    </button>
+    <button class="w3-button w3-round w3-border w3-small wid-dl-btn" title="Pipe-delimited text file"
+      [disabled]="state.downloading" (click)="psvFn()">
+      @if (state.downloading) { <i class="fa-solid fa-spinner fa-spin"></i> }
+      @if (!state.downloading) { <i class="fa-solid fa-file-lines"></i> }
+      TXT (pipe)
+    </button>
+    <button class="w3-button w3-round w3-border w3-small wid-dl-btn" title="JSON array file"
+      [disabled]="state.downloading" (click)="jsonFn()">
+      @if (state.downloading) { <i class="fa-solid fa-spinner fa-spin"></i> }
+      @if (!state.downloading) { <i class="fa-solid fa-code"></i> }
+      JSON
+    </button>
+    <button class="w3-button w3-round w3-border w3-small wid-dl-btn" title="Excel workbook"
+      [disabled]="state.downloading" (click)="xlsxFn()">
+      @if (state.downloading) { <i class="fa-solid fa-spinner fa-spin"></i> }
+      @if (!state.downloading) { <i class="fa-regular fa-file-excel"></i> }
+      Excel
+    </button>
+    @if (state.downloadError) {
+      <span class="w3-small w3-text-red">{{ state.downloadError }}</span>
+    }
+  </div>
+</ng-template>

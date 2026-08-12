@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NationalWid.Api/NationalWid.Api.csproj" />
+    <Project Path="src/NationalWid.Ingestion/NationalWid.Ingestion.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NationalWid.Api.Tests/NationalWid.Api.Tests.csproj" />
+    <Project Path="tests/NationalWid.Ingestion.Tests/NationalWid.Ingestion.Tests.csproj" />
+  </Folder>
+</Solution>

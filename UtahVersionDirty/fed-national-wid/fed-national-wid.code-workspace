@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../widapi"
+		},
+		{
+			"path": "../fed-ulmita-ng"
+		}
+	],
+	"settings": {}
+}

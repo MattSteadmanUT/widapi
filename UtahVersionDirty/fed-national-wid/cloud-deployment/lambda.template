@@ -1,0 +1,495 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "National WID 3.0 API — Aurora Serverless v2 + API Lambda + Ingestion Lambda",
+
+  "Parameters": {
+    "appCognitoUserPoolId":     { "Type": "String" },
+    "appCognitoClientId":       { "Type": "String" },
+    "appCognitoClientIdSecondary": { "Type": "String", "Default": "" },
+    "appEnvironment":           { "Type": "String" },
+    "appAspNetCoreEnvironment": { "Type": "String" },
+    "appAuroraDbName":          { "Type": "String", "Default": "nationalwid" },
+    "appAuroraMinCapacity":     { "Type": "Number", "Default": 0.5 },
+    "appAuroraMaxCapacity":     { "Type": "Number", "Default": 8 },
+    "vpcId":                    { "Type": "String" },
+    "vpcSubnetIds":             { "Type": "CommaDelimitedList" },
+    "vpcSecurityGroupIds":      { "Type": "CommaDelimitedList" },
+    "tagElcid":                 { "Type": "String", "Default": "wsitapro" },
+    "tagDept":                  { "Type": "String", "Default": "dws" },
+    "tagDivision":              { "Type": "String", "Default": "wra" },
+    "tagContact":               { "Type": "String", "Default": "MattSteadman@utah.gov" },
+    "tagEnv":                   { "Type": "String" }
+  },
+
+  "Conditions": {
+    "HasSecondaryCognitoClientId": {
+      "Fn::Not": [
+        { "Fn::Equals": [{ "Ref": "appCognitoClientIdSecondary" }, ""] }
+      ]
+    }
+  },
+
+  "Resources": {
+
+    "AuroraSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "Subnets for National WID Aurora cluster",
+        "SubnetIds": { "Ref": "vpcSubnetIds" }
+      }
+    },
+
+    "DBPasswordSecret": {
+      "Type": "AWS::SecretsManager::Secret",
+      "Properties": {
+        "Name": { "Fn::Sub": "${appEnvironment}-national-wid-db-password" },
+        "Description": "Aurora master password for the National WID database",
+        "GenerateSecretString": {
+          "SecretStringTemplate": "{\"username\": \"widadmin\"}",
+          "GenerateStringKey": "password",
+          "PasswordLength": 32,
+          "ExcludeCharacters": "\"@/\\;'"
+        }
+      }
+    },
+
+    "AuroraCluster": {
+      "Type": "AWS::RDS::DBCluster",
+      "DeletionPolicy": "Snapshot",
+      "UpdateReplacePolicy": "Snapshot",
+      "Properties": {
+        "DBClusterIdentifier": { "Fn::Sub": "${appEnvironment}-national-wid" },
+        "Engine": "aurora-postgresql",
+        "EngineVersion": "16.4",
+        "DatabaseName": { "Ref": "appAuroraDbName" },
+        "MasterUsername": { "Fn::Sub": "{{resolve:secretsmanager:${DBPasswordSecret}:SecretString:username}}" },
+        "MasterUserPassword": { "Fn::Sub": "{{resolve:secretsmanager:${DBPasswordSecret}:SecretString:password}}" },
+        "DBSubnetGroupName": { "Ref": "AuroraSubnetGroup" },
+        "VpcSecurityGroupIds": { "Ref": "vpcSecurityGroupIds" },
+        "StorageEncrypted": true,
+        "ServerlessV2ScalingConfiguration": {
+          "MinCapacity": { "Ref": "appAuroraMinCapacity" },
+          "MaxCapacity": { "Ref": "appAuroraMaxCapacity" }
+        },
+        "BackupRetentionPeriod": 7,
+        "EnableCloudwatchLogsExports": ["postgresql"]
+      }
+    },
+
+    "AuroraInstance": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "DBInstanceClass": "db.serverless",
+        "Engine": "aurora-postgresql",
+        "DBClusterIdentifier": { "Ref": "AuroraCluster" },
+        "PubliclyAccessible": false
+      }
+    },
+
+    "DbConnectionStringParameter": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": { "Fn::Sub": "/${appEnvironment}/wid-api/db-connection-string" },
+        "Type": "String",
+        "Value": {
+          "Fn::Sub": [
+            "Host=${Host};Database=${DB};Username=widadmin;Password={{resolve:secretsmanager:${Secret}:SecretString:password}}",
+            {
+              "Host": { "Fn::GetAtt": ["AuroraCluster", "Endpoint.Address"] },
+              "DB":   { "Ref": "appAuroraDbName" },
+              "Secret": { "Ref": "DBPasswordSecret" }
+            }
+          ]
+        },
+        "Description": "Npgsql connection string for the National WID Aurora cluster"
+      }
+    },
+
+    "HttpApi": {
+      "Type": "AWS::Serverless::HttpApi",
+      "Properties": {
+        "StageName": "$default",
+        "Auth": {
+          "DefaultAuthorizer": "UlmitaCognito",
+          "Authorizers": {
+            "UlmitaCognito": {
+              "JwtConfiguration": {
+                "issuer": {
+                  "Fn::Sub": "https://cognito-idp.us-gov-west-1.amazonaws.com/${appCognitoUserPoolId}"
+                },
+                "audience": {
+                  "Fn::If": [
+                    "HasSecondaryCognitoClientId",
+                    [
+                      { "Ref": "appCognitoClientId" },
+                      { "Ref": "appCognitoClientIdSecondary" }
+                    ],
+                    [
+                      { "Ref": "appCognitoClientId" }
+                    ]
+                  ]
+                }
+              },
+              "IdentitySource": "$request.header.Authorization"
+            }
+          }
+        },
+        "CorsConfiguration": {
+          "AllowOrigins": ["*"],
+          "AllowHeaders": ["Authorization", "Content-Type"],
+          "AllowMethods": ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+          "MaxAge": 300
+        }
+      }
+    },
+
+    "ApiExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": { "Fn::Sub": "${appEnvironment}-national-wid-api-role" },
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": { "Service": "lambda.amazonaws.com" },
+            "Action": "sts:AssumeRole"
+          }]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws-us-gov:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          "arn:aws-us-gov:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+        ]
+      }
+    },
+
+    "IngestionExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": { "Fn::Sub": "${appEnvironment}-national-wid-ingestion-role" },
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": { "Service": "lambda.amazonaws.com" },
+            "Action": "sts:AssumeRole"
+          }]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws-us-gov:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          "arn:aws-us-gov:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+        ],
+        "Policies": [{
+          "PolicyName": "ReadNationalWidParameters",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "ssm:GetParameter",
+                  "ssm:GetParameters",
+                  "ssm:GetParametersByPath"
+                ],
+                "Resource": {
+                  "Fn::Sub": "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${appEnvironment}/wid-api/*"
+                }
+              }
+            ]
+          }
+        }]
+      }
+    },
+
+    "NationalWidApiFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "FunctionName": { "Fn::Sub": "${appEnvironment}-national-wid-api" },
+        "Handler": "NationalWid.Api",
+        "Runtime": "dotnet8",
+        "CodeUri": "../src/NationalWid.Api",
+        "MemorySize": 1024,
+        "Timeout": 30,
+        "Role": { "Fn::GetAtt": ["ApiExecutionRole", "Arn"] },
+        "Environment": {
+          "Variables": {
+            "ASPNETCORE_ENVIRONMENT": { "Ref": "appAspNetCoreEnvironment" },
+            "Cognito__UserPoolId":    { "Ref": "appCognitoUserPoolId" },
+            "Cognito__ClientId":      { "Ref": "appCognitoClientId" },
+            "Cognito__ClientIds__0":  { "Ref": "appCognitoClientId" },
+            "Cognito__ClientIds__1": {
+              "Fn::If": [
+                "HasSecondaryCognitoClientId",
+                { "Ref": "appCognitoClientIdSecondary" },
+                { "Ref": "AWS::NoValue" }
+              ]
+            },
+            "Cognito__Region":        "us-gov-west-1",
+            "ConnectionStrings__WidDb": {
+              "Fn::Sub": [
+                "Host=${Host};Database=${DB};Username=widadmin;Password={{resolve:secretsmanager:${Secret}:SecretString:password}}",
+                {
+                  "Host": { "Fn::GetAtt": ["AuroraCluster", "Endpoint.Address"] },
+                  "DB":   { "Ref": "appAuroraDbName" },
+                  "Secret": { "Ref": "DBPasswordSecret" }
+                }
+              ]
+            },
+            "Cors__AllowedOrigins__0": "https://dev.ulmita.org",
+            "Cors__AllowedOrigins__1": "https://ulmita.org",
+            "Cors__AllowedOrigins__2": "http://localhost:4200",
+            "Cors__AllowedOrigins__3": "https://localhost:4200"
+          }
+        },
+        "VpcConfig": {
+          "SubnetIds":        { "Ref": "vpcSubnetIds" },
+          "SecurityGroupIds": { "Ref": "vpcSecurityGroupIds" }
+        },
+        "Events": {
+          "ApiProxyGet": {
+            "Type": "HttpApi",
+            "Properties": {
+              "ApiId":  { "Ref": "HttpApi" },
+              "Path":   "/{proxy+}",
+              "Method": "GET",
+              "Auth": {
+                "Authorizer": "UlmitaCognito"
+              }
+            }
+          },
+          "ApiProxyPost": {
+            "Type": "HttpApi",
+            "Properties": {
+              "ApiId":  { "Ref": "HttpApi" },
+              "Path":   "/{proxy+}",
+              "Method": "POST",
+              "Auth": {
+                "Authorizer": "UlmitaCognito"
+              }
+            }
+          },
+          "ApiProxyPatch": {
+            "Type": "HttpApi",
+            "Properties": {
+              "ApiId":  { "Ref": "HttpApi" },
+              "Path":   "/{proxy+}",
+              "Method": "PATCH",
+              "Auth": {
+                "Authorizer": "UlmitaCognito"
+              }
+            }
+          },
+          "ApiProxyDelete": {
+            "Type": "HttpApi",
+            "Properties": {
+              "ApiId":  { "Ref": "HttpApi" },
+              "Path":   "/{proxy+}",
+              "Method": "DELETE",
+              "Auth": {
+                "Authorizer": "UlmitaCognito"
+              }
+            }
+          },
+          "HealthGet": {
+            "Type": "HttpApi",
+            "Properties": {
+              "ApiId":  { "Ref": "HttpApi" },
+              "Path":   "/health",
+              "Method": "GET",
+              "Auth": { "Authorizer": "NONE" }
+            }
+          },
+          "StatusGet": {
+            "Type": "HttpApi",
+            "Properties": {
+              "ApiId":  { "Ref": "HttpApi" },
+              "Path":   "/status",
+              "Method": "GET",
+              "Auth": { "Authorizer": "NONE" }
+            }
+          }
+        }
+      }
+    },
+
+    "NationalWidIngestionFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "FunctionName": { "Fn::Sub": "${appEnvironment}-national-wid-ingestion" },
+        "Handler": "NationalWid.Ingestion::NationalWid.Ingestion.Function::FunctionHandler",
+        "Runtime": "dotnet8",
+        "CodeUri": "../src/NationalWid.Ingestion",
+        "MemorySize": 2048,
+        "Timeout": 900,
+        "Role": { "Fn::GetAtt": ["IngestionExecutionRole", "Arn"] },
+        "Environment": {
+          "Variables": {
+            "DOTNET_ENVIRONMENT": { "Ref": "appAspNetCoreEnvironment" },
+            "DB_CONNECTION_STRING_PARAMETER": { "Fn::Sub": "/${appEnvironment}/wid-api/db-connection-string" },
+            "BLS_API_KEY_PARAMETER": { "Fn::Sub": "/${appEnvironment}/wid-api/bls-api-key" },
+            "BLS_FLATFILE_BASE_URL": "https://download.bls.gov/pub/time.series"
+          }
+        },
+        "VpcConfig": {
+          "SubnetIds":        { "Ref": "vpcSubnetIds" },
+          "SecurityGroupIds": { "Ref": "vpcSecurityGroupIds" }
+        }
+      }
+    },
+
+    "IngestionSchedulerRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": { "Fn::Sub": "${appEnvironment}-national-wid-scheduler-role" },
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": { "Service": "scheduler.amazonaws.com" },
+            "Action": "sts:AssumeRole"
+          }]
+        },
+        "Policies": [{
+          "PolicyName": "InvokeIngestionLambda",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": "lambda:InvokeFunction",
+              "Resource": { "Fn::GetAtt": ["NationalWidIngestionFunction", "Arn"] }
+            }]
+          }
+        }]
+      }
+    },
+
+    "DailyFastIngestLaus": {
+      "Type": "AWS::Scheduler::Schedule",
+      "Properties": {
+        "Name": { "Fn::Sub": "${appEnvironment}-national-wid-daily-laus" },
+        "Description": "Daily LAUS ingestion Mon-Fri 10:05am ET (after BLS data drop at 10:01am ET) — parallel with CES",
+        "ScheduleExpression": "cron(05 15 ? * MON-FRI *)",
+        "FlexibleTimeWindow": { "Mode": "FLEXIBLE", "MaximumWindowInMinutes": 10 },
+        "Target": {
+          "Arn":     { "Fn::GetAtt": ["NationalWidIngestionFunction", "Arn"] },
+          "RoleArn": { "Fn::GetAtt": ["IngestionSchedulerRole", "Arn"] },
+          "Input":   "{\"datasetGroup\": \"laus\"}"
+        },
+        "State": "ENABLED"
+      }
+    },
+
+    "DailyFastIngestCes": {
+      "Type": "AWS::Scheduler::Schedule",
+      "Properties": {
+        "Name": { "Fn::Sub": "${appEnvironment}-national-wid-daily-ces" },
+        "Description": "Daily CES ingestion Mon-Fri 10:05am ET (after BLS data drop at 10:01am ET) — parallel with LAUS",
+        "ScheduleExpression": "cron(05 15 ? * MON-FRI *)",
+        "FlexibleTimeWindow": { "Mode": "FLEXIBLE", "MaximumWindowInMinutes": 10 },
+        "Target": {
+          "Arn":     { "Fn::GetAtt": ["NationalWidIngestionFunction", "Arn"] },
+          "RoleArn": { "Fn::GetAtt": ["IngestionSchedulerRole", "Arn"] },
+          "Input":   "{\"datasetGroup\": \"ces\"}"
+        },
+        "State": "ENABLED"
+      }
+    },
+
+    "WeeklyFullIngestLookups": {
+      "Type": "AWS::Scheduler::Schedule",
+      "Properties": {
+        "Name": { "Fn::Sub": "${appEnvironment}-national-wid-weekly-lookups" },
+        "Description": "Weekly lookups (geographies, area types, codes) every Sunday 2am ET",
+        "ScheduleExpression": "cron(0 7 ? * SUN *)",
+        "FlexibleTimeWindow": { "Mode": "FLEXIBLE", "MaximumWindowInMinutes": 15 },
+        "Target": {
+          "Arn":     { "Fn::GetAtt": ["NationalWidIngestionFunction", "Arn"] },
+          "RoleArn": { "Fn::GetAtt": ["IngestionSchedulerRole", "Arn"] },
+          "Input":   "{\"datasetGroup\": \"lookups\"}"
+        },
+        "State": "ENABLED"
+      }
+    },
+
+    "WeeklyFullIngestQcew": {
+      "Type": "AWS::Scheduler::Schedule",
+      "Properties": {
+        "Name": { "Fn::Sub": "${appEnvironment}-national-wid-weekly-qcew" },
+        "Description": "Weekly QCEW (Industry) every Sunday 10:05am ET (after BLS data drop) — staggered",
+        "ScheduleExpression": "cron(05 15 ? * SUN *)",
+        "FlexibleTimeWindow": { "Mode": "FLEXIBLE", "MaximumWindowInMinutes": 15 },
+        "Target": {
+          "Arn":     { "Fn::GetAtt": ["NationalWidIngestionFunction", "Arn"] },
+          "RoleArn": { "Fn::GetAtt": ["IngestionSchedulerRole", "Arn"] },
+          "Input":   "{\"datasetGroup\": \"qcew\"}"
+        },
+        "State": "ENABLED"
+      }
+    },
+
+    "WeeklyFullIngestOes": {
+      "Type": "AWS::Scheduler::Schedule",
+      "Properties": {
+        "Name": { "Fn::Sub": "${appEnvironment}-national-wid-weekly-oes" },
+        "Description": "Weekly OES (Wages) every Sunday 10:15am ET (after BLS data drop) — staggered",
+        "ScheduleExpression": "cron(15 15 ? * SUN *)",
+        "FlexibleTimeWindow": { "Mode": "FLEXIBLE", "MaximumWindowInMinutes": 15 },
+        "Target": {
+          "Arn":     { "Fn::GetAtt": ["NationalWidIngestionFunction", "Arn"] },
+          "RoleArn": { "Fn::GetAtt": ["IngestionSchedulerRole", "Arn"] },
+          "Input":   "{\"datasetGroup\": \"oes\"}"
+        },
+        "State": "ENABLED"
+      }
+    },
+
+    "WeeklyFullIngestProjections": {
+      "Type": "AWS::Scheduler::Schedule",
+      "Properties": {
+        "Name": { "Fn::Sub": "${appEnvironment}-national-wid-weekly-projections" },
+        "Description": "Weekly Projections every Sunday 10:25am ET (after BLS data drop) — staggered",
+        "ScheduleExpression": "cron(25 15 ? * SUN *)",
+        "FlexibleTimeWindow": { "Mode": "FLEXIBLE", "MaximumWindowInMinutes": 15 },
+        "Target": {
+          "Arn":     { "Fn::GetAtt": ["NationalWidIngestionFunction", "Arn"] },
+          "RoleArn": { "Fn::GetAtt": ["IngestionSchedulerRole", "Arn"] },
+          "Input":   "{\"datasetGroup\": \"projections\"}"
+        },
+        "State": "ENABLED"
+      }
+    },
+
+    "WeeklyFullIngestCpi": {
+      "Type": "AWS::Scheduler::Schedule",
+      "Properties": {
+        "Name": { "Fn::Sub": "${appEnvironment}-national-wid-weekly-cpi" },
+        "Description": "Weekly CPI every Sunday 10:35am ET (after BLS data drop) — staggered, full timeout",
+        "ScheduleExpression": "cron(35 15 ? * SUN *)",
+        "FlexibleTimeWindow": { "Mode": "FLEXIBLE", "MaximumWindowInMinutes": 15 },
+        "Target": {
+          "Arn":     { "Fn::GetAtt": ["NationalWidIngestionFunction", "Arn"] },
+          "RoleArn": { "Fn::GetAtt": ["IngestionSchedulerRole", "Arn"] },
+          "Input":   "{\"datasetGroup\": \"cpi\"}"
+        },
+        "State": "ENABLED"
+      }
+    }
+  },
+
+  "Outputs": {
+    "ApiUrl": {
+      "Description": "National WID API base URL",
+      "Value": { "Fn::Sub": "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com" },
+      "Export": { "Name": { "Fn::Sub": "${appEnvironment}-national-wid-api-url" } }
+    },
+    "AuroraClusterEndpoint": {
+      "Description": "Aurora cluster write endpoint",
+      "Value": { "Fn::GetAtt": ["AuroraCluster", "Endpoint.Address"] },
+      "Export": { "Name": { "Fn::Sub": "${appEnvironment}-national-wid-aurora-endpoint" } }
+    },
+    "IngestionFunctionArn": {
+      "Description": "ARN of the BLS ingestion Lambda",
+      "Value": { "Fn::GetAtt": ["NationalWidIngestionFunction", "Arn"] }
+    }
+  }
+}
