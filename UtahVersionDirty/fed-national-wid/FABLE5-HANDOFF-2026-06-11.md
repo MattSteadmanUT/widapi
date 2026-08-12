@@ -15,8 +15,8 @@ This document captures the current implementation state, verified runtime behavi
 - Region: `us-gov-west-1`
 - Stack: `dev-national-wid-api`
 - Stack status note: a recent deploy attempt briefly showed `ROLLBACK_IN_PROGRESS`, then the stack returned to `CREATE_COMPLETE`.
-- API URL: `https://uk6y6uz1il.execute-api.us-gov-west-1.amazonaws.com`
-- Aurora endpoint: `dev-national-wid.cluster-cxveh3zajems.us-gov-west-1.rds.amazonaws.com`
+- API URL: `[REDACTED-LIVE-API-URL]`
+- Aurora endpoint: `[REDACTED-LIVE-AURORA-ENDPOINT]`
 - Ingestion function: `dev-national-wid-ingestion`
 
 ## Deployment State Caveat

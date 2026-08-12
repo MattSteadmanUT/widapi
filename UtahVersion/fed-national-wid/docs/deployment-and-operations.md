@@ -125,7 +125,8 @@ not exist in North Carolina's AWS account** and must be replaced before NC can d
   filling these in.
 - `awsToolsDefaults.profile` (`GovDev`/`GovProd`) — local AWS CLI profile names Utah configured on
   Matt Steadman's machine; meaningless outside that environment. NC will configure their own.
-- `s3-bucket` (`dev-ulmita-deployments`) — Utah's SAM deployment artifact bucket.
+- `s3-bucket` — Utah's SAM deployment artifact bucket (name redacted in this handoff since that
+  environment is still live; not something NC would reuse regardless — create your own).
 - `tagContact: "MattSteadman@utah.gov"` — update to NC's contact before deploying, and check for
   other `tagElcid`/`tagDept`/`tagDivision` tag values that may follow Utah's internal cost-center
   conventions rather than anything NC needs to preserve.

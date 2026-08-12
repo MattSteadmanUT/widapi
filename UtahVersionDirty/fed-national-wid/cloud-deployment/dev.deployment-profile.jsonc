@@ -13,7 +13,7 @@
     "configuration": "Release",
     "s3-prefix": "dev-national-wid-api",
     "stack-name": "dev-national-wid-api",
-    "s3-bucket": "dev-ulmita-deployments"
+    "s3-bucket": "[REDACTED-LIVE-S3-BUCKET]"
   },
 
   "templates": [
@@ -30,9 +30,9 @@
     "appAuroraMinCapacity": 0.5,
     "appAuroraMaxCapacity": 8,
 
-    "vpcId": "vpc-0c8b11c49a9205363",
-    "vpcSubnetIds": "subnet-02410be4a4d897935,subnet-0b4d297b95c7b6c7d",
-    "vpcSecurityGroupIds": "sg-0f4b7c6a6480fb5d0",
+    "vpcId": "[REDACTED-LIVE-VPC-ID]",
+    "vpcSubnetIds": "[REDACTED-LIVE-SUBNET-IDS]",
+    "vpcSecurityGroupIds": "[REDACTED-LIVE-SECURITY-GROUP-ID]",
 
     "tagElcid": "wsitapro",
     "tagDept": "dws",

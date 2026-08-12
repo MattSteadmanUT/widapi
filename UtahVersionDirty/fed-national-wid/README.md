@@ -96,7 +96,7 @@ Or invoke the scripts directly:
 
 | | Dev |
 |---|---|
-| **API base URL** | `https://uk6y6uz1il.execute-api.us-gov-west-1.amazonaws.com/` |
+| **API base URL** | `[REDACTED-LIVE-API-URL]/` |
 | **Stack** | `dev-national-wid-api` |
 | **Region** | `us-gov-west-1` |
 | **AWS Profile** | `GovDev` |

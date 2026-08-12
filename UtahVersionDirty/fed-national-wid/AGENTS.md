@@ -196,9 +196,9 @@ The `cloud-deployment/lambda.template` must define:
 {
   "appCognitoUserPoolId": "us-gov-west-1_OGMbjPhYh",
   "appCognitoClientId": "1151pibjvfgecq8d761drjcmu8",
-  "vpcId": "vpc-0c8b11c49a9205363",
-  "vpcSubnetIds": "subnet-02410be4a4d897935,subnet-0b4d297b95c7b6c7d",
-  "vpcSecurityGroupIds": "sg-0f4b7c6a6480fb5d0",
+  "vpcId": "[REDACTED-LIVE-VPC-ID]",
+  "vpcSubnetIds": "[REDACTED-LIVE-SUBNET-IDS]",
+  "vpcSecurityGroupIds": "[REDACTED-LIVE-SECURITY-GROUP-ID]",
   "appAuroraDbName": "nationalwid",
   "appAuroraMinCapacity": 0.5,
   "appAuroraMaxCapacity": 8

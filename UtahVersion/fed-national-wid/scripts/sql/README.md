@@ -28,7 +28,7 @@ Run `wid-30-seed-national.sql` (PostgreSQL syntax, adapt for other engines) to p
 
 ## Pulling data from the National WID API
 
-The National WID 3.0 API at `https://uk6y6uz1il.execute-api.us-gov-west-1.amazonaws.com` serves nationally-available BLS data. You can query it and insert the results into your state database.
+The National WID 3.0 API serves nationally-available BLS data. You can query it and insert the results into your state database. (Utah's dev URL is redacted here since that environment is still live — use your own deployment's base URL, or ask Utah directly if you need to compare against theirs.)
 
 ### Available endpoints
 

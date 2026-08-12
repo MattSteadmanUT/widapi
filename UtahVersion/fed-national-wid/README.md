@@ -100,9 +100,13 @@ Or invoke the scripts directly:
 
 ## Live Environments
 
+Utah's dev environment is still running as of this handoff, so its actual API URL is redacted here
+rather than published in a permanently-public repo — ask Utah directly for it if you need to query
+it (e.g. to compare behavior before standing up NC's own environment).
+
 | | Dev |
 |---|---|
-| **API base URL** | `https://uk6y6uz1il.execute-api.us-gov-west-1.amazonaws.com/` |
+| **API base URL** | *(redacted — Utah's environment is still live; see note above)* |
 | **Stack** | `dev-national-wid-api` |
 | **Region** | `us-gov-west-1` |
 | **AWS Profile** | `GovDev` |

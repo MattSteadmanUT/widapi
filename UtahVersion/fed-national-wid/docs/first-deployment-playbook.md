@@ -67,11 +67,11 @@ sign-up flow.
 
 ## Step 3: SAM deployment artifact bucket
 
-`dev.deployment-profile.jsonc`'s `awsToolsDefaults.s3-bucket` names an S3 bucket
-(`dev-ulmita-deployments` for Utah) that `dotnet lambda deploy-serverless` uploads build artifacts
-to. Create an equivalent bucket in NC's account (standard S3 bucket, no special configuration
-found in the template or scripts beyond it needing to exist and be writable by the deploying
-identity) before the first deploy.
+`dev.deployment-profile.jsonc`'s `awsToolsDefaults.s3-bucket` names an S3 bucket that
+`dotnet lambda deploy-serverless` uploads build artifacts to (Utah's real bucket name is redacted
+in this handoff since that environment is still live). Create an equivalent bucket in NC's account
+(standard S3 bucket, no special configuration found in the template or scripts beyond it needing
+to exist and be writable by the deploying identity) before the first deploy.
 
 ## Step 4: Fill in the deployment profile
 

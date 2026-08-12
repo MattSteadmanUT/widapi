@@ -29,8 +29,8 @@ portal (Cognito).
 | Region | `us-gov-west-1` |
 | CloudFormation stack | `dev-national-wid-api` |
 | Stack status | `UPDATE_COMPLETE` |
-| API Gateway URL | `https://uk6y6uz1il.execute-api.us-gov-west-1.amazonaws.com` |
-| Aurora cluster endpoint | `dev-national-wid.cluster-cxveh3zajems.us-gov-west-1.rds.amazonaws.com` |
+| API Gateway URL | `[REDACTED-LIVE-API-URL]` |
+| Aurora cluster endpoint | `[REDACTED-LIVE-AURORA-ENDPOINT]` |
 | Aurora DB name | `nationalwid` |
 | Aurora master user | `widadmin` |
 | Aurora master password secret | `dev-national-wid-db-password` (Secrets Manager) |
