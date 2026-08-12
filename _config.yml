@@ -1,0 +1,6 @@
+exclude:
+  - .github/
+  - .venv/
+  - node_modules/
+  - UtahVersion/
+  - UtahVersionDirty/

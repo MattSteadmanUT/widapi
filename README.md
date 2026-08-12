@@ -102,6 +102,7 @@ Add a Markdown file to `docs/decisions/` following the format described in that 
 
 - **YAML** is human-readable and used for collaborative editing and version control
 - **JSON** is required for GitHub Pages + Swagger UI compatibility (the YAML parser on GitHub Pages has known limitations)
+- GitHub Pages is scoped to the published spec/docs site assets; implementation handoff trees such as `UtahVersion/` and `UtahVersionDirty/` are intentionally excluded from the Pages build
 
 ### The YAML → JSON workflow
 
