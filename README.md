@@ -53,6 +53,7 @@ widapi/
 │   ├── decisions/                    # Design decisions and rationale
 │   └── field-mapping/                # WID 2.8 → 3.0 field mapping notes
 ├── .github/workflows/
+│   ├── pages.yml                     # GitHub Action: builds and deploys the published GitHub Pages site
 │   └── sync-spec-json.yml            # GitHub Action: converts YAML → JSON on pull requests
 ├── vendor/swagger-ui/                # Vendored Swagger UI assets
 ├── scripts/update-vendor.js          # Helper to refresh vendored assets
@@ -103,6 +104,14 @@ Add a Markdown file to `docs/decisions/` following the format described in that 
 - **YAML** is human-readable and used for collaborative editing and version control
 - **JSON** is required for GitHub Pages + Swagger UI compatibility (the YAML parser on GitHub Pages has known limitations)
 - GitHub Pages is scoped to the published spec/docs site assets; implementation handoff trees such as `UtahVersion/` and `UtahVersionDirty/` are intentionally excluded from the Pages build
+
+### GitHub Pages publishing
+
+GitHub Pages is published through a repository workflow rather than the legacy branch-based Pages
+builder. This keeps the site build explicit and current, and avoids relying on GitHub-managed
+legacy workflow internals.
+
+**Action file:** `.github/workflows/pages.yml`
 
 ### The YAML → JSON workflow
 
