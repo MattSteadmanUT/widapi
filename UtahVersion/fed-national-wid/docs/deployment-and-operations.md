@@ -30,10 +30,15 @@ not exist in North Carolina's AWS account** and must be replaced before NC can d
 
 - `vpcId`, `vpcSubnetIds`, `vpcSecurityGroupIds` — Utah's GovCloud VPC network.
 - `appCognitoUserPoolId`, `appCognitoClientId`, `appCognitoClientIdSecondary` — Utah's ULMITA
-  Cognito user pool (dev: `us-gov-west-1_OGMbjPhYh`). **This is the biggest open question for
-  NC** — see [known-issues-and-gaps.md](./known-issues-and-gaps.md) for whether NC stands up its
-  own Cognito pool (and therefore its own ULMITA-equivalent identity layer) or this API needs a
-  different auth model entirely once it's no longer living inside Utah's ULMITA platform.
+  Cognito user pool (dev: `us-gov-west-1_OGMbjPhYh`). These specific IDs are dev-environment
+  values either way, so NC will need its own environment's IDs regardless — the real decision is
+  *whose* pool those IDs point at. Utah has offered to keep hosting ULMITA login for NC's
+  analysts (low incremental cost, many are already ULMITA users elsewhere), which is a live,
+  low-effort option alongside NC standing up its own pool. Nothing in `Program.cs` hardcodes a
+  specific pool — it's entirely config-driven — so this is purely a "which IDs go in the
+  deployment profile" decision, not an application change. See the Cognito checklist item in
+  [../../HANDOFF.md](../../HANDOFF.md#infrastructure--access-transition-checklist) before
+  filling these in.
 - `awsToolsDefaults.profile` (`GovDev`/`GovProd`) — local AWS CLI profile names Utah configured on
   Matt Steadman's machine; meaningless outside that environment. NC will configure their own.
 - `s3-bucket` (`dev-ulmita-deployments`) — Utah's SAM deployment artifact bucket.

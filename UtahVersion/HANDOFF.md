@@ -127,12 +127,29 @@ checklist form:
       private subnets, and security group for the Aurora cluster and VPC-attached Lambdas.
 - [ ] **Aurora PostgreSQL cluster** — stood up fresh; none of Utah's data transfers automatically
       (nor should it — NC will run ingestion fresh against BLS/WID Center sources).
-- [ ] **Cognito user pool** — this is the biggest open architectural question, not just a config
-      swap. Utah's API authenticates against **ULMITA's existing Cognito user pool** — this project
-      never stood up its own identity provider. NC needs to decide: stand up an equivalent
-      Cognito pool (and therefore an equivalent SSO/identity layer) as its own identity source, or
-      change the auth model. Either way, this isn't "use Utah's IDs" — Utah's Cognito pool isn't
-      reusable at all.
+- [ ] **Cognito user pool — decide, don't assume.** Utah's API authenticates against **ULMITA's
+      existing Cognito user pool**; this project never stood up its own identity provider. Two
+      genuinely viable paths, and **Matt Steadman/Utah DWS has offered to keep hosting ULMITA login
+      for NC's analysts** rather than requiring NC to stand up a separate identity system — many of
+      the same analysts already have ULMITA accounts for other systems, and the incremental cost of
+      a small number of additional users is low. Confirm which path NC wants:
+      1. **Continue using Utah's ULMITA Cognito pool** — NC's analysts log in through ULMITA the
+         same way Utah's do; no new identity infrastructure for NC to build or maintain. Lowest
+         effort, and the option Utah is actively offering.
+      2. **Stand up an NC-owned Cognito pool** (or other identity provider) as a fully independent
+         auth source, if NC prefers full control over its own user base long-term.
+
+      **The code does not need to change either way** — `Program.cs`'s JWT validation reads
+      `Cognito:UserPoolId`/`ClientId`/`Region`/`ClientIds` entirely from configuration (see
+      [architecture.md](./fed-national-wid/docs/architecture.md#auth-dual-scheme-jwt-by-default-api-key-as-a-fallback)),
+      with zero hardcoded pool identifiers anywhere in the C# source — those only ever appear in the
+      per-environment deployment profiles (`cloud-deployment/*.deployment-profile.jsonc`), which are
+      meant to be edited per deployment regardless. Pointing at Utah's pool, an NC pool, or both
+      (e.g. `ClientIds` already accepts a list of allowed app client IDs) is purely a config
+      decision. The one genuinely ULMITA-specific thing in the codebase —
+      `Auth/CognitoClaimsExtensions.cs`'s `custom:ulmita_activated`/`custom:ulmita_roles` claim-name
+      constants — is defined but **not called anywhere** in the current code, so it isn't a
+      dependency either way; it's just available if NC wants to read those claims later.
 - [ ] **Parameter Store secrets** — NC's own BLS API key registration (`/${env}/wid-api/bls-api-key`)
       and DB connection string, provisioned in NC's account. Recommend fixing the plaintext-SSM
       issue above at the same time.
@@ -178,14 +195,15 @@ written.
 
 ## Recommended next steps, in priority order
 
-1. **Stand up NC's own AWS account/VPC/Cognito equivalent** and get a dev deploy working end to
-   end — this is prerequisite to everything else, and per the checklist above it's more than a
-   config-value swap.
-2. **Fix the plaintext-SSM password issue** while you're already touching the deployment template
+1. **Stand up NC's own AWS account/VPC** and get a dev deploy working end to end — this is
+   prerequisite to everything else.
+2. **Confirm the Cognito/identity path with Utah** — continuing to authenticate through Utah's
+   ULMITA Cognito pool (the option Utah has offered) vs. NC standing up its own pool. Either way
+   this is a configuration decision, not a code change (see the checklist above) — nail it down
+   early so `provideNationalWid()`'s `getToken()` contract in the Angular library, and the
+   `Cognito:*` values in NC's deployment profile, are set correctly from the start.
+3. **Fix the plaintext-SSM password issue** while you're already touching the deployment template
    for step 1.
-3. **Decide the Cognito/identity question** — does NC stand up its own equivalent of ULMITA's
-   identity layer, or does this API need a different auth model once it's not living inside Utah's
-   platform? This affects both the API and the Angular library's `getToken()` contract.
 4. **Write ingestor-level tests** for LAUS, CES, QCEW, OEWS, Projections, and WID Center Lookups
    before making further changes to them — right now regressions in the trickiest parts of the
    pipeline (multi-tier fallback logic, area-code resolution) would go undetected.

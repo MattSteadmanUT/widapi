@@ -85,17 +85,25 @@ cursor pagination even if they started with `?page=1`.
 the right one per-request:
 
 1. **Cognito JWT bearer** (`JwtBearerDefaults.AuthenticationScheme`, the default) — validates
-   against the ULMITA Cognito user pool's OIDC discovery document
+   against **whichever** Cognito user pool `Cognito:UserPoolId`/`ClientId`/`Region`/`ClientIds`
+   in configuration point at, via that pool's OIDC discovery document
    (`{issuer}/.well-known/openid-configuration`), with a custom `AudienceValidator` because Cognito
    *access* tokens (as opposed to ID tokens) carry the app client ID in a `client_id` claim rather
-   than the standard `aud` claim — see `Program.cs:45-49`. `CognitoClaimsExtensions.cs` exposes the
-   ULMITA-specific custom claims (`custom:stFips`, `custom:ulmita_activated`,
-   `custom:ulmita_roles`) as typed extension methods on `ClaimsPrincipal`, though as of this
-   handoff no controller actually enforces `stFips`-based access restriction — the JWT auth
-   requirement is "any authenticated ULMITA user" (`RequireAuthenticatedUser()` fallback policy),
-   not "only the caller's own state's data." This was a deliberate simplification made after an
-   earlier stricter policy (requiring stFips match + activation) caused false 401s for valid users
-   — see `HANDOFF-2026-07-28.md` item 3.
+   than the standard `aud` claim — see `Program.cs:45-49`. **Nothing here hardcodes Utah's ULMITA
+   pool** — the pool ID only ever appears in the per-environment deployment profile
+   (`cloud-deployment/*.deployment-profile.jsonc`), so continuing to authenticate against Utah's
+   ULMITA pool, standing up a separate pool for NC, or trusting both (via `ClientIds`, which
+   accepts a list) are all the same code path — see the Cognito checklist item in
+   [HANDOFF.md](../../HANDOFF.md#infrastructure--access-transition-checklist) for the actual
+   decision to make. `CognitoClaimsExtensions.cs` exposes ULMITA-specific custom claims
+   (`custom:stFips`, `custom:ulmita_activated`, `custom:ulmita_roles`) as typed extension methods
+   on `ClaimsPrincipal`, but **none of them are currently called anywhere in the codebase** — as of
+   this handoff no controller enforces `stFips`-based access restriction or checks activation/role
+   claims at all. The JWT auth requirement is simply "any authenticated user from the configured
+   pool" (`RequireAuthenticatedUser()` fallback policy), not "only the caller's own state's data."
+   This was a deliberate simplification made after an earlier stricter policy (requiring stFips
+   match + activation) caused false 401s for valid users — see the timeline in
+   [HANDOFF.md](../../HANDOFF.md#timeline).
 2. **API key** (`ApiKeyAuthHandler`, scheme name `"ApiKey"`) — recognizes an `Authorization: ApiKey
    <key>` header, hashes the presented key (SHA-256) and looks it up via `ApiKeyService`. If no
    `ApiKey ` header is present it returns `AuthenticateResult.NoResult()` rather than failing, so
