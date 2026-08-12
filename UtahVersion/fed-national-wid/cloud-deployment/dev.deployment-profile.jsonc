@@ -1,0 +1,43 @@
+{
+  /*
+    National WID 3.0 API — Dev deployment profile
+    AWS profile: GovDev (us-gov-west-1)
+
+    To deploy:  just deploy dev
+    To validate: just validate-deploy dev
+  */
+
+  "awsToolsDefaults": {
+    "profile": "GovDev",
+    "region": "us-gov-west-1",
+    "configuration": "Release",
+    "s3-prefix": "dev-national-wid-api",
+    "stack-name": "dev-national-wid-api",
+    "s3-bucket": "dev-ulmita-deployments"
+  },
+
+  "templates": [
+    "cloud-deployment/lambda.template"
+  ],
+
+  "templateParameters": {
+    "appEnvironment": "dev",
+    "appAspNetCoreEnvironment": "Development",
+    "appCognitoUserPoolId": "us-gov-west-1_OGMbjPhYh",
+    "appCognitoClientId": "1151pibjvfgecq8d761drjcmu8",
+    "appCognitoClientIdSecondary": "57k8c86o5fidijcjjnubrsudf5",
+    "appAuroraDbName": "nationalwid",
+    "appAuroraMinCapacity": 0.5,
+    "appAuroraMaxCapacity": 8,
+
+    "vpcId": "vpc-0c8b11c49a9205363",
+    "vpcSubnetIds": "subnet-02410be4a4d897935,subnet-0b4d297b95c7b6c7d",
+    "vpcSecurityGroupIds": "sg-0f4b7c6a6480fb5d0",
+
+    "tagElcid": "wsitapro",
+    "tagDept": "dws",
+    "tagDivision": "wra",
+    "tagContact": "MattSteadman@utah.gov",
+    "tagEnv": "dev"
+  }
+}

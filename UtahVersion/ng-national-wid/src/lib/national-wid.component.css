@@ -1,0 +1,168 @@
+/* ===== Portal layout ===== */
+.wid-portal {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  min-width: 0;
+  background: #f5f5f5;
+}
+
+.wid-header {
+  padding: 1rem 1.5rem;
+}
+.wid-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.wid-title  { margin: 0; font-size: 1.5rem; }
+.wid-subtitle { margin: 0.25rem 0 0; font-size: 0.9rem; opacity: 0.9; }
+.wid-back-btn { white-space: nowrap; }
+
+/* ===== Tabs ===== */
+.wid-tabs { border-bottom: 2px solid rgba(0,0,0,0.15); }
+.wid-tab  { font-size: 0.9rem; padding: 0.6rem 1rem; }
+.wid-tab-active {
+  background: white !important;
+  border-bottom: 2px solid transparent;
+  font-weight: 600;
+  margin-bottom: -2px;
+}
+
+/* ===== Content area ===== */
+.wid-content {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 1rem 1.5rem;
+}
+
+/* ===== Section ===== */
+.wid-section {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+.wid-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: 4px 4px 0 0;
+}
+.wid-section-header h3 { margin: 0; font-size: 1.1rem; }
+.wid-subhead { margin: 1rem 0 0.5rem; font-size: 1rem; }
+
+/* ===== Filter form ===== */
+.wid-filters { padding: 0.75rem 1rem; border-bottom: 1px solid #eee; background: #fafafa; }
+.wid-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+.wid-filter-grid label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  font-weight: 600;
+  gap: 0.25rem;
+}
+.wid-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.wid-meta-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* ===== Table ===== */
+.wid-scroll {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 1rem;
+}
+.wid-table  { font-size: 0.82rem; width: max-content; min-width: 100%; }
+.wid-table th { white-space: nowrap; font-size: 0.78rem; }
+.wid-table td { white-space: nowrap; }
+.wid-num    { text-align: right; font-variant-numeric: tabular-nums; }
+.wid-highlight { font-weight: 600; }
+.wid-pos    { color: #2e7d32; }
+.wid-neg    { color: #c62828; }
+
+.wid-dataset-link {
+  background: none;
+  border: none;
+  color: #0b5394;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.wid-dataset-link:hover {
+  color: #073763;
+}
+
+/* ===== Badges ===== */
+.wid-badge {
+  display: inline-block;
+  padding: 0 0.35rem;
+  font-size: 0.7rem;
+  background: #e0e0e0;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* ===== Pager ===== */
+.wid-pager {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid #eee;
+}
+.wid-pager-btns { display: flex; gap: 0.4rem; }
+.wid-page-size  { margin-left: auto; }
+
+/* ===== States ===== */
+.wid-loading { padding: 1rem; color: #555; }
+.wid-empty   { padding: 1rem; color: #888; font-style: italic; }
+
+code {
+  font-size: 0.82em;
+  background: #f0f0f0;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+/* ===== Download bar ===== */
+.wid-dl-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0;
+  margin-top: 0.4rem;
+  border-top: 1px dashed #ddd;
+}
+.wid-dl-btn { min-width: 80px; }

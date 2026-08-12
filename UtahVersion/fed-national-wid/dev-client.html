@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>National WID API Test Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .panel h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 18px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="url"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: "Monaco", "Menlo", monospace;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        #response {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            color: #333;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .endpoint-info {
+            background: #f0f8ff;
+            border-left: 4px solid #007bff;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        #tokenDetails {
+            background: #fff8e1;
+            border-left: 4px solid #ffb300;
+            margin-top: 8px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .param-section {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        
+        .param-section h4 {
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .param-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .param-row input {
+            margin: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Request Panel -->
+        <div class="panel">
+            <h2>🔗 API Request</h2>
+            
+            <div id="authStatus" class="status"></div>
+            
+            <div class="form-group">
+                <label>API Base URL</label>
+                <input type="url" id="baseUrl" value="https://uk6y6uz1il.execute-api.us-gov-west-1.amazonaws.com" placeholder="e.g., https://api.example.com">
+            </div>
+            
+            <div class="form-group">
+                <label>Bearer Token (ULMITA JWT)</label>
+                <textarea id="token" placeholder="Paste your Cognito JWT token here..."></textarea>
+                <div id="tokenDetails" class="endpoint-info" style="display:none;"></div>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="testHealth()">Test Health</button>
+                <button onclick="testStatus()">Test Status</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Endpoint</label>
+                <select id="endpoint" onchange="updateEndpointInfo()">
+                    <optgroup label="Data Endpoints (require auth)">
+                        <option value="/ces">GET /ces - Current Employment Statistics</option>
+                        <option value="/labor-force">GET /labor-force - Labor Force (LAUS)</option>
+                        <option value="/industry">GET /industry - Industry Data (QCEW)</option>
+                        <option value="/wages">GET /wages - Wages (OES)</option>
+                        <option value="/projections">GET /projections - Employment Projections</option>
+                    </optgroup>
+                    <optgroup label="Lookup Endpoints (require auth)">
+                        <option value="/lookups/geographies">GET /lookups/geographies</option>
+                        <option value="/lookups/period-years">GET /lookups/period-years</option>
+                        <option value="/lookups/ces-codes">GET /lookups/ces-codes</option>
+                        <option value="/lookups/ind-directories">GET /lookups/ind-directories</option>
+                        <option value="/lookups/occ-directories">GET /lookups/occ-directories</option>
+                    </optgroup>
+                    <optgroup label="Public Endpoints (no auth)">
+                        <option value="/health">GET /health</option>
+                        <option value="/status">GET /status</option>
+                    </optgroup>
+                </select>
+            </div>
+            
+            <div id="endpointInfo" class="endpoint-info"></div>
+            
+            <div id="queryParams" class="param-section" style="display:none;">
+                <h4>Query Parameters</h4>
+                <div id="paramInputs"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Format</label>
+                <select id="format">
+                    <option value="">Default (JSON)</option>
+                    <option value="json">JSON</option>
+                    <option value="csv">CSV</option>
+                    <option value="xlsx">XLSX</option>
+                </select>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="sendRequest()" style="flex: 1; background: #28a745;">Send Request</button>
+                <button onclick="clearResponse()" style="background: #6c757d;">Clear</button>
+            </div>
+        </div>
+        
+        <!-- Response Panel -->
+        <div class="panel">
+            <h2>📋 Response</h2>
+            <div id="status" class="status" style="display:none;"></div>
+            <div id="response">Ready to send a request...</div>
+        </div>
+    </div>
+    
+    <script>
+        const expectedIssuer = 'https://cognito-idp.us-gov-west-1.amazonaws.com/us-gov-west-1_OGMbjPhYh';
+        const expectedClientIds = ['1151pibjvfgecq8d761drjcmu8', '57k8c86o5fidijcjjnubrsudf5'];
+
+        const commonParams = {
+            '/ces': ['stFips', 'areaType', 'area', 'seriesCode', 'sort', 'page', 'pageSize'],
+            '/labor-force': ['stFips', 'areaType', 'area', 'sort', 'page', 'pageSize'],
+            '/industry': ['stFips', 'areaType', 'area', 'indCode', 'sort', 'page', 'pageSize'],
+            '/wages': ['stFips', 'areaType', 'area', 'occCode', 'indCode', 'sort', 'page', 'pageSize'],
+            '/projections': ['stFips', 'areaType', 'area', 'indCode', 'occCode', 'sort', 'page', 'pageSize'],
+            '/lookups/geographies': ['stFips', 'areaType', 'area', 'sort', 'page', 'pageSize'],
+            '/lookups/period-years': ['stFips', 'periodType', 'sort', 'page', 'pageSize'],
+            '/lookups/ces-codes': ['stFips', 'seriesCode', 'sort', 'page', 'pageSize'],
+            '/lookups/ind-directories': ['stFips', 'indCode', 'sort', 'page', 'pageSize'],
+            '/lookups/occ-directories': ['stFips', 'occCode', 'sort', 'page', 'pageSize'],
+        };
+        
+        const endpointDescriptions = {
+            '/ces': 'Current Employment Statistics - monthly employment data. Supports comma-separated filter values and wildcard code filters (for example seriesCode=11*).',
+            '/labor-force': 'Labor Force - LAUS national/state unemployment data. Supports comma-separated filter values.',
+            '/industry': 'Industry Employment - quarterly QCEW data. Supports comma-separated filter values and wildcard code filters (for example indCode=31*).',
+            '/wages': 'Wages & Employment - OES occupational wage data. Supports comma-separated filter values and wildcard code filters (for example occCode=11*).',
+            '/projections': 'Employment Projections - industry/occupation projections. Supports comma-separated filter values and wildcard code filters.',
+            '/health': 'Health check - returns {status: "healthy"}',
+            '/status': 'Service status - data freshness from last ingestion',
+        };
+
+        function normalizeToken(rawToken) {
+            return (rawToken || '').trim().replace(/^Bearer\s+/i, '');
+        }
+
+        function decodeJwtPayload(token) {
+            const parts = token.split('.');
+            if (parts.length !== 3) {
+                return null;
+            }
+
+            try {
+                const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+                const padded = payloadBase64 + '='.repeat((4 - (payloadBase64.length % 4)) % 4);
+                return JSON.parse(atob(padded));
+            } catch {
+                return null;
+            }
+        }
+
+        function formatEpochSeconds(value) {
+            if (!value || Number.isNaN(Number(value))) {
+                return 'n/a';
+            }
+
+            const date = new Date(Number(value) * 1000);
+            return date.toISOString();
+        }
+        
+        function updateAuthStatus() {
+            const rawToken = document.getElementById('token').value;
+            const token = normalizeToken(rawToken);
+            const status = document.getElementById('authStatus');
+            const details = document.getElementById('tokenDetails');
+
+            if (!token) {
+                status.className = 'status error';
+                status.textContent = '✗ No token (public endpoints only)';
+                details.style.display = 'none';
+                return;
+            }
+
+            const payload = decodeJwtPayload(token);
+            if (!payload) {
+                status.className = 'status error';
+                status.textContent = '✗ Token is not a valid JWT (expected 3 dot-separated parts)';
+                details.style.display = 'none';
+                return;
+            }
+
+            const tokenUse = payload.token_use || '(missing)';
+            const issuer = payload.iss || '(missing)';
+            const audience = payload.aud || payload.client_id || '(missing)';
+            const expiresAt = formatEpochSeconds(payload.exp);
+            const matchesIssuer = issuer === expectedIssuer;
+            const matchesAudience = expectedClientIds.includes(audience);
+
+            details.style.display = 'block';
+            details.textContent = [
+                `token_use: ${tokenUse}`,
+                `iss: ${issuer}`,
+                `aud/client_id: ${audience}`,
+                `exp: ${expiresAt}`,
+                `expected client ids: ${expectedClientIds.join(', ')}`,
+                payload['custom:stFips'] ? `custom:stFips: ${payload['custom:stFips']}` : 'custom:stFips: (missing)'
+            ].join('\n');
+
+            if (!matchesIssuer) {
+                status.className = 'status error';
+                status.textContent = '✗ Token issuer does not match DEV user pool';
+            } else if (!matchesAudience) {
+                status.className = 'status error';
+                status.textContent = '✗ Token audience/client_id does not match accepted DEV app clients';
+            } else if (rawToken.trim().toLowerCase().startsWith('bearer ')) {
+                status.className = 'status success';
+                status.textContent = '✓ Token configured (Bearer prefix detected and removed automatically)';
+            } else {
+                status.className = 'status success';
+                status.textContent = '✓ Bearer token configured';
+            }
+        }
+        
+        function updateEndpointInfo() {
+            const endpoint = document.getElementById('endpoint').value;
+            const info = document.getElementById('endpointInfo');
+            const params = document.getElementById('queryParams');
+            const inputs = document.getElementById('paramInputs');
+            
+            info.textContent = endpointDescriptions[endpoint] || 'Endpoint details';
+            
+            if (commonParams[endpoint]) {
+                inputs.innerHTML = commonParams[endpoint]
+                    .map(p => `
+                        <div class="param-row">
+                            <label style="margin: 0;">${p}</label>
+                            <input type="text" id="param_${p}" placeholder="optional">
+                        </div>
+                    `).join('');
+                params.style.display = 'block';
+            } else {
+                params.style.display = 'none';
+            }
+        }
+        
+        async function sendRequest() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const rawToken = document.getElementById('token').value;
+            const token = normalizeToken(rawToken);
+            const endpoint = document.getElementById('endpoint').value;
+            const format = document.getElementById('format').value;
+            const status = document.getElementById('status');
+            const response = document.getElementById('response');
+            
+            try {
+                status.style.display = 'block';
+                status.className = 'status loading';
+                status.textContent = '⏳ Sending request...';
+                
+                let url = baseUrl + endpoint;
+                const params = new URLSearchParams();
+                
+                // Collect query parameters
+                if (commonParams[endpoint]) {
+                    commonParams[endpoint].forEach(p => {
+                        const input = document.getElementById('param_' + p);
+                        if (input && input.value) {
+                            params.append(p, input.value);
+                        }
+                    });
+                }
+                
+                if (format) {
+                    params.append('format', format);
+                }
+                
+                const queryString = params.toString();
+                if (queryString) {
+                    url += '?' + queryString;
+                }
+                
+                const headers = {
+                    'Accept': format === 'csv' ? 'text/csv' : format === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/json'
+                };
+                
+                if (token) {
+                    headers['Authorization'] = 'Bearer ' + token;
+                }
+                
+                const result = await fetch(url, { headers });
+                
+                let contentType = result.headers.get('content-type') || '';
+                let displayText;
+                
+                if (contentType.includes('application/json')) {
+                    const data = await result.json();
+                    displayText = JSON.stringify(data, null, 2);
+                } else if (contentType.includes('text/csv')) {
+                    displayText = await result.text();
+                } else {
+                    displayText = await result.text();
+                }
+                
+                response.textContent = displayText;
+                
+                if (result.ok) {
+                    status.className = 'status success';
+                    status.textContent = `✓ Success (${result.status} ${result.statusText})`;
+                } else {
+                    status.className = 'status error';
+                    status.textContent = `✗ Error ${result.status}: ${result.statusText}`;
+
+                    if (result.status === 401) {
+                        const payload = decodeJwtPayload(token);
+                        const wwwAuth = result.headers.get('www-authenticate') || '(not provided)';
+                        const debugLines = [
+                            '',
+                            '--- AUTH DEBUG ---',
+                            `www-authenticate: ${wwwAuth}`
+                        ];
+
+                        if (payload) {
+                            debugLines.push(`iss: ${payload.iss || '(missing)'}`);
+                            debugLines.push(`token_use: ${payload.token_use || '(missing)'}`);
+                            debugLines.push(`aud: ${payload.aud || '(missing)'}`);
+                            debugLines.push(`client_id: ${payload.client_id || '(missing)'}`);
+                            debugLines.push(`expected issuer: ${expectedIssuer}`);
+                            debugLines.push(`expected client ids: ${expectedClientIds.join(', ')}`);
+                        }
+
+                        displayText += '\n' + debugLines.join('\n');
+                        response.textContent = displayText;
+                    }
+                }
+            } catch (err) {
+                status.className = 'status error';
+                status.textContent = `✗ Request failed: ${err.message}`;
+                response.textContent = err.message;
+            }
+        }
+        
+        async function testHealth() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const status = document.getElementById('status');
+            const response = document.getElementById('response');
+            
+            try {
+                status.style.display = 'block';
+                status.className = 'status loading';
+                status.textContent = '⏳ Testing health endpoint...';
+                
+                const result = await fetch(baseUrl + '/health');
+                const data = await result.json();
+                
+                response.textContent = JSON.stringify(data, null, 2);
+                
+                if (result.ok) {
+                    status.className = 'status success';
+                    status.textContent = '✓ API is healthy';
+                } else {
+                    status.className = 'status error';
+                    status.textContent = '✗ Health check failed';
+                }
+            } catch (err) {
+                status.className = 'status error';
+                status.textContent = `✗ Health check failed: ${err.message}`;
+                response.textContent = err.message;
+            }
+        }
+        
+        async function testStatus() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const status = document.getElementById('status');
+            const response = document.getElementById('response');
+            
+            try {
+                status.style.display = 'block';
+                status.className = 'status loading';
+                status.textContent = '⏳ Fetching service status...';
+                
+                const result = await fetch(baseUrl + '/status');
+                const data = await result.json();
+                
+                response.textContent = JSON.stringify(data, null, 2);
+                
+                if (result.ok) {
+                    status.className = 'status success';
+                    status.textContent = `✓ Status retrieved (${data.datasets?.length || 0} datasets)`;
+                } else {
+                    status.className = 'status error';
+                    status.textContent = '✗ Status check failed';
+                }
+            } catch (err) {
+                status.className = 'status error';
+                status.textContent = `✗ Status check failed: ${err.message}`;
+                response.textContent = err.message;
+            }
+        }
+        
+        function clearResponse() {
+            document.getElementById('response').textContent = 'Ready to send a request...';
+            document.getElementById('status').style.display = 'none';
+        }
+        
+        // Initialize
+        document.getElementById('token').addEventListener('change', updateAuthStatus);
+        document.getElementById('token').addEventListener('input', updateAuthStatus);
+        updateAuthStatus();
+        updateEndpointInfo();
+    </script>
+</body>
+</html>

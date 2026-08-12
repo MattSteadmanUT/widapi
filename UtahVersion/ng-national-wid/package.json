@@ -1,0 +1,24 @@
+{
+  "name": "@ulmita/ng-national-wid",
+  "version": "1.0.0",
+  "description": "Angular component library for the National Workforce Information Database (WID) portal. Provides a self-contained data explorer UI for BLS labor market data.",
+  "keywords": [
+    "angular",
+    "wid",
+    "workforce-information-database",
+    "bls",
+    "labor-market",
+    "ulmita"
+  ],
+  "peerDependencies": {
+    "@angular/common": ">=17.0.0",
+    "@angular/core": ">=17.0.0",
+    "@angular/forms": ">=17.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/utahdws/fed-ulmita-ng.git"
+  },
+  "license": "MIT",
+  "sideEffects": false
+}

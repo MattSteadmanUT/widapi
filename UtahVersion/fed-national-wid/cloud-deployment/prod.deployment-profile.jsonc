@@ -1,0 +1,44 @@
+{
+  /*
+    National WID 3.0 API — Prod deployment profile
+    AWS profile: GovProd (us-gov-west-1)
+
+    To deploy:  just deploy prod
+    To validate: just validate-deploy prod
+
+    TODO: fill in prod-specific values before first prod deployment.
+  */
+
+  "awsToolsDefaults": {
+    "profile": "GovProd",
+    "region": "us-gov-west-1",
+    "configuration": "Release",
+    "s3-prefix": "prod-national-wid-api",
+    "stack-name": "prod-national-wid-api",
+    "s3-bucket": "TODO_SET_PROD_DEPLOYMENTS_BUCKET"
+  },
+
+  "templates": [
+    "cloud-deployment/lambda.template"
+  ],
+
+  "templateParameters": {
+    "appEnvironment": "prod",
+    "appAspNetCoreEnvironment": "Production",
+    "appCognitoUserPoolId": "us-gov-west-1_RMhTk2TxL",
+    "appCognitoClientId": "TODO_SET_PROD_COGNITO_CLIENT_ID",
+    "appAuroraDbName": "nationalwid",
+    "appAuroraMinCapacity": 1,
+    "appAuroraMaxCapacity": 32,
+
+    "vpcId": "TODO_SET_PROD_VPC_ID",
+    "vpcSubnetIds": "TODO_SET_PROD_SUBNET_IDS",
+    "vpcSecurityGroupIds": "TODO_SET_PROD_SECURITY_GROUP_IDS",
+
+    "tagElcid": "wsitapro",
+    "tagDept": "dws",
+    "tagDivision": "wra",
+    "tagContact": "MattSteadman@utah.gov",
+    "tagEnv": "prod"
+  }
+}

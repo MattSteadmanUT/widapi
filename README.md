@@ -56,8 +56,17 @@ widapi/
 │   └── sync-spec-json.yml            # GitHub Action: converts YAML → JSON on pull requests
 ├── vendor/swagger-ui/                # Vendored Swagger UI assets
 ├── scripts/update-vendor.js          # Helper to refresh vendored assets
+├── UtahVersion/                      # Utah DWS's national WID API implementation, handed off to NC
+│   ├── HANDOFF.md                    # Start here — status, known issues, infra checklist, next steps
+│   ├── fed-national-wid/             # .NET 8 API + BLS ingestion Lambda implementing this spec
+│   └── ng-national-wid/              # Angular 17+ data-explorer component library
 └── package.json
 ```
+
+`UtahVersion/` is a working implementation of the WID 3.0 contract defined above, contributed by
+Utah DWS and handed off for North Carolina to continue. See
+[UtahVersion/README.md](./UtahVersion/README.md) for orientation and
+[UtahVersion/HANDOFF.md](./UtahVersion/HANDOFF.md) for full handoff status.
 
 ---
 

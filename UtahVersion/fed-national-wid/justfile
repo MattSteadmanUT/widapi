@@ -1,0 +1,70 @@
+# Set the shell to PowerShell 7+ (not Bash)
+set shell := ["pwsh", "-c"]
+
+# Default recipe
+__default:
+    @just --list
+
+# Build the solution
+build:
+    dotnet build
+
+# Run the API locally with hot reload
+run:
+    dotnet watch run --project src/NationalWid.Api/NationalWid.Api.csproj
+
+# Run unit tests
+test:
+    dotnet test
+
+# Run unit tests with code coverage
+test-coverage:
+    dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/
+
+# Restore NuGet packages
+restore:
+    dotnet restore
+
+# Deploy to specified environment (dev or prod)
+deploy ENVIRONMENT:
+    ./dev-scripts/Deploy.ps1 ./cloud-deployment/{{ENVIRONMENT}}.deployment-profile.jsonc
+
+# Validate the merged CloudFormation/SAM template for an environment
+validate-deploy ENVIRONMENT='dev':
+    ./dev-scripts/Deploy.ps1 ./cloud-deployment/{{ENVIRONMENT}}.deployment-profile.jsonc -ValidateOnly
+
+# Tail CloudWatch logs from the API Lambda
+monitor:
+    ./dev-scripts/Tail-Logs.ps1
+
+# Watch CloudFormation stack status with rollback-aware terminal state handling
+watch-stack-dev:
+    ./dev-scripts/Watch-Stack.ps1 -StackName dev-national-wid-api -Profile GovDev -Region us-gov-west-1
+
+watch-stack-prod:
+    ./dev-scripts/Watch-Stack.ps1 -StackName prod-national-wid-api -Profile GovProd -Region us-gov-west-1
+
+# Run idempotent migrations in dev via the ingestion Lambda
+migrate-dev:
+    ./dev-scripts/Run-Migrations.ps1 -FunctionName dev-national-wid-ingestion -Profile GovDev -Region us-gov-west-1
+
+# Verify required schema tables exist in dev
+verify-schema-dev:
+    ./dev-scripts/Run-Migrations.ps1 -FunctionName dev-national-wid-ingestion -Profile GovDev -Region us-gov-west-1 -VerifyOnly
+
+# Invoke the ingestion Lambda in dev (runs migrations + all ingestors)
+ingest-dev:
+    aws lambda invoke --function-name dev-national-wid-ingestion --profile GovDev --region us-gov-west-1 --cli-binary-format raw-in-base64-out --payload '{}' ingest-invoke-output.json | Out-Null; Get-Content ingest-invoke-output.json -Raw | ConvertFrom-Json | ConvertTo-Json
+
+# Tail ingestion Lambda logs in dev
+tail-ingestion-dev:
+    aws logs tail /aws/lambda/dev-national-wid-ingestion --profile GovDev --region us-gov-west-1 --since 5m --format short -f
+
+# Run the ingestion Lambda locally (requires AWS credentials and Parameter Store access)
+ingest:
+    dotnet run --project src/NationalWid.Ingestion/NationalWid.Ingestion.csproj
+
+__ci:
+    just restore
+    just build
+    just test
