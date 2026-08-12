@@ -19,21 +19,24 @@ the corresponding endpoint.
 
 ---
 
-## Decision 2: Eliminate per-domain `listAreas`, `maxPeriod`, `minPeriod` sub-endpoints
+## Decision 2: Replace per-domain metadata sub-endpoints with standardized table metadata endpoints
 
 **Decision:** The Oregon spec exposes `listAreas`, `listYears`, `maxPeriod`, and `minPeriod`
 as separate sub-paths under each domain (e.g., `/ces/employment/listAreas`,
-`/ces/employment/maxPeriod`). The WID 3.0 spec removes all of these.
+`/ces/employment/maxPeriod`). The WID 3.0 spec does not replicate these one-for-one;
+instead it exposes standardized `/{table}/metadata` endpoints for core data tables that
+return the same kinds of table-scoped coverage information.
 
 **Options considered:**
 - Keep the Oregon sub-endpoint pattern
-- Replace with a shared `/lookups/geographies` and `/lookups/periods` endpoint
+- Replace with only shared global lookups
+- Add standardized per-table metadata endpoints while keeping shared global lookups
 
-**Rationale:** The Geographies table is shared across all data domains — duplicating it under
-every domain creates an explosion of redundant endpoints and inconsistent behaviour (the data
-returned by `/ces/employment/listAreas` vs `/industry/listAreas` should be identical).
-Callers who need the max or min period for a dataset can sort the `/lookups/periodYears`
-response. Standard `minYear`/`maxYear` query parameters on data endpoints handle range filtering.
+**Rationale:** Shared global lookup tables are still needed for canonical code lists, but they do
+not describe actual data coverage in a specific table after table-specific filters are applied
+(for example, OEWS and QCEW can have different max years). Standardized `/{table}/metadata`
+endpoints provide efficient table-scoped discovery (areas/years/minPeriod/maxPeriod) without
+forcing clients to pull full datasets or reintroducing many ad-hoc Oregon-style sub-path variants.
 
 ---
 
@@ -95,20 +98,21 @@ serialising char fields from legacy database drivers. Consumers that prefer bool
 
 ---
 
-## Decision 7: Projections use `IndDirectories` / `OccDirectories`, not `MatrixXInd` / `MatrixXOcc`
+## Decision 7: Directory lookups use `/lookups/*-directories`; crosswalks remain in `/projections/*`
 
-**Decision:** The code enumeration endpoints for projections are `/projections/indDirectories`
-and `/projections/occDirectories`, which map directly to the `IndDirectories` and `OccDirectories`
-WID 3.0 lookup tables. The `MatrixXInd` / `MatrixXOcc` crosswalk tables are also exposed at
-`/projections/matrixXInd` and `/projections/matrixXOcc`.
+**Decision:** The code enumeration endpoints for projection directories are
+`/lookups/ind-directories` and `/lookups/occ-directories`, which map directly to the
+`IndDirectories` and `OccDirectories` WID 3.0 lookup tables. The `MatrixXInd` / `MatrixXOcc`
+crosswalk tables remain exposed at `/projections/matrixXInd` and `/projections/matrixXOcc`.
 
 **Context:** The Oregon spec used `ioMatrix/listIndustries` and `ioMatrix/listOccupations` as
 ad-hoc sub-endpoints with no clear WID table backing. WID 3.0 formalises the directory concept
 with `IndDirectories` and `OccDirectories`, and separately has crosswalk tables (`MatrixXInd`,
 `MatrixXOcc`) that map matrix codes to standard industry/occupation codes.
 
-**Rationale:** Exposing all four tables keeps the native structure accessible, and their distinct
-purposes are now clear from the endpoint names.
+**Rationale:** Keeping directory tables under `/lookups/*` aligns with the current implementation
+and with the broader table-native pattern where directory/reference sets are queried as lookups,
+while projection-specific crosswalks remain under `/projections/*`.
 
 ---
 

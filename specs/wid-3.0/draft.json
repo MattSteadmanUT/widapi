@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "WID 3.0 API — National Draft",
-    "description": "Working draft of the national **Workforce Information Database (WID) 3.0** API specification.\nThis specification is being developed collaboratively by multiple state workforce agencies\nunder the Analyst Resource Center (ARC) consortium.\n\n## Design philosophy\n\n1. **Table-native endpoints** — every WID 3.0 core table is exposed as a queryable resource\n   at its own path with filter parameters that mirror the table's columns exactly.\n2. **View endpoints** — cross-table views join related tables and return enriched records\n   (e.g., CES employment with resolved geography names and series titles).\n3. **Consistent naming** — all API field names use `camelCase` equivalents of the WID 3.0\n   column names (e.g., `StFips` → `stFips`, `AreaTypeVersion` → `areaTypeVersion`).\n4. **Standard envelope** — every list response wraps results in `{ meta, data, links }`.\n   The envelope supports both page-number and cursor pagination.\n5. **State-agnostic** — `stFips` is never hardcoded; the spec supports all 50 states plus\n   national data.\n\n## Key structural changes from WID 2.8 / Oregon reference spec\n\n- `AreaTypeVersion` is a new field in WID 3.0 that is part of the geography primary key.\n  It allows historical vintages of area definitions (especially MSAs) to coexist.\n- CES is a **single table** containing employment, production-worker stats, and\n  hours/earnings.  The Oregon spec split these into separate endpoints, which is a 2.8-era\n  design choice not needed in 3.0.\n- `SeriesCodeType` is part of the CES primary key alongside `SeriesCode` (to support\n  multiple industry classification systems).\n- Lookup tables such as `IndDirectories` and `OccDirectories` now serve as the canonical\n  directory of projection-period matrix codes, replacing the ad-hoc listIndustries /\n  listOccupations sub-endpoints in the Oregon spec.\n- Licensing tables (`License`, `LicenseAuthorities`, `LicenseHistory`, `LicenseXOcc`)\n  are new in WID 3.0 with no equivalent in WID 2.8.\n\n## Reference documents\n\n- [WID 3.0 Structure (Nov 2025)](../WID-3.0-Structure-20251120.pdf)\n- [WID v3.0 Addenda](../WID-v30-Addenda.pdf)\n- [Oregon WID 2.8 reference spec](../../reference/oregon-wid-2.8.yaml)\n\nFor background on the WID standard see https://widcenter.org.\nThis is a living document — open a pull request to propose changes.\n",
+    "description": "Working draft of the national **Workforce Information Database (WID) 3.0** API specification.\nThis specification is being developed collaboratively by multiple state workforce agencies\nunder the Analyst Resource Center (ARC) consortium.\n\n## Design philosophy\n\n1. **Table-native endpoints** — every WID 3.0 core table is exposed as a queryable resource\n   at its own path with filter parameters that mirror the table's columns exactly.\n2. **View endpoints** — cross-table views join related tables and return enriched records\n   (e.g., CES employment with resolved geography names and series titles).\n3. **Consistent naming** — all API field names use `camelCase` equivalents of the WID 3.0\n   column names (e.g., `StFips` → `stFips`, `AreaTypeVersion` → `areaTypeVersion`).\n4. **Standard envelope** — every list response wraps results in `{ meta, data, links }`.\n   The envelope supports both page-number and cursor pagination.\n5. **State-agnostic** — `stFips` is never hardcoded; the spec supports all 50 states plus\n   national data.\n 6. **Composable filtering** — string filter parameters may accept comma-separated values\n   for OR-style matching (for example `stFips=49,53`). Code-like filters may additionally\n   support a single wildcard character `*` for prefix/suffix/contains matching\n   (for example `occCode=11*`, `occCode=*11`, `occCode=*11*`).\n\n## Key structural changes from WID 2.8 / Oregon reference spec\n\n- `AreaTypeVersion` is a new field in WID 3.0 that is part of the geography primary key.\n  It allows historical vintages of area definitions (especially MSAs) to coexist.\n- CES is a **single table** containing employment, production-worker stats, and\n  hours/earnings.  The Oregon spec split these into separate endpoints, which is a 2.8-era\n  design choice not needed in 3.0.\n- `SeriesCodeType` is part of the CES primary key alongside `SeriesCode` (to support\n  multiple industry classification systems).\n- Lookup tables such as `IndDirectories` and `OccDirectories` now serve as the canonical\n  directory of projection-period matrix codes, replacing the ad-hoc listIndustries /\n  listOccupations sub-endpoints in the Oregon spec.\n- Licensing tables (`License`, `LicenseAuthorities`, `LicenseHistory`, `LicenseXOcc`)\n  are new in WID 3.0 with no equivalent in WID 2.8.\n\n## Reference documents\n\n- [WID 3.0 Structure (Nov 2025)](../WID-3.0-Structure-20251120.pdf)\n- [WID v3.0 Addenda](../WID-v30-Addenda.pdf)\n- [Oregon WID 2.8 reference spec](../../reference/oregon-wid-2.8.yaml)\n\nFor background on the WID standard see https://widcenter.org.\nThis is a living document — open a pull request to propose changes.\n",
     "version": "3.0.0-draft",
     "contact": {
       "name": "WID 3.0 Working Group"
@@ -878,6 +878,156 @@
         }
       }
     },
+    "/lookups/ind-directories": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the IndDirectories lookup table",
+        "description": "Returns projection industry directory records from `IndDirectories`. This is the canonical lookup endpoint for matrix industry directory entries in the current National WID implementation.\n",
+        "operationId": "getLookupIndDirectories",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "name": "projPeriod",
+            "in": "query",
+            "description": "Projection span (for example `2022-2032`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "indCodeType",
+            "in": "query",
+            "description": "Industry code type used by projection directory rows",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "indCode",
+            "in": "query",
+            "description": "Industry code value",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndDirectoryListResponse"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/lookups/occ-directories": {
+      "get": {
+        "tags": [
+          "lookups"
+        ],
+        "summary": "Query the OccDirectories lookup table",
+        "description": "Returns projection occupation directory records from `OccDirectories`. This is the canonical lookup endpoint for matrix occupation directory entries in the current National WID implementation.\n",
+        "operationId": "getLookupOccDirectories",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          },
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "name": "projPeriod",
+            "in": "query",
+            "description": "Projection span (for example `2022-2032`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "occCodeType",
+            "in": "query",
+            "description": "Occupation code type used by projection directory rows",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "occCode",
+            "in": "query",
+            "description": "Occupation code value",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccDirectoryListResponse"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
     "/ces": {
       "get": {
         "tags": [
@@ -983,6 +1133,93 @@
         }
       }
     },
+    "/ces/metadata": {
+      "get": {
+        "tags": [
+          "ces"
+        ],
+        "summary": "Query CES data-coverage metadata",
+        "description": "Returns table-scoped metadata for CES records that match the supplied filters. This endpoint provides a standardized way to retrieve listAreas/listYears/minPeriod/maxPeriod-style information without pulling full CES datasets.\n",
+        "operationId": "getCesMetadata",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "name": "seriesCodeType",
+            "in": "query",
+            "description": "Industry code type for CES series (e.g. '10' for NAICS)",
+            "schema": {
+              "type": "string",
+              "example": "10"
+            }
+          },
+          {
+            "name": "seriesCode",
+            "in": "query",
+            "description": "8-character CES industry series code",
+            "schema": {
+              "type": "string",
+              "example": "00000000"
+            }
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "description": "'1' for seasonally adjusted, '0' for unadjusted",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/metadataFields"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableMetadataResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
     "/laborForce": {
       "get": {
         "tags": [
@@ -1060,6 +1297,75 @@
                 "schema": {
                   "type": "string",
                   "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/laborForce/metadata": {
+      "get": {
+        "tags": [
+          "laborForce"
+        ],
+        "summary": "Query LaborForce data-coverage metadata",
+        "description": "Returns table-scoped metadata for LaborForce records that match the supplied filters. This endpoint provides a standardized way to retrieve listAreas/listYears/minPeriod/maxPeriod-style information without pulling full LaborForce datasets.\n",
+        "operationId": "getLaborForceMetadata",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "description": "'1' for seasonally adjusted, '0' for not adjusted",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/metadataFields"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableMetadataResponse"
                 }
               }
             }
@@ -1150,6 +1456,78 @@
                 "schema": {
                   "type": "string",
                   "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/industry/metadata": {
+      "get": {
+        "tags": [
+          "industry"
+        ],
+        "summary": "Query Industry data-coverage metadata",
+        "description": "Returns table-scoped metadata for Industry (QCEW) records that match the supplied filters. This endpoint provides a standardized way to retrieve listAreas/listYears/minPeriod/maxPeriod-style information without pulling full Industry datasets.\n",
+        "operationId": "getIndustryMetadata",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "$ref": "#/components/parameters/industryCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/industryCode"
+          },
+          {
+            "name": "ownership",
+            "in": "query",
+            "description": "Ownership code (e.g. '50'=Private, '10'=Total)",
+            "schema": {
+              "type": "string",
+              "example": "50"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/metadataFields"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableMetadataResponse"
                 }
               }
             }
@@ -1254,29 +1632,26 @@
         }
       }
     },
-    "/projections/indDirectories": {
+    "/projections/metadata": {
       "get": {
         "tags": [
           "projections"
         ],
-        "summary": "Query IndDirectories — matrix industry code directory",
-        "description": "Returns the directory of MicroMatrix industry codes valid for a given projection run (periodYear / periodType / period / projectedYear). Use this to enumerate available industry codes before querying `/projections`. Replaces the Oregon-style `ioMatrix/listIndustries` sub-endpoint.\n",
-        "operationId": "getIndDirectories",
+        "summary": "Query Projections data-coverage metadata",
+        "description": "Returns table-scoped metadata for ProjectionsMatrix records that match the supplied filters. This endpoint provides a standardized way to retrieve listAreas/listYears/minPeriod/maxPeriod-style information without pulling full projections datasets.\n",
+        "operationId": "getProjectionsMetadata",
         "parameters": [
           {
-            "$ref": "#/components/parameters/page"
+            "$ref": "#/components/parameters/stFips"
           },
           {
-            "$ref": "#/components/parameters/pageSize"
+            "$ref": "#/components/parameters/areaType"
           },
           {
-            "$ref": "#/components/parameters/cursor"
+            "$ref": "#/components/parameters/areaTypeVersion"
           },
           {
-            "$ref": "#/components/parameters/limit"
-          },
-          {
-            "$ref": "#/components/parameters/sort"
+            "$ref": "#/components/parameters/area"
           },
           {
             "$ref": "#/components/parameters/periodType"
@@ -1290,6 +1665,7 @@
           {
             "name": "projectedYear",
             "in": "query",
+            "description": "Target/projected calendar year",
             "schema": {
               "type": "string",
               "example": "2032"
@@ -1298,81 +1674,21 @@
           {
             "name": "matrixIndCode",
             "in": "query",
+            "description": "IO matrix industry code (from `IndDirectories`)",
             "schema": {
               "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IndDirectoryListResponse"
-                }
-              },
-              "text/csv": {
-                "schema": {
-                  "type": "string",
-                  "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          }
-        }
-      }
-    },
-    "/projections/occDirectories": {
-      "get": {
-        "tags": [
-          "projections"
-        ],
-        "summary": "Query OccDirectories — matrix occupation code directory",
-        "description": "Returns the directory of MicroMatrix occupation codes valid for a given projection run.  Replaces the Oregon-style `ioMatrix/listOccupations` sub-endpoint.\n",
-        "operationId": "getOccDirectories",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/page"
-          },
-          {
-            "$ref": "#/components/parameters/pageSize"
-          },
-          {
-            "$ref": "#/components/parameters/cursor"
-          },
-          {
-            "$ref": "#/components/parameters/limit"
-          },
-          {
-            "$ref": "#/components/parameters/sort"
-          },
-          {
-            "$ref": "#/components/parameters/periodType"
-          },
-          {
-            "$ref": "#/components/parameters/periodYear"
-          },
-          {
-            "$ref": "#/components/parameters/period"
-          },
-          {
-            "name": "projectedYear",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "example": "2032"
             }
           },
           {
             "name": "matrixOccCode",
             "in": "query",
+            "description": "IO matrix occupation code (from `OccDirectories`)",
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/metadataFields"
           }
         ],
         "responses": {
@@ -1381,13 +1697,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OccDirectoryListResponse"
-                }
-              },
-              "text/csv": {
-                "schema": {
-                  "type": "string",
-                  "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
+                  "$ref": "#/components/schemas/TableMetadataResponse"
                 }
               }
             }
@@ -1623,6 +1933,95 @@
                 "schema": {
                   "type": "string",
                   "description": "Flat CSV with one header row followed by one data row per record. Contains the same fields as the JSON `data` array items, in the same field order.  No metadata envelope or links are included. All string values are enclosed in double quotes.\n"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/wages/metadata": {
+      "get": {
+        "tags": [
+          "wages"
+        ],
+        "summary": "Query IOWage data-coverage metadata",
+        "description": "Returns table-scoped metadata for IOWage records that match the supplied filters. This endpoint provides a standardized way to retrieve listAreas/listYears/minPeriod/maxPeriod-style information without pulling full wage datasets.\n",
+        "operationId": "getWagesMetadata",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/stFips"
+          },
+          {
+            "$ref": "#/components/parameters/areaType"
+          },
+          {
+            "$ref": "#/components/parameters/areaTypeVersion"
+          },
+          {
+            "$ref": "#/components/parameters/area"
+          },
+          {
+            "$ref": "#/components/parameters/periodType"
+          },
+          {
+            "$ref": "#/components/parameters/periodYear"
+          },
+          {
+            "$ref": "#/components/parameters/period"
+          },
+          {
+            "$ref": "#/components/parameters/minYear"
+          },
+          {
+            "$ref": "#/components/parameters/maxYear"
+          },
+          {
+            "$ref": "#/components/parameters/industryCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/industryCode"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCodeType"
+          },
+          {
+            "$ref": "#/components/parameters/occupationCode"
+          },
+          {
+            "name": "wageSource",
+            "in": "query",
+            "description": "Wage data source code (see `/lookups/wageSources`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rateType",
+            "in": "query",
+            "description": "Rate type code: '1'=hourly, '2'=annual",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1",
+                "2"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/metadataFields"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableMetadataResponse"
                 }
               }
             }
@@ -2515,10 +2914,9 @@
       "stFips": {
         "name": "stFips",
         "in": "query",
-        "description": "2-digit state FIPS code. Use '00' for national data. All 50 states are supported — this parameter is never restricted to a single state.\n",
+        "description": "2-digit state FIPS code. Use '00' for national data. All 50 states are supported — this parameter is never restricted to a single state.\nComma-separated values are allowed to request multiple states in one call (for example `stFips=49,53`).\n",
         "schema": {
           "type": "string",
-          "pattern": "^\\d{2}$",
           "example": "41"
         }
       },
@@ -2543,7 +2941,7 @@
       "area": {
         "name": "area",
         "in": "query",
-        "description": "6-character geographic area code, zero-padded on the left per the WID 3.0 structure specification (e.g., county FIPS 41005 → `041005`).\n**The API normalizes area codes server-side**: supply the bare numeric code (e.g. `41005`) and the implementation will left-pad it with zeros to 6 characters.  Supplying the padded form (`041005`) also works.\n",
+        "description": "6-character geographic area code, zero-padded on the left per the WID 3.0 structure specification (e.g., county FIPS 41005 → `041005`).\n**The API normalizes area codes server-side**: supply the bare numeric code (e.g. `41005`) and the implementation will left-pad it with zeros to 6 characters.  Supplying the padded form (`041005`) also works.\nComma-separated values are allowed (for example `area=41005,53033`).\n",
         "schema": {
           "type": "string",
           "example": "041005"
@@ -2606,7 +3004,7 @@
       "industryCode": {
         "name": "industryCode",
         "in": "query",
-        "description": "Industry classification code.  In the WID 3.0 database this is stored as a 10-character field, left-justified and right-padded with blanks (ASCII 32) per the WID 3.0 structure specification.\n**The API normalizes codes server-side**: supply the bare code (e.g. `722511`) and the implementation will right-pad it to 10 characters before querying. Supplying the padded form (`722511    `) also works.\n",
+        "description": "Industry classification code.  In the WID 3.0 database this is stored as a 10-character field, left-justified and right-padded with blanks (ASCII 32) per the WID 3.0 structure specification.\n**The API normalizes codes server-side**: supply the bare code (e.g. `722511`) and the implementation will right-pad it to 10 characters before querying. Supplying the padded form (`722511    `) also works.\nComma-separated values are allowed (for example `industryCode=31,32`). Wildcard `*` is supported at the beginning and/or end for code-pattern matching (for example `industryCode=31*`, `industryCode=*11`, `industryCode=*31*`).\n",
         "schema": {
           "type": "string",
           "example": "722511"
@@ -2624,7 +3022,7 @@
       "occupationCode": {
         "name": "occupationCode",
         "in": "query",
-        "description": "Occupation classification code.  In the WID 3.0 database this is stored as a 10-character field, left-justified and right-padded with blanks (ASCII 32) per the WID 3.0 structure specification.\n**The API normalizes codes server-side**: supply the bare code (e.g. `35-2014`) and the implementation will right-pad it to 10 characters before querying. Supplying the padded form (`35-2014   `) also works.\n",
+        "description": "Occupation classification code.  In the WID 3.0 database this is stored as a 10-character field, left-justified and right-padded with blanks (ASCII 32) per the WID 3.0 structure specification.\n**The API normalizes codes server-side**: supply the bare code (e.g. `35-2014`) and the implementation will right-pad it to 10 characters before querying. Supplying the padded form (`35-2014   `) also works.\nComma-separated values are allowed (for example `occupationCode=11-1011,11-1021`). Wildcard `*` is supported at the beginning and/or end for code-pattern matching (for example `occupationCode=11*`, `occupationCode=*11`, `occupationCode=*11*`).\n",
         "schema": {
           "type": "string",
           "example": "35-2014"
@@ -2637,6 +3035,32 @@
         "schema": {
           "type": "string",
           "example": "periodYear:desc,period:asc"
+        }
+      },
+      "metadataFields": {
+        "name": "metadataFields",
+        "in": "query",
+        "description": "Comma-separated list of metadata facets to return for table-scoped metadata endpoints. If omitted, all supported facets are returned.\nSupported values:\n  - `areas` (listAreas-style distinct geography keys)\n  - `years` (listYears-style distinct period years)\n  - `periods` (distinct periodType+period combinations)\n  - `minPeriod` (earliest matching period)\n  - `maxPeriod` (latest matching period)\n  - `projectedYears` (distinct projection target years when applicable)\n",
+        "style": "form",
+        "explode": false,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "areas",
+              "years",
+              "periods",
+              "minPeriod",
+              "maxPeriod",
+              "projectedYears"
+            ]
+          },
+          "example": [
+            "areas",
+            "years",
+            "maxPeriod"
+          ]
         }
       }
     },
@@ -2725,6 +3149,12 @@
             "nullable": true,
             "description": "ISO 8601 date (YYYY-MM-DD) through which the returned data is current. Reflects the most recent load date for the tables contributing to this response.  `null` if the implementation does not track load dates.\n",
             "example": "2025-03-15"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional informational message about the current result set. Implementations should set this when no rows match supplied filters, for example \"No records found with the supplied filters.\"\n",
+            "example": "No records found with the supplied filters."
           }
         }
       },
@@ -3010,6 +3440,113 @@
             "items": {
               "$ref": "#/components/schemas/Period"
             }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "AreaKey": {
+        "type": "object",
+        "description": "Distinct geography key present in a filtered dataset.",
+        "properties": {
+          "stFips": {
+            "type": "string",
+            "example": "41"
+          },
+          "areaType": {
+            "type": "string",
+            "example": "04"
+          },
+          "areaTypeVersion": {
+            "type": "string",
+            "example": "0"
+          },
+          "area": {
+            "type": "string",
+            "example": "041005"
+          }
+        }
+      },
+      "PeriodPoint": {
+        "type": "object",
+        "description": "Identifies a single point in a WID period dimension.",
+        "properties": {
+          "periodYear": {
+            "type": "string",
+            "example": "2024"
+          },
+          "periodType": {
+            "type": "string",
+            "example": "03"
+          },
+          "period": {
+            "type": "string",
+            "example": "06"
+          }
+        }
+      },
+      "TableMetadata": {
+        "type": "object",
+        "description": "Table-scoped metadata derived from records matching the supplied filters. Supports listAreas/listYears/minPeriod/maxPeriod-style discovery without returning full data rows.\n",
+        "properties": {
+          "areas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AreaKey"
+            }
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "2024"
+            }
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Period"
+            }
+          },
+          "minPeriod": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PeriodPoint"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maxPeriod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodPoint"
+              }
+            ],
+            "nullable": true
+          },
+          "projectedYears": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "2032"
+            }
+          }
+        }
+      },
+      "TableMetadataResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TableMetadata"
           },
           "links": {
             "type": "array",
@@ -3787,11 +4324,11 @@
           },
           "matrixIndCode": {
             "type": "string",
-            "description": "MicroMatrix industry code; see `/projections/indDirectories`"
+            "description": "MicroMatrix industry code; see `/lookups/ind-directories`"
           },
           "matrixOccCode": {
             "type": "string",
-            "description": "MicroMatrix occupation code; see `/projections/occDirectories`"
+            "description": "MicroMatrix occupation code; see `/lookups/occ-directories`"
           },
           "projectedYear": {
             "type": "string",
@@ -3910,39 +4447,27 @@
       },
       "IndDirectory": {
         "type": "object",
-        "description": "A MicroMatrix industry code entry from `IndDirectories`",
+        "description": "A projection industry directory entry from `IndDirectories`",
         "properties": {
-          "matrixIndCode": {
-            "type": "string"
-          },
-          "periodYear": {
-            "type": "string",
-            "example": "2022"
-          },
-          "periodType": {
-            "type": "string",
-            "example": "01"
-          },
-          "period": {
+          "stFips": {
             "type": "string",
             "example": "00"
           },
-          "projectedYear": {
+          "projPeriod": {
             "type": "string",
-            "example": "2032"
+            "example": "2022-2032"
           },
-          "matrixIndTitle": {
+          "indCodeType": {
+            "type": "string",
+            "example": "10"
+          },
+          "indCode": {
+            "type": "string",
+            "example": "722511"
+          },
+          "indTitle": {
             "type": "string",
             "example": "Full-Service Restaurants"
-          },
-          "subTotal": {
-            "type": "string",
-            "description": "Sum level indicator for the matrix industry"
-          },
-          "ownership": {
-            "type": "string",
-            "example": "50",
-            "description": "2-digit ownership code for this projection industry entry. See `/lookups/ownerships` for valid values.\n"
           }
         }
       },
@@ -3968,33 +4493,27 @@
       },
       "OccDirectory": {
         "type": "object",
-        "description": "A MicroMatrix occupation code entry from `OccDirectories`",
+        "description": "A projection occupation directory entry from `OccDirectories`",
         "properties": {
-          "matrixOccCode": {
-            "type": "string"
-          },
-          "periodYear": {
-            "type": "string",
-            "example": "2022"
-          },
-          "periodType": {
-            "type": "string",
-            "example": "01"
-          },
-          "period": {
+          "stFips": {
             "type": "string",
             "example": "00"
           },
-          "projectedYear": {
+          "projPeriod": {
             "type": "string",
-            "example": "2032"
+            "example": "2022-2032"
           },
-          "matrixOccTitle": {
+          "occCodeType": {
             "type": "string",
-            "example": "Cooks, Restaurant"
+            "example": "19"
           },
-          "subTotal": {
-            "type": "string"
+          "occCode": {
+            "type": "string",
+            "example": "15-1256"
+          },
+          "occTitle": {
+            "type": "string",
+            "example": "Software Developers and Testers"
           }
         }
       },
