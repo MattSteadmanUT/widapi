@@ -50,40 +50,51 @@ true as of this handoff (2026-08-12, repo HEAD `6b47131`).
    `ParameterStoreService` read call to pass `WithDecryption: true`, which it already does for
    other params) is a small, well-scoped fix worth doing before NC's first deploy.
 
-4. **API keys don't auto-disable when the underlying Cognito user is disabled.** Only the base
+4. **The original README claimed per-state access scoping that doesn't actually exist.** It stated
+   that the JWT's `custom:stFips` claim "automatically scope[s] results to the user's state unless
+   overridden by an admin-level claim." Confirmed by grepping the codebase: `GetStFips()` and the
+   other `CognitoClaimsExtensions` helpers are **never called anywhere** — no controller filters by
+   the caller's state. Every authenticated caller, JWT or API key, can query any state's `stFips`
+   value today; there is no per-state access restriction. Low real-world impact since all data
+   served is public BLS/WID Center data, not sensitive per-state records, but if NC's threat model
+   ever assumes this scoping is in place (e.g. before adding any non-public data to this API),
+   it needs to be implemented, not just documented. The README has been corrected to state the
+   actual behavior.
+
+5. **API keys don't auto-disable when the underlying Cognito user is disabled.** Only the base
    lifecycle (create/rotate/revoke/expire) exists — there's no event-driven sync from Cognito
    admin-disable actions to `apikeys.status`. If a user is deactivated in ULMITA/Cognito, any API
    keys they created stay active until manually revoked.
 
-5. **Gateway-level throttling was never decided.** `docs/stakeholder-feedback-plan-2026-07-29.md`
+6. **Gateway-level throttling was never decided.** `docs/stakeholder-feedback-plan-2026-07-29.md`
    leaves this as an open decision (REST API usage-plans vs. HTTP-API app-level throttling) — it
    was never implemented either way. Current rate limiting, if any, is whatever HTTP API's defaults
    provide plus the unused `rateProfile` field on API keys (`standard`/`elevated` policies exist in
    the `apikeyratepolicies` table but nothing in `ApiKeyService`/`ApiKeyAuthHandler` currently reads
    or enforces them).
 
-6. **Broader non-core WID table families beyond what's implemented are still out of scope.**
+7. **Broader non-core WID table families beyond what's implemented are still out of scope.**
    `docs/wid30-structure-validation-2026-07-31.md` explicitly says optional WID table families
    beyond the current 33 tables aren't migrated or exposed, and there's no automated
    field-by-field validator comparing the live schema against the WID 3.0 structure document —
    conformance has been checked manually so far, not continuously.
 
-7. **`sam validate --lint`/`cfn-lint` has never been run** against `lambda.template` — the 2026-06-30
+8. **`sam validate --lint`/`cfn-lint` has never been run** against `lambda.template` — the 2026-06-30
    hardening changes (IAM role split, Aurora snapshot policy, env-scoped SSM paths — all confirmed
    present in the current template) were authored in an environment without those tools installed,
    so the template has only ever been JSON-parsed, not linted. Worth running once before NC's first
    deploy just to catch anything that slipped through.
 
-8. **`ForceRefreshDatasets` sets a process-wide environment variable with no reset path** — see
+9. **`ForceRefreshDatasets` sets a process-wide environment variable with no reset path** — see
    [ingestion-pipeline.md](./ingestion-pipeline.md#payload-options-ingestrequest). Possible
    warm-Lambda-container leak between invocations; not confirmed to have caused a real incident,
    but not proven safe either.
 
-9. **QCEW's upsert `ON CONFLICT` column list references `codetype` while its `INSERT` column list
-   uses `indcodetype`** — see [database-schema.md](./database-schema.md). Needs verification
-   against the live `industry` table constraint definition.
+10. **QCEW's upsert `ON CONFLICT` column list references `codetype` while its `INSERT` column list
+    uses `indcodetype`** — see [database-schema.md](./database-schema.md). Needs verification
+    against the live `industry` table constraint definition.
 
-10. **Zero ingestor-class-level tests for six of the seven ingestors** (LAUS, CES, QCEW, OEWS,
+11. **Zero ingestor-class-level tests for six of the seven ingestors** (LAUS, CES, QCEW, OEWS,
     Projections, WID Center Lookups — only CPI has one). See [testing.md](./testing.md) for detail
     and a suggested starting approach (fixture-based tests like `BlsFlatFileServiceTests.cs`
     already uses).

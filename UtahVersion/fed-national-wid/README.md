@@ -113,13 +113,21 @@ Or invoke the scripts directly:
 
 ## Authentication
 
-### Cognito JWT (interactive users)
+### JWT bearer token (interactive users)
 
-All endpoints except `/health` require a valid ULMITA Cognito access token:
+All endpoints except `/health` require a valid OIDC access token:
 
 ```http
-Authorization: Bearer <cognito-access-token>
+Authorization: Bearer <access-token>
 ```
+
+Deployed against Utah's ULMITA Cognito user pool today (dev settings below), but the API isn't
+tied to Cognito specifically — it's standard ASP.NET Core JWT/OIDC validation. Set `Oidc:Authority`
+in configuration to point at any other OIDC-compliant identity provider instead (Auth0, Okta,
+Azure AD B2C, Keycloak, a different Cognito pool, etc.) with no code change. See
+[docs/architecture.md](docs/architecture.md#auth-dual-scheme-jwt-by-default-api-key-as-a-fallback)
+and [docs/deployment-and-operations.md](docs/deployment-and-operations.md#platform-portability--whats-aws-specific-vs-portable)
+for the full picture.
 
 | Setting | Dev |
 |---|---|
@@ -127,7 +135,11 @@ Authorization: Bearer <cognito-access-token>
 | Client ID | `1151pibjvfgecq8d761drjcmu8` |
 | Region | `us-gov-west-1` |
 
-The JWT `custom:stFips` claim identifies the requesting state. Endpoints that accept a `stFips` query parameter automatically scope results to the user's state unless overridden by an admin-level claim.
+The JWT's `custom:stFips` claim identifies the requesting state, and helper methods exist to read
+it (`CognitoClaimsExtensions.GetStFips`), but **nothing in the API currently uses it to scope
+results** — no controller filters by the caller's state automatically. Every authenticated caller
+(JWT or API key) can query any state's data by passing `stFips` as an ordinary query parameter;
+there is no per-state access restriction today. If NC needs that scoping, it isn't implemented yet.
 
 ---
 

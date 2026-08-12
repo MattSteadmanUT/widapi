@@ -104,7 +104,11 @@ NC's early attention:
 4. **Six of the seven ingestors have zero dedicated unit tests** at the ingestor-class level (only
    CPI does). If NC's first priority is "make this pipeline trustworthy," this is the highest-value
    place to start.
-5. Several smaller, concretely-scoped items (a hardcoded Utah contact in outbound BLS request
+5. **The original README claimed the API scopes results to the caller's own state — it doesn't.**
+   Confirmed by grep: the helper method that would do this is never called anywhere. Every
+   authenticated caller can query any state's data today. Low impact since all data is public
+   BLS/WID Center data, but don't assume access is restricted if that assumption ever matters.
+6. Several smaller, concretely-scoped items (a hardcoded Utah contact in outbound BLS request
    headers, one upsert with a possible column-name mismatch, an env-var leak risk in the
    force-refresh flag) are listed with exact file locations in known-issues-and-gaps.md.
 
@@ -127,29 +131,42 @@ checklist form:
       private subnets, and security group for the Aurora cluster and VPC-attached Lambdas.
 - [ ] **Aurora PostgreSQL cluster** — stood up fresh; none of Utah's data transfers automatically
       (nor should it — NC will run ingestion fresh against BLS/WID Center sources).
-- [ ] **Cognito user pool — decide, don't assume.** Utah's API authenticates against **ULMITA's
-      existing Cognito user pool**; this project never stood up its own identity provider. Two
-      genuinely viable paths, and **Matt Steadman/Utah DWS has offered to keep hosting ULMITA login
-      for NC's analysts** rather than requiring NC to stand up a separate identity system — many of
-      the same analysts already have ULMITA accounts for other systems, and the incremental cost of
-      a small number of additional users is low. Confirm which path NC wants:
+- [ ] **Identity provider — decide, don't assume, and it's a real choice.** Utah's API
+      authenticates against **ULMITA's existing Cognito user pool** today, but NC is not locked
+      into Cognito, or AWS, to run this — that was Utah's hosting choice, not a requirement baked
+      into the code. Three genuinely viable paths:
       1. **Continue using Utah's ULMITA Cognito pool** — NC's analysts log in through ULMITA the
-         same way Utah's do; no new identity infrastructure for NC to build or maintain. Lowest
-         effort, and the option Utah is actively offering.
-      2. **Stand up an NC-owned Cognito pool** (or other identity provider) as a fully independent
-         auth source, if NC prefers full control over its own user base long-term.
+         same way Utah's do. **Matt Steadman/Utah DWS has offered to keep hosting this** for NC
+         rather than requiring NC to stand up a separate identity system — many of the same
+         analysts already have ULMITA accounts for other systems, and the incremental cost of a
+         small number of additional users is low. Lowest effort of the three.
+      2. **Stand up an NC-owned AWS Cognito pool** as a fully independent auth source, if NC wants
+         full control while staying on the same identity technology Utah used.
+      3. **Use any other OIDC-compliant identity provider** — Auth0, Okta, Azure AD B2C, Keycloak,
+         a self-hosted IdP, whatever NC already runs or prefers. As part of this handoff,
+         `Program.cs` was generalized to accept an `Oidc:Authority` configuration value that
+         overrides its Cognito-shaped default issuer-URL construction, so this is **also just a
+         configuration decision, not a code change** — see
+         [architecture.md](./fed-national-wid/docs/architecture.md#auth-dual-scheme-jwt-by-default-api-key-as-a-fallback)
+         and [deployment-and-operations.md](./fed-national-wid/docs/deployment-and-operations.md#platform-portability--whats-aws-specific-vs-portable).
 
-      **The code does not need to change either way** — `Program.cs`'s JWT validation reads
-      `Cognito:UserPoolId`/`ClientId`/`Region`/`ClientIds` entirely from configuration (see
-      [architecture.md](./fed-national-wid/docs/architecture.md#auth-dual-scheme-jwt-by-default-api-key-as-a-fallback)),
-      with zero hardcoded pool identifiers anywhere in the C# source — those only ever appear in the
-      per-environment deployment profiles (`cloud-deployment/*.deployment-profile.jsonc`), which are
-      meant to be edited per deployment regardless. Pointing at Utah's pool, an NC pool, or both
-      (e.g. `ClientIds` already accepts a list of allowed app client IDs) is purely a config
-      decision. The one genuinely ULMITA-specific thing in the codebase —
-      `Auth/CognitoClaimsExtensions.cs`'s `custom:ulmita_activated`/`custom:ulmita_roles` claim-name
-      constants — is defined but **not called anywhere** in the current code, so it isn't a
-      dependency either way; it's just available if NC wants to read those claims later.
+      None of these three require touching the C# source — `Program.cs`'s JWT validation reads
+      `Cognito:*`/`Oidc:Authority` entirely from configuration, with zero hardcoded identity-provider
+      values anywhere in the source; those only ever appear in the per-environment deployment
+      profiles, which are meant to be edited per deployment regardless. The one genuinely
+      ULMITA-specific thing in the codebase — `Auth/CognitoClaimsExtensions.cs`'s
+      `custom:ulmita_activated`/`custom:ulmita_roles` claim-name constants — is defined but **not
+      called anywhere** in the current code, so it isn't a dependency on any of the three paths;
+      it's just available if NC wants to read those claims later.
+- [ ] **Cloud platform — also a real choice, not just identity.** The API itself already runs as a
+      plain ASP.NET Core app (AWS Lambda hosting is additive, not required — confirmed by the fact
+      that local development already runs it as an ordinary Kestrel server) and the database is
+      plain PostgreSQL, so both are portable to any host. The ingestion Lambda's entry point and
+      its AWS Parameter Store-based secrets lookup are the one genuinely AWS-coupled piece of
+      application code, and the SAM/CloudFormation IaC is AWS-only by nature (as any IaC is to its
+      platform) — see the portability breakdown linked above for exactly what would need rework if
+      NC picks a non-AWS platform. Staying on AWS is simply the lowest-effort path since it's what's
+      already built and proven, not a hard requirement.
 - [ ] **Parameter Store secrets** — NC's own BLS API key registration (`/${env}/wid-api/bls-api-key`)
       and DB connection string, provisioned in NC's account. Recommend fixing the plaintext-SSM
       issue above at the same time.
@@ -195,15 +212,18 @@ written.
 
 ## Recommended next steps, in priority order
 
-1. **Stand up NC's own AWS account/VPC** and get a dev deploy working end to end — this is
-   prerequisite to everything else.
-2. **Confirm the Cognito/identity path with Utah** — continuing to authenticate through Utah's
-   ULMITA Cognito pool (the option Utah has offered) vs. NC standing up its own pool. Either way
-   this is a configuration decision, not a code change (see the checklist above) — nail it down
-   early so `provideNationalWid()`'s `getToken()` contract in the Angular library, and the
-   `Cognito:*` values in NC's deployment profile, are set correctly from the start.
-3. **Fix the plaintext-SSM password issue** while you're already touching the deployment template
-   for step 1.
+1. **Decide the cloud platform and identity provider first** — both are real choices, not
+   foregone conclusions (see the checklist above). If staying on AWS with Utah's ULMITA Cognito
+   pool, this is the fastest path since it's what's already built and proven. If choosing anything
+   else — NC's own Cognito pool, a different OIDC provider, or a non-AWS cloud entirely — none of
+   it requires touching the API or ingestion business logic, only configuration and (for a
+   non-AWS platform) the ingestion Lambda's bootstrap and IaC layer. Get this decided early so
+   `provideNationalWid()`'s `getToken()` contract in the Angular library and the deployment
+   profile's `Cognito:*`/`Oidc:Authority` values are set correctly from the start.
+2. **Stand up NC's chosen cloud account/network** and get a dev deploy working end to end — this
+   is prerequisite to everything else.
+3. **If staying on AWS, fix the plaintext-SSM password issue** while you're already touching the
+   deployment template for step 2.
 4. **Write ingestor-level tests** for LAUS, CES, QCEW, OEWS, Projections, and WID Center Lookups
    before making further changes to them — right now regressions in the trickiest parts of the
    pipeline (multi-tier fallback logic, area-code resolution) would go undetected.

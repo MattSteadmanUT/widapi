@@ -84,19 +84,29 @@ cursor pagination even if they started with `?page=1`.
 `Program.cs` registers **two** authentication schemes and lets ASP.NET Core's scheme chaining pick
 the right one per-request:
 
-1. **Cognito JWT bearer** (`JwtBearerDefaults.AuthenticationScheme`, the default) — validates
-   against **whichever** Cognito user pool `Cognito:UserPoolId`/`ClientId`/`Region`/`ClientIds`
-   in configuration point at, via that pool's OIDC discovery document
-   (`{issuer}/.well-known/openid-configuration`), with a custom `AudienceValidator` because Cognito
-   *access* tokens (as opposed to ID tokens) carry the app client ID in a `client_id` claim rather
-   than the standard `aud` claim — see `Program.cs:45-49`. **Nothing here hardcodes Utah's ULMITA
-   pool** — the pool ID only ever appears in the per-environment deployment profile
-   (`cloud-deployment/*.deployment-profile.jsonc`), so continuing to authenticate against Utah's
-   ULMITA pool, standing up a separate pool for NC, or trusting both (via `ClientIds`, which
-   accepts a list) are all the same code path — see the Cognito checklist item in
+1. **JWT bearer, any OIDC-compliant provider** (`JwtBearerDefaults.AuthenticationScheme`, the
+   default) — standard ASP.NET Core `JwtBearer`/OIDC validation, not Cognito-specific machinery.
+   By default the issuer URL is built from `Cognito:Region`/`Cognito:UserPoolId` in Cognito's
+   URL shape (`https://cognito-idp.{region}.amazonaws.com/{userPoolId}`), which is what Utah's
+   deployment uses today. An explicit `Oidc:Authority` configuration value — added as part of this
+   handoff — overrides that construction entirely, so pointing this at Auth0, Okta, Azure AD B2C,
+   Keycloak, a self-hosted IdP, or any other OIDC-compliant provider is a **configuration change,
+   not a code change**. Validation itself happens against that issuer's OIDC discovery document
+   (`{issuer}/.well-known/openid-configuration`), with one small Cognito-specific fallback in the
+   `AudienceValidator` — Cognito *access* tokens (as opposed to ID tokens) carry the app client ID
+   in a `client_id` claim rather than the standard `aud` claim, so that claim is checked as a
+   fallback after the standard `aud` check — see `Program.cs:50-57`. That fallback is harmless
+   against providers that don't set a `client_id` claim, so it doesn't need to be removed for a
+   non-Cognito provider to work. See
+   [deployment-and-operations.md](./deployment-and-operations.md#platform-portability--whats-aws-specific-vs-portable)
+   for the full portability picture (this API isn't just auth-portable — it isn't AWS-locked
+   either), and the Cognito checklist item in
    [HANDOFF.md](../../HANDOFF.md#infrastructure--access-transition-checklist) for the actual
-   decision to make. `CognitoClaimsExtensions.cs` exposes ULMITA-specific custom claims
-   (`custom:stFips`, `custom:ulmita_activated`, `custom:ulmita_roles`) as typed extension methods
+   decision NC needs to make: continue sharing Utah's ULMITA pool, stand up a separate pool
+   (Cognito or otherwise), or trust both at once (`ClientIds` already accepts a list). None of
+   those are more than a config change. `CognitoClaimsExtensions.cs` exposes ULMITA-specific
+   custom claims (`custom:stFips`, `custom:ulmita_activated`, `custom:ulmita_roles`) as typed
+   extension methods
    on `ClaimsPrincipal`, but **none of them are currently called anywhere in the codebase** — as of
    this handoff no controller enforces `stFips`-based access restriction or checks activation/role
    claims at all. The JWT auth requirement is simply "any authenticated user from the configured

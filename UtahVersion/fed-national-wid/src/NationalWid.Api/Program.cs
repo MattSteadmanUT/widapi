@@ -15,7 +15,13 @@ builder.Logging.AddConsole();
 // API Gateway HTTP API (payload v2) fronts this Lambda.
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
 
-// --- Authentication: ULMITA Cognito user pool (JWT bearer) ---
+// --- Authentication: any standard OIDC provider (JWT bearer) ---
+// Deployed against Utah's ULMITA Cognito user pool today, but nothing below requires Cognito
+// specifically -- this is standard ASP.NET Core JwtBearer/OIDC validation. Cognito's issuer URL
+// has a predictable shape, so by default it's built from Region+UserPoolId; set Oidc:Authority
+// directly to point at any other OIDC-compliant identity provider (Auth0, Okta, Azure AD B2C,
+// Keycloak, a self-hosted IdP, or a second Cognito pool under a different account) with zero
+// code changes -- it always wins over the Cognito-shaped default when present.
 var cognito = builder.Configuration.GetSection("Cognito");
 var cognitoRegion = cognito["Region"] ?? "us-gov-west-1";
 var userPoolId = cognito["UserPoolId"];
@@ -26,7 +32,10 @@ var allowedClientIds = configuredClientIds
     .Where(id => !string.IsNullOrWhiteSpace(id))
     .Distinct(StringComparer.Ordinal)
     .ToArray();
-var issuer = $"https://cognito-idp.{cognitoRegion}.amazonaws.com/{userPoolId}";
+var explicitAuthority = builder.Configuration["Oidc:Authority"]?.TrimEnd('/');
+var issuer = string.IsNullOrWhiteSpace(explicitAuthority)
+    ? $"https://cognito-idp.{cognitoRegion}.amazonaws.com/{userPoolId}"
+    : explicitAuthority;
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -41,7 +50,10 @@ builder.Services
             ValidIssuer = issuer,
             ValidateAudience = true,
             ValidAudiences = allowedClientIds,
-            // Cognito access tokens carry the app client id in "client_id" rather than "aud".
+            // Standard OIDC providers put the client/app ID in "aud" (checked first, below) --
+            // Cognito access tokens are the exception, carrying it in "client_id" instead. The
+            // second branch is a Cognito-only fallback; it's a no-op against any provider that
+            // doesn't set a "client_id" claim, so it's harmless to leave in place either way.
             AudienceValidator = (audiences, token, _) =>
                 (audiences?.Any(a => allowedClientIds.Contains(a, StringComparer.Ordinal)) == true)
                 || (token is JsonWebToken jwt

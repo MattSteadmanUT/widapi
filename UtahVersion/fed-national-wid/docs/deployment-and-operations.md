@@ -21,6 +21,80 @@ Auth in front of the API is **AWS Cognito** (ULMITA's existing user pool — thi
 or provision its own user pool) plus the application-layer API key system
 (`apikeys`/`apikeyratepolicies` tables, see [architecture.md](./architecture.md#auth-dual-scheme-jwt-by-default-api-key-as-a-fallback)).
 
+## Platform portability — what's AWS-specific vs. portable
+
+Utah built and ran this on AWS, but **NC is not locked into AWS, or Cognito specifically, to run
+this application.** That wasn't true by accident — most of the coupling that existed was either
+never real (a hardcoded issuer URL shape, two unused SDK package references) or is isolated to a
+small, identifiable surface rather than spread through the business logic. Here's the accurate
+breakdown, verified against the actual code rather than assumed:
+
+### Already portable today — no code changes needed
+
+- **The API itself.** `NationalWid.Api` is a plain ASP.NET Core Kestrel application.
+  `AddAWSLambdaHosting(...)` in `Program.cs` is additive: it only engages Lambda-specific hosting
+  when actually running inside the Lambda runtime, and is a no-op otherwise — this is exactly how
+  `just run`/`dotnet watch run` already runs it locally as an ordinary web server, no Lambda
+  runtime present. It will run unmodified on any container host, PaaS, VM, or on-prem server that
+  can host a .NET 8 web app.
+- **Authentication.** Standard ASP.NET Core `JwtBearer`/OIDC middleware — Cognito is simply the
+  identity provider Utah configured, not a requirement baked into the code. `Program.cs` builds
+  its OIDC issuer URL from `Cognito:Region`/`Cognito:UserPoolId` by default (matching Cognito's
+  URL shape), but an explicit `Oidc:Authority` configuration value — added as part of this handoff
+  — overrides that construction entirely. Point `Oidc:Authority` at Auth0, Okta, Azure AD B2C,
+  Keycloak, a self-hosted IdP, or a second Cognito pool under a different AWS account, and it
+  works with **zero code changes**, as long as the provider is OIDC-compliant and issues standard
+  JWTs. The one Cognito-specific quirk (`AudienceValidator`'s `client_id`-claim fallback, since
+  Cognito access tokens don't populate the standard `aud` claim) is additive and harmless against
+  any provider that doesn't set that claim — it doesn't need to be removed for a non-Cognito
+  provider to work.
+- **The database.** Plain PostgreSQL 16 via Npgsql/EF Core (`ConnectionStrings:WidDb`). Aurora
+  Serverless v2 is Utah's hosting choice, not a dependency — any managed or self-hosted Postgres
+  instance works.
+- **The ingestion business logic.** All 7 ingestors and their shared services
+  (`BlsFlatFileService`, `SourceHashService`, etc. — see
+  [ingestion-pipeline.md](./ingestion-pipeline.md)) take a plain connection string and an
+  `HttpClient`; none of them reference AWS types. Only the *bootstrap* around them (below) is
+  AWS-coupled.
+- **The Angular library.** Already fully platform-agnostic by design — see
+  [ng-national-wid/README.md](../../ng-national-wid/README.md#configuration-nationalwidconfig);
+  `getToken()` accepts whatever bearer/API-key string the host app's own auth system produces.
+
+As part of this handoff, two AWS SDK package references (`AWSSDK.SimpleSystemsManagement`,
+`AWSSDK.SSO`) were removed from `NationalWid.Api.csproj` — they were never actually called
+anywhere in the API's code and only overstated its AWS coupling.
+
+### Genuinely AWS-specific — would need rework to leave AWS entirely
+
+- **The ingestion Lambda's entry point** (`Function.cs`). Its handler signature
+  (`FunctionHandler(IngestRequest? request, ILambdaContext context)`) and its per-group time-budget
+  logic (`context.RemainingTime`, used throughout `RunSafeAsync` — see
+  [ingestion-pipeline.md](./ingestion-pipeline.md)) are genuinely AWS Lambda-specific. Moving to a
+  different platform's scheduled-job/function primitive (Azure Functions timer trigger, GCP Cloud
+  Run Jobs + Cloud Scheduler, a container + cron, a Kubernetes CronJob) means writing a new
+  entry point and an equivalent time-budget mechanism — bounded to this one file's bootstrap and
+  dispatch logic, not the ingestors it calls into.
+- **Secrets retrieval** (`ParameterStoreService.cs`). Constructed directly with
+  `new AmazonSimpleSystemsManagementClient()` in `Function.cs`'s constructor — not behind an
+  interface, so it's a hard dependency on AWS Systems Manager Parameter Store today. Swapping to
+  another platform's secrets mechanism (Azure Key Vault, GCP Secret Manager, HashiCorp Vault, or
+  plain environment variables) means replacing this one class and its instantiation point; nothing
+  downstream (the ingestors) knows or cares where the connection string / BLS API key came from —
+  they receive plain strings.
+- **The IaC and deployment tooling.** `cloud-deployment/lambda.template` (SAM/CloudFormation),
+  `dev-scripts/Deploy.ps1` (`dotnet lambda deploy-serverless`), the 7 EventBridge Scheduler
+  entries, and the Secrets Manager-backed DB password are all AWS-specific infrastructure
+  definitions. None of this transfers to another cloud — that's expected of any IaC — but the
+  resource table above is a reasonably complete checklist of what equivalent infrastructure NC
+  would need to stand up (managed Postgres, a scheduled-compute primitive, a secrets store, an API
+  gateway/ingress, a scheduler) if choosing a non-AWS platform.
+
+**Bottom line for NC**: choosing to deploy this on AWS (with either Utah's ULMITA Cognito pool or
+NC's own) is the lowest-effort path, since it's what's already built and proven. Choosing a
+different cloud is a real option, not blocked by the application code — it concentrates the work
+in one Lambda entry point, one secrets-fetching class, and rewriting the IaC layer, rather than
+touching the API, the ingestion logic, the database layer, or the Angular library.
+
 ## Deployment profiles — what's Utah-specific
 
 `cloud-deployment/dev.deployment-profile.jsonc` and `prod.deployment-profile.jsonc` carry the AWS
