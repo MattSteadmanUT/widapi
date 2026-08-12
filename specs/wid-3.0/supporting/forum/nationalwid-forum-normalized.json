@@ -1,8 +1,8 @@
 {
   "source": "s3://ulmita-forum-content/nationalwid/",
   "awsProfile": "GovProd",
-  "postCount": 20,
-  "threadCount": 6,
+  "postCount": 22,
+  "threadCount": 7,
   "threads": [
     {
       "rootId": "welcome#0",
@@ -52,6 +52,13 @@
       "rootId": "meetingnotes3202026#0",
       "postIds": [
         "meetingnotes3202026#0"
+      ]
+    },
+    {
+      "rootId": "nationalwidimplementationupdateasof20260612#0",
+      "postIds": [
+        "nationalwidimplementationupdateasof20260612#0",
+        "nationalwidimplementationupdateasof20260612#1"
       ]
     }
   ],
@@ -275,6 +282,28 @@
       "author": "gary.m.sincick",
       "createdAt": "2026-03-30T19:24:46.598Z",
       "sourceFile": ".forum-sync/raw/nationalwid/meetingnotes3202026/0.json"
+    },
+    {
+      "id": "nationalwidimplementationupdateasof20260612#0",
+      "rawId": "0",
+      "replyToId": null,
+      "threadHint": null,
+      "title": "National WID implementation update (as of 2026-06-12):",
+      "body": "Quick status for the team. We have a working GovCloud dev deployment with the core architecture in place: API Gateway + .NET API + Aurora PostgreSQL + ingestion orchestration.\nCurrent API and access status:\n\nDev API endpoint is live: https://uk6y6uz1il.execute-api.us-gov-west-1.amazonaws.com \n\nThat URL is not permanent.\n\n\nHealth endpoint is open.\nData endpoints are protected by ULMITA auth.\n\ncurrently requires ULMITA dev login and there's not really a pretty clean way to pass the authentication token into it for everyone, but we'll add one.\n\n\nImplemented data endpoints are labor-force, ces, industry, wages, projections, and lookups.\n\nCurrent database/data propagation status:\n\nLaborForce (LAUS): implemented and validated, national + state data loaded. Latest validated upserts: 26,554.\nCES: implemented and validated, national + state data loaded. Latest validated upserts: 31,579.\nIndustry (QCEW): source was migrated to BLS CEW CSV slices; non-zero upserts are now observed. Recent logs show 6,480 rows upserted.\nIOWage (OEWS/OES): source was migrated to OEWS ZIP/XLSX workbooks and parser is deployed, but latest observed runs still show zero upserts. Final normalization pass is in progress.\nProjectionsMatrix: ingestor is implemented and wired; source endpoint checks are good, but we still need one clean non-overlapping run to publish final authoritative counts.\n\nSource lineage now in place:\n\nLaborForce from BLS LAUS\nCES from BLS CES\nIndustry from BLS QCEW (CEW CSV slices)\nIOWage from BLS OEWS downloadable workbooks\nProjectionsMatrix from Projections Central REST JSON\n\nDetailed technical progress document:\nhttps://github.com/MattSteadmanUT/widapi/blob/main/docs/reference-documents/NationalWID-Implementation-Update-2026-06-12.md",
+      "author": "mattsteadman",
+      "createdAt": "2026-06-12T20:14:22.094Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/nationalwidimplementationupdateasof20260612/0.json"
+    },
+    {
+      "id": "nationalwidimplementationupdateasof20260612#1",
+      "rawId": "1",
+      "replyToId": "nationalwidimplementationupdateasof20260612#0",
+      "threadHint": null,
+      "title": "nationalwidimplementationupdateasof20260612",
+      "body": "Thanks, Matt!",
+      "author": "gary.m.sincick",
+      "createdAt": "2026-06-12T21:06:39.925Z",
+      "sourceFile": ".forum-sync/raw/nationalwid/nationalwidimplementationupdateasof20260612/1.json"
     }
   ]
 }
