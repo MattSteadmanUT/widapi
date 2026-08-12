@@ -7,9 +7,9 @@
         <h2 class="wid-title">National WID 3.0 Portal</h2>
         <p class="wid-subtitle">Nationally-available labor market data &mdash; BLS / ETA sources</p>
       </div>
-      <a class="w3-button w3-govopsb w3-round wid-back-btn" (click)="routeBack()">
-        &larr; My Resources
-      </a>
+      <button type="button" class="w3-button w3-govopsb w3-round wid-back-btn" (click)="routeBack()">
+        &larr; Back
+      </button>
     </div>
   </div>
 
@@ -1363,7 +1363,7 @@
 <!-- ===== Download bar template ===== -->
 <ng-template #dlBarTpl let-state="state" let-csvFn="csvFn" let-tsvFn="tsvFn" let-psvFn="psvFn" let-jsonFn="jsonFn" let-xlsxFn="xlsxFn">
   <div class="wid-dl-bar">
-    <span class="w3-small w3-text-grey">Download all matching rows (up to 100k):</span>
+    <span class="w3-small w3-text-grey">Download all matching rows (up to the API's configured export limit):</span>
     <button class="w3-button w3-round w3-border w3-small wid-dl-btn" title="Comma-separated values"
       [disabled]="state.downloading" (click)="csvFn()">
       @if (state.downloading) { <i class="fa-solid fa-spinner fa-spin"></i> }

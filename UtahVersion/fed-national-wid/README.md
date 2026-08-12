@@ -115,7 +115,15 @@ Or invoke the scripts directly:
 
 ### JWT bearer token (interactive users)
 
-All endpoints except `/health` require a valid OIDC access token:
+All endpoints require a valid OIDC access token, **except** `/health`, `/status` (and its
+`/status/history`, `/status/coverage` variants), and — worth calling out explicitly since it's easy
+to miss — all four `/cpi*` endpoints (`GET /cpi`, `/cpi/metadata`, `/cpi/items`, `/cpi/areas`),
+which carry `[AllowAnonymous]` at the method level despite the controller also declaring
+`[Authorize]`. `[AllowAnonymous]` wins, so **CPI data is fully public with no authentication
+required at all**, unlike every other dataset in this API. Nothing in the code or Utah's prior
+docs explains whether this was a deliberate call to expose price data more broadly than labor
+market data, or an oversight — worth confirming intent with the original author before assuming
+either way (see [known-issues-and-gaps.md](docs/known-issues-and-gaps.md)).
 
 ```http
 Authorization: Bearer <access-token>

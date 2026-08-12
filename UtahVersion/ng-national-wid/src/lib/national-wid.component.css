@@ -166,3 +166,42 @@ code {
   border-top: 1px dashed #ddd;
 }
 .wid-dl-btn { min-width: 80px; }
+
+/*
+ * ===== Theme colors =====
+ * The template uses W3.CSS "color theme" classes (w3-theme, w3-theme-l3/l4/l5)
+ * and two custom classes (w3-govopso, w3-govopsb) that were never part of the
+ * base w3.css bundle this library documents loading (see INTEGRATION.md step 4)
+ * -- both relied on an additional theme stylesheet Utah's ULMITA host app
+ * happened to already load, which isn't part of this handoff. Defined here
+ * instead so the component renders fully styled with ONLY the documented
+ * w3.css + Font Awesome dependencies, regardless of the host app. Angular's
+ * default view encapsulation scopes these to this component's template only,
+ * so they won't leak into (or conflict with) a host app's own styling.
+ * Replace these values with NC's own palette whenever convenient -- there's
+ * nothing structural tying the rest of the template to these exact colors.
+ */
+.w3-theme, .w3-govopso {
+  background-color: #0b5394 !important;
+  color: #ffffff !important;
+}
+.w3-govopsb {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+.w3-govopsb:hover {
+  background-color: rgba(255, 255, 255, 0.28) !important;
+}
+.w3-theme-l3 {
+  background-color: #dbe9f6 !important;
+  color: #0b3d61 !important;
+}
+.w3-theme-l4 {
+  background-color: #eaf2fa !important;
+  color: #0b3d61 !important;
+}
+.w3-theme-l5 {
+  background-color: #f4f8fc !important;
+  color: #0b3d61 !important;
+}

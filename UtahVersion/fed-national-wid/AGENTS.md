@@ -1,283 +1,207 @@
 # National WID API — Agent Instructions (AGENTS.md)
 
-## Mission
-Build the **National WID 3.0 API** — a federally-hosted REST API that provides state workforce
-agencies with programmatic access to nationally-available labor market data aligned with the
-WID 3.0 database structure. State users authenticate via the ULMITA SSO portal (Cognito).
+## Status
 
----
+This project is **built and was operated in production-like use by Utah DWS**, then handed off to
+North Carolina to continue. This file used to be the original greenfield build brief — it has been
+rewritten to describe *current* state, since a stale "build this from scratch" brief would mislead
+an AI coding agent into recreating things that already exist. For full handoff status, start at
+[`../HANDOFF.md`](../HANDOFF.md); for deep architecture/operations docs, see `docs/` in this
+folder. This file stays focused on what a coding agent working in this repo needs to know.
+
+## Mission
+
+The **National WID 3.0 API** is a nationally-hosted REST API that provides state workforce
+agencies with programmatic access to nationally-available labor market data aligned with the WID
+3.0 database structure, pre-loaded from BLS and other public sources so states can query national
+benchmarks or pull data into their own state WID systems.
 
 ## Project Context
 
 ### What is WID?
 The Workforce Information Database (WID) is a standardized database structure (governed by the
-ARC consortium / ETA grant) that all 50 states use to store and disseminate labor market
-information. Version 3.0 is the current version (released 2024, revised May 2025).
+ARC consortium / ETA grant) that state workforce agencies use to store and disseminate labor market
+information. WID 3.0 (released 2024, revised May 2025) is the current version.
 
-### What this API does
-- **Serves nationally-available data** (BLS, Census, etc.) pre-loaded into a WID 3.0 compliant
-  database, so state agencies can query national benchmarks and pull data into their own
-  state WID systems.
-- **Auto-populates from BLS** published data series (CES, LAUS, QCEW, OES/OEWS, Projections)
-  on a scheduled basis.
-- **Supports multiple download formats**: JSON (API), CSV, Excel (XLSX), potentially SDMX.
-- **Requires ULMITA authentication** — all endpoints require a valid Cognito JWT from the
-  ULMITA user pool. The `custom:stFips` claim identifies which state the user represents.
+### What this API does — current state
+- Serves nationally-available labor market data (BLS LAUS/CES/QCEW/OEWS/Employment Projections,
+  BLS CPI-U, WID Center licensing and lookup data) pre-loaded into a WID 3.0-aligned Aurora
+  PostgreSQL database via a scheduled ingestion Lambda — see `docs/ingestion-pipeline.md`.
+- Exposes 11 controllers covering core WID tables, non-core lookups, joined "views," licensing,
+  CPI, and self-service API key management — see the README's API Reference section for the full
+  endpoint list, and `docs/architecture.md` for how the shared query/filter/sort/pagination engine
+  under all of them works.
+- Supports JSON, CSV, TSV, PSV, and XLSX output on every list endpoint.
+- Authenticates via any OIDC-compliant identity provider (deployed against Utah's ULMITA Cognito
+  user pool today, but not coupled to Cognito in code — see `docs/architecture.md`'s auth section)
+  plus a self-service, long-lived API key system. There is **no per-state data access
+  restriction** — any authenticated caller can query any state's data; this is intentional (a
+  nationally-hosted public-data API), not a gap.
 
----
+## Authentication
 
-## Authentication — ULMITA Cognito
+See `docs/architecture.md`'s "Auth: dual scheme" section for the full mechanism. Quick reference:
 
-**Dev user pool:** `us-gov-west-1_OGMbjPhYh`  
-**Dev client ID:** `1151pibjvfgecq8d761drjcmu8`  
-**Prod user pool:** `us-gov-west-1_RMhTk2TxL`  
-**Prod client ID:** (retrieve from Parameter Store `/prod/wid-api/cognito-client-id`)  
-**Region:** `us-gov-west-1` (AWS GovCloud)  
-**AWS profiles available:** `GovDev`, `GovProd`
-
-### Relevant JWT claims
-| Claim | Description |
+| Setting | Dev (Utah's ULMITA pool, as currently deployed) |
 |---|---|
-| `custom:stFips` | State FIPS code (e.g., `"49"` for Utah). Every state user has this. |
-| `custom:ulmita_activated` | `"true"` if the account is activated. |
-| `custom:ulmita_roles` | Comma-separated list of roles (future use for admin). |
-| `sub` | Cognito user UUID |
-| `email` | User email |
+| User Pool ID | `us-gov-west-1_OGMbjPhYh` |
+| Client ID | `1151pibjvfgecq8d761drjcmu8` |
+| Region | `us-gov-west-1` |
 
-### Auth requirement
-API Gateway should use a **Cognito Authorizer** (not a Lambda authorizer) pointed at the
-ULMITA user pool. All resource methods should require the authorizer. Public endpoints:
-`GET /health`, `GET /status`.
+`Program.cs` builds its OIDC issuer URL from `Cognito:Region`/`Cognito:UserPoolId` by default
+(Cognito's URL shape), but an `Oidc:Authority` configuration value overrides that entirely — so
+pointing this at a different identity provider is a configuration change, not a code change.
 
----
+Public (unauthenticated) endpoints: `GET /health`, `GET /status`, `GET /status/history`,
+`GET /status/coverage`.
 
-## WID 3.0 Data Model (Core Tables to Expose)
+## WID 3.0 Data Model — current table set
 
-The WID 3.0 spec is in `../widapi/specs/wid-3.0/draft.json` (OpenAPI 3.1.0).
-The structure document is in `../widapi/specs/wid-3.0/WID-3.0-Structure-20251120.md`.
+The WID 3.0 spec lives in this repository's sibling location (two directories up from this file):
+`../../specs/wid-3.0/draft.yaml` (OpenAPI 3.1) and `../../specs/wid-3.0/WID-3.0-Structure-20251120.md`
+(structure document). See the "Cross-Repo API Contract Governance" section below for how this
+implementation and that spec are supposed to stay in sync — and `docs/known-issues-and-gaps.md`
+for where that governance process itself has open questions for NC (e.g. no automated OpenAPI
+generation currently exists in this API to diff against the spec).
 
-### Core data tables (mandatory per ETA grant)
-| WID Table | API Path | BLS Source |
+### Core tables
+| WID Table | API Path | Source |
 |---|---|---|
-| `LaborForce` | `GET /labor-force` | BLS LAUS (series prefix: `LA`) |
-| `CES` | `GET /ces` | BLS CES (series prefix: `CE`) |
-| `Industry` | `GET /industry` | BLS QCEW (CEW data) |
+| `LaborForce` | `GET /labor-force` | BLS LAUS |
+| `CES` | `GET /ces` | BLS CES |
+| `Industry` | `GET /industry` | BLS QCEW |
 | `IOWage` | `GET /wages` | BLS OES/OEWS |
-| `ProjectionsMatrix` | `GET /projections` | ETA/BLS Employment Projections |
-| `License` | `GET /licensing` | (future — no BLS source) |
+| `ProjectionsMatrix` | `GET /projections` | BLS/ETA Employment Projections |
+| `License`, `LicenseAuthorities`, `LicenseHistory` (empty, source-constrained), `LicenseXOcc` | `GET /licensing/*` | WID Center `COSFlatExport` + per-state WID 2.8 exports |
 
-### Lookup tables
-| WID Table | API Path |
-|---|---|
-| `Geographies` | `GET /lookups/geographies` |
-| `PeriodYears` | `GET /lookups/period-years` |
-| `CEScodes` | `GET /lookups/ces-codes` |
-| `IndDirectories` | `GET /lookups/ind-directories` |
-| `OccDirectories` | `GET /lookups/occ-directories` |
+### Added after the original build brief (not in the original spec-era table list)
+| WID Table | API Path | Source |
+|---|---|---|
+| `CPI`, `CpiSeries`, `CpiItems`, `CpiAreas` | `GET /cpi*` | BLS CPI-U — added per 2026-07 stakeholder feedback as a wage-purchasing-power supplement, not a WID 3.0 core table |
+| — | `POST/GET/PATCH/DELETE /api-keys` | Self-service API key management, unrelated to WID data |
 
-### Key WID 3.0 design decisions (from `../widapi/docs/decisions/2026-04-07-wid-3-api-design.md`)
-1. Table-native endpoints (each WID table = one endpoint)
-2. No per-domain `listAreas`/`maxPeriod` sub-endpoints; use shared `/lookups/geographies`
-3. `areaTypeVersion` is part of every geography key (new in WID 3.0)
-4. CES is a single endpoint (not split employment/hours-earnings as in Oregon 2.8)
-5. `SeriesCodeType` is exposed alongside `SeriesCode` on CES
-6. Suppress fields are strings `'0'`/`'1'`, not booleans
-7. Standard response envelope: `{ meta, data, links }` with cursor+page pagination
+### Non-core lookups and views
+14 lookup tables under `/lookups/*` and `/projections/matrixX*`, 6 joined "view" endpoints under
+`/views/*` (these are runtime LINQ joins, not persisted SQL views). Full inventory in
+`docs/database-schema.md` and `docs/table-classification.md`.
 
----
+### Key WID 3.0 design decisions still in effect
+1. Table-native endpoints (each WID table = one endpoint).
+2. No per-domain `listAreas`/`maxPeriod` sub-endpoints; shared `/lookups/geographies` plus
+   per-table `/metadata` sub-endpoints instead.
+3. `areaTypeVersion` is part of every geography key.
+4. CES is a single endpoint (not split employment/hours-earnings).
+5. `SeriesCodeType` is exposed alongside `SeriesCode` on CES.
+6. Suppress fields are strings `'0'`/`'1'`, not booleans.
+7. Standard response envelope: `{ meta, data, links }` with cursor+page pagination.
+
+Five deliberate, documented deviations from the WID 3.0 spec exist in the schema (e.g.
+`projectionsmatrix`'s period key shape, `ces.seriescodetype` storing `"NAICS"` instead of a WID
+code for ~35k existing rows) — see `docs/database-schema.md`'s migration-012 section for the full
+list and rationale before treating any of them as bugs to silently "fix."
 
 ## Technical Architecture
 
-### Tech Stack
-- **Language/Runtime:** .NET 8, C# — ASP.NET Core Web API
-  (matches existing ULMITA identity API at `../fed-ulmita-id`)
-- **Hosting:** AWS Lambda (function URL or API Gateway HTTP API)
-- **IaC:** AWS SAM + CloudFormation — matching the deployment pattern in `../fed-ulmita-id`
-- **Database:** Amazon Aurora Serverless v2 (PostgreSQL 16) — WID 3.0 is a relational schema
-- **Scheduler:** Amazon EventBridge Scheduler → Lambda for BLS data ingestion
-- **Downloads:** S3 (pre-generated CSV/XLSX) or streaming from Lambda
-- **Secrets:** AWS Systems Manager Parameter Store
+- **Language/Runtime:** .NET 8, C# — ASP.NET Core Web API.
+- **Hosting:** AWS Lambda behind API Gateway HTTP API today — but the API itself is a portable
+  ASP.NET Core app; AWS Lambda hosting is additive (see
+  `docs/deployment-and-operations.md`'s "Platform portability" section for exactly what is and
+  isn't AWS-specific before assuming this has to stay on AWS/Lambda).
+- **IaC:** AWS SAM + CloudFormation (`cloud-deployment/lambda.template`).
+- **Database:** Amazon Aurora Serverless v2 (PostgreSQL 16) — plain Npgsql/EF Core, not
+  Aurora-specific at the code level.
+- **Scheduler:** Amazon EventBridge Scheduler → ingestion Lambda, 7 dataset-group schedules.
+- **Secrets:** AWS Systems Manager Parameter Store (ingestion Lambda only — the API project has no
+  runtime AWS SDK dependency at all).
 
-### Project structure to create
+### Project structure
+
 ```
 fed-national-wid/
 ├── AGENTS.md                     (this file)
-├── README.md
-├── justfile                      (task runner — matches fed-ulmita-id pattern)
+├── README.md                     (API reference, quick start)
+├── justfile                      (task runner)
 ├── nuget.config
 ├── NationalWid.Api.slnx
 ├── src/
-│   ├── NationalWid.Api/          (ASP.NET Core Lambda project)
+│   ├── NationalWid.Api/          (ASP.NET Core Lambda project — 11 controllers)
 │   │   ├── Program.cs
 │   │   ├── appsettings.json
 │   │   ├── Controllers/
-│   │   │   ├── CesController.cs
-│   │   │   ├── LaborForceController.cs
-│   │   │   ├── IndustryController.cs
-│   │   │   ├── WagesController.cs
-│   │   │   ├── ProjectionsController.cs
-│   │   │   ├── LookupController.cs
-│   │   │   └── HealthController.cs
-│   │   ├── Models/               (WID 3.0 entity models)
-│   │   ├── Services/             (data access, BLS ingestion)
-│   │   └── Auth/                 (JWT/Cognito helpers)
-│   └── NationalWid.Ingestion/    (separate Lambda for BLS data ingestion)
+│   │   ├── Models/
+│   │   ├── Services/              (the shared query/filter/sort/pagination/download engine)
+│   │   └── Auth/
+│   └── NationalWid.Ingestion/    (separate Lambda — 7 ingestors)
 │       ├── Function.cs
-│       └── Ingestors/
-│           ├── BlsLausIngestor.cs
-│           ├── BlsCesIngestor.cs
-│           ├── BlsQcewIngestor.cs
-│           └── BlsOesIngestor.cs
+│       ├── Ingestors/
+│       └── Services/
 ├── cloud-deployment/
 │   ├── lambda.template           (SAM template: API + Ingestion Lambdas + Aurora)
 │   ├── dev.deployment-profile.jsonc
-│   ├── prod.deployment-profile.jsonc
-│   └── migrations/               (SQL migration scripts for Aurora)
-├── dev-scripts/
-│   ├── Deploy.ps1
-│   └── Tail-Logs.ps1
-└── tests/
-    ├── NationalWid.Api.Tests/
-    └── NationalWid.Ingestion.Tests/
+│   ├── prod.deployment-profile.jsonc (still has unfilled TODO_SET_PROD_* placeholders)
+│   └── migrations/               (17 SQL migrations, sequential + idempotent)
+├── dev-scripts/                  (PowerShell deployment/ops helpers)
+├── tests/                        (xUnit — see docs/testing.md for coverage gaps)
+└── docs/                         (architecture, ingestion pipeline, schema, deployment,
+                                    testing, known-issues, and a first-deployment playbook)
 ```
 
----
+## Key Conventions
 
-## BLS Data Ingestion Details
+1. **justfile** for all tasks: `just build`, `just run`, `just test`, `just deploy dev`.
+2. **Deployment** via `dotnet lambda deploy-serverless` (wrapped by `dev-scripts/Deploy.ps1`).
+3. **No hardcoded secrets** — always Parameter Store (ingestion) or config (API).
+4. **Health endpoint** `GET /health` returns `200 OK { "status": "healthy" }`, unauthenticated.
+5. Deployment-profile tags (`tagElcid`, `tagDept`, `tagDivision`, `tagContact`) are Utah's internal
+   cost-center conventions — replace with NC's own before deploying, don't treat them as required
+   values with fixed meaning.
 
-### BLS Public API v2
-- Base URL: `https://api.bls.gov/publicAPI/v2/timeseries/data/`
-- Registration key preferred for higher rate limits (store in Parameter Store)
-- Supports up to 50 series per request, 20 years of history
+## Immediate priorities for whoever picks this up next
 
-### Series to ingest (national-level stFips = '00' or '00000')
-| Dataset | Series example | WID table |
-|---|---|---|
-| LAUS (national) | `LNS14000000` (unemployment rate) | `LaborForce` |
-| CES (national) | `CES0000000001` (total nonfarm) | `CES` |
-| QCEW (quarterly) | CEW API: `https://data.bls.gov/cew/data/api/` | `Industry` |
-| OES/OEWS | BLS OES flat files (annual) | `IOWage` |
-| Employment Projections | ETA Projections data | `ProjectionsMatrix` |
-
-### Ingestion Lambda behavior
-- Triggered by EventBridge Scheduler (monthly for most datasets, quarterly for QCEW)
-- Idempotent upsert into Aurora PostgreSQL
-- Writes ingestion log to `IngestLog` table (admin/operational table)
-- Respects BLS rate limits (10 requests/second, 500/day without key)
-- Stores BLS API registration key in Parameter Store: `/wid-api/bls-api-key`
-
----
-
-## Download Formats
-
-All data endpoints support an `Accept` header or `?format=` query param:
-- `application/json` (default) — standard envelope
-- `text/csv` — flat CSV download
-- `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` — XLSX download
-  (use ClosedXML or EPPlus NuGet package)
-
-For large datasets, streaming response is preferred over buffering.
-
----
-
-## CloudFormation / SAM Template Requirements
-
-The `cloud-deployment/lambda.template` must define:
-1. **Aurora Serverless v2 cluster** (PostgreSQL 16) — private subnets, no public access
-2. **NationalWidApi Lambda** — .NET 8, 1024MB, 30s timeout, VPC-attached
-3. **NationalWidIngestion Lambda** — .NET 8, 2048MB, 15min timeout, VPC-attached
-4. **API Gateway HTTP API** — with Cognito authorizer (ULMITA user pool)
-5. **EventBridge Scheduler** — monthly trigger for ingestion Lambda
-6. **Parameter Store parameters** for secrets (DB connection string, BLS key)
-7. **VPC config** — reuse existing VPC from deployment profile
-
-### Deployment profile parameters to include
-```json
-{
-  "appCognitoUserPoolId": "us-gov-west-1_OGMbjPhYh",
-  "appCognitoClientId": "1151pibjvfgecq8d761drjcmu8",
-  "vpcId": "vpc-0c8b11c49a9205363",
-  "vpcSubnetIds": "subnet-02410be4a4d897935,subnet-0b4d297b95c7b6c7d",
-  "vpcSecurityGroupIds": "sg-0f4b7c6a6480fb5d0",
-  "appAuroraDbName": "nationalwid",
-  "appAuroraMinCapacity": 0.5,
-  "appAuroraMaxCapacity": 8
-}
-```
-
----
-
-## Key Conventions (match fed-ulmita-id)
-
-1. **justfile** for all tasks: `just build`, `just run`, `just test`, `just deploy dev`
-2. **Deployment** via `dotnet lambda deploy-serverless` or `sam deploy`
-3. **PowerShell scripts** in `dev-scripts/`
-4. **Tags**: `tagElcid: wsitapro`, `tagDept: dws`, `tagDivision: wra`, 
-   `tagContact: MattSteadman@utah.gov`
-5. **No hardcoded secrets** — always Parameter Store
-6. **Health endpoint** `GET /health` returns `200 OK { "status": "healthy" }` — unauthenticated
-
----
-
-## API Response Envelope
-
-All list responses use:
-```json
-{
-  "meta": {
-    "total": 1500,
-    "page": 1,
-    "pageSize": 100,
-    "nextCursor": "eyJzdEZpcHMiOi..."
-  },
-  "data": [...],
-  "links": {
-    "self": "/ces?stFips=00&page=1",
-    "next": "/ces?stFips=00&cursor=eyJzdEZpcHMiOi...",
-    "geographies": "/lookups/geographies?stFips=00"
-  }
-}
-```
-
----
-
-## Immediate Build Goals (Priority Order)
-
-1. **Project scaffold** — solution, projects, justfile, nuget.config
-2. **WID 3.0 data models** — C# records for all core tables
-3. **Database schema** — PostgreSQL migration SQL matching WID 3.0 structure
-4. **API project** — controllers, Cognito JWT auth, response envelope
-5. **Cloud deployment template** — Aurora + Lambda + API Gateway + Cognito authorizer
-6. **BLS ingestion Lambda** — at minimum LAUS and CES national series
-7. **Download formats** — CSV and XLSX export
-8. **Deployment profiles** — dev and prod
-
-Build as much of this as possible in a single coherent pass. 
-Prioritize correctness and completeness over perfection.
+See `../HANDOFF.md`'s "Recommended next steps" for the full prioritized list. In short: decide the
+identity-provider and cloud-platform questions first (both are genuinely open, not assumed-AWS/
+assumed-Cognito), fix the plaintext-SSM database password, write ingestor-level tests (6 of 7
+ingestors currently have none), and complete an actual prod deployment (Utah never did).
 
 ---
 
 ## Cross-Repo API Contract Governance (fed-national-wid <-> widapi)
 
-The API implementation repository (`fed-national-wid`) and the specification repository (`widapi`) must remain synchronized.
+The API implementation (this repository, `UtahVersion/fed-national-wid/`) and the specification
+(this repository's root `specs/wid-3.0/`) must remain synchronized. This section is unchanged from
+the original build brief because the governance rule itself is still correct — only the sibling-repo
+paths have changed now that both live in one repository.
 
 ### Source-of-truth hierarchy
-1. `widapi` is the source of truth for API contract behavior and documentation.
-2. `fed-national-wid` must implement the contract defined in `widapi/specs/wid-3.0/draft.yaml`.
-3. If there is any conflict between implementation and spec/docs, resolve the conflict in favor of `widapi` and then update implementation.
+1. `specs/wid-3.0/draft.yaml` (repo root) is the source of truth for API contract behavior and
+   documentation.
+2. This implementation must match the contract defined there.
+3. If there is any conflict between implementation and spec/docs, resolve in favor of the spec and
+   then update the implementation.
 
 ### Canonical contract rule
-1. Any behavioral or contract change in `fed-national-wid` API routes, query parameters, filtering, sorting, pagination, auth model, response envelope, or field names/types MUST be documented in `widapi`.
-2. In the ideal state, generated OpenAPI/Swagger from `fed-national-wid` is identical in API contract semantics to `widapi/specs/wid-3.0/draft.yaml` (and therefore `draft.json`).
+1. Any behavioral or contract change in this API's routes, query parameters, filtering, sorting,
+   pagination, auth model, response envelope, or field names/types MUST be documented in
+   `specs/wid-3.0/draft.yaml`.
+2. In the ideal state, a generated OpenAPI spec from this API would be identical in contract
+   semantics to `specs/wid-3.0/draft.yaml`. **As of this handoff, no such generation exists** — the
+   API project has no Swagger/OpenAPI library registered (confirmed: no Swashbuckle, no NSwag, no
+   generation code anywhere). Any comparison between the spec and this implementation is currently
+   manual. Adding real OpenAPI generation (e.g. via Swashbuckle or NSwag) would make this rule
+   actually enforceable instead of aspirational — worth prioritizing early.
 
 ### Required workflow for API changes
-1. Implement API change in `fed-national-wid`.
-2. Update `widapi/specs/wid-3.0/draft.yaml` in the same workstream.
-3. Add/update supporting rationale in `widapi/docs/decisions/` when the change is non-trivial.
-4. Ensure examples and parameter descriptions in `widapi` reflect actual implementation behavior.
+1. Implement the API change here.
+2. Update `specs/wid-3.0/draft.yaml` in the same workstream.
+3. Add/update supporting rationale in `docs/decisions/` (repo root) when the change is non-trivial.
+4. Ensure examples and parameter descriptions in the spec reflect actual implementation behavior.
 5. Do not treat API work as complete until spec/docs parity is addressed.
 
 ### Drift policy
-1. If implementation temporarily diverges from `widapi`, record the drift explicitly in both repos and create a follow-up task to close the gap.
+1. If implementation temporarily diverges from the spec, record the drift explicitly and create a
+   follow-up task to close the gap.
 2. Prefer spec-first or same-PR synchronization over deferred backfill.
-
+3. Governance-process question for NC: with Utah stepping back, who is the maintainer/approver for
+   `specs/wid-3.0/draft.yaml` now? Is there still an active ARC-consortium review process for spec
+   changes? This isn't answerable from the code — resolve it directly with the ARC consortium
+   before assuming any particular approval process still applies.

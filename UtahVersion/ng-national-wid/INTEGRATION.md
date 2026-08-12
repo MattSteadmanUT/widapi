@@ -187,15 +187,18 @@ import { NationalWidApiService } from '@ulmita/ng-national-wid';
 export class MyComponent {
   constructor(private widApi: NationalWidApiService) {}
 
-  loadLaborForce(stFips: string) {
-    this.widApi.get<any>('labor-force', { stFips }).subscribe(response => {
-      this.rows = response.data;
-    });
+  async loadLaborForce(stFips: string) {
+    const result = await this.widApi.get<any>(`labor-force?stFips=${encodeURIComponent(stFips)}`);
+    if (result.success) {
+      this.rows = result.data.data;   // the outer `data` is the {meta,data,links} envelope
+    } else {
+      this.error = result.error;
+    }
   }
 }
 ```
 
-`get<T>(path, params?)` builds the full URL from `apiBaseUrl`, appends query parameters, attaches the Authorization header from `getToken`, and returns an `Observable<T>`.
+`get<T>(path)` takes a single path string — build any query string into `path` yourself (URL-encode values), it does not accept a separate params object. It builds the full URL from `apiBaseUrl`, attaches the Authorization header from `getToken`, and returns a `Promise<{ success: boolean; data?: T; error?: string }>` — not an `Observable`, so `await` or `.then()` it rather than `.subscribe()`. `T` is whatever the endpoint returns verbatim, which for list endpoints is the API's `{ meta, data, links }` envelope — the actual rows are one level deeper, at `result.data.data`.
 
 ---
 

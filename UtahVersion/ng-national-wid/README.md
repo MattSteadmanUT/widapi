@@ -1,9 +1,12 @@
 # @ulmita/ng-national-wid — Component Architecture
 
 This document explains what the library actually renders and how its pieces fit together. For
-"how do I install and use this in my app," see [INTEGRATION.md](./INTEGRATION.md) instead — that
-guide is unchanged from how Utah shipped it and remains accurate. For "how do I build this from
-source in my own workspace," see [docs/standalone-build-guide.md](./docs/standalone-build-guide.md).
+"how do I install and use this in my app," see [INTEGRATION.md](./INTEGRATION.md) instead. For
+"how do I build this from source in my own workspace," see
+[docs/standalone-build-guide.md](./docs/standalone-build-guide.md). For a list of real bugs found
+and fixed during the NC handoff review, plus larger UX/accessibility/branding gaps that need an NC
+product decision rather than a blind code fix, see
+[docs/known-issues-and-gaps.md](./docs/known-issues-and-gaps.md).
 
 ## What this is
 

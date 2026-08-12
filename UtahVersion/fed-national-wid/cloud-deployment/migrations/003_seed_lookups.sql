@@ -7,7 +7,13 @@
 -- ---------------------------------------------------------------------------
 -- National geography record (stfips='00', areatype='00', area='000000')
 -- ---------------------------------------------------------------------------
-INSERT INTO geographies (stfips, areatype, areatypeversion, area, areaname, areatypetitle)
+-- NOTE: uses "areatitle" (the column name as of migration 001), not "areaname" --
+-- migration 012 renames areatitle -> areaname later in the sequence, and this
+-- seeded row's data carries over automatically when that rename runs. Inserting
+-- into "areaname" here would fail on a fresh database, since that column does
+-- not exist until migration 012 (confirmed by tracing the schema at each step;
+-- see docs/database-schema.md).
+INSERT INTO geographies (stfips, areatype, areatypeversion, area, areatitle, areatypetitle)
 VALUES ('00', '00', '0', '000000', 'United States', 'National')
 ON CONFLICT DO NOTHING;
 

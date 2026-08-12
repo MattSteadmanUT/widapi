@@ -31,7 +31,18 @@ true as of this handoff (2026-08-12, repo HEAD `6b47131`).
    history either. No alternate machine-readable source was identified. This can't be "fixed" in
    code; it needs a new external data source if NC wants it populated.
 
-2. **Prod deployment was never completed.** `cloud-deployment/prod.deployment-profile.jsonc`
+2. **CPI endpoints require no authentication at all — confirm this was intentional.** All four
+   `/cpi*` endpoints carry `[AllowAnonymous]` at the method level (`CpiController.cs`), which wins
+   over the `[Authorize]` attribute the controller also declares and over `Program.cs`'s global
+   `RequireAuthenticatedUser()` fallback policy. Every other dataset in this API requires
+   authentication; CPI is the sole, undocumented exception. Nothing in the code, commit history, or
+   prior handoff notes explains why — it could be a deliberate choice (price/inflation data judged
+   more appropriate for fully public access than labor-market microdata) or simply an oversight
+   carried over from whoever added the CPI feature. Confirm intent before NC either relies on CPI
+   staying public or "fixes" it to require auth like everything else — either is a one-line change
+   (add/remove the attribute) but the decision itself needs a real answer, not a guess.
+
+3. **Prod deployment was never completed.** `cloud-deployment/prod.deployment-profile.jsonc`
    still has literal placeholders — `TODO_SET_PROD_COGNITO_CLIENT_ID`, `TODO_SET_PROD_VPC_ID`,
    `TODO_SET_PROD_SUBNET_IDS`, `TODO_SET_PROD_SECURITY_GROUP_IDS`,
    `TODO_SET_PROD_DEPLOYMENTS_BUCKET` — confirmed still present as of this handoff. Only the prod
@@ -39,7 +50,7 @@ true as of this handoff (2026-08-12, repo HEAD `6b47131`).
    cleanup — it means **the project itself never had a working production environment**, in Utah's
    account or otherwise. Budget for a full prod stand-up, not just a config swap.
 
-3. **The database password is stored in a plaintext SSM `String` parameter, not `SecureString`.**
+4. **The database password is stored in a plaintext SSM `String` parameter, not `SecureString`.**
    Confirmed in `cloud-deployment/lambda.template`: `DbConnectionStringParameter` is
    `"Type": "String"` whose `Value` embeds
    `Password={{resolve:secretsmanager:${Secret}:SecretString:password}}` — i.e. the actual
@@ -50,43 +61,57 @@ true as of this handoff (2026-08-12, repo HEAD `6b47131`).
    `ParameterStoreService` read call to pass `WithDecryption: true`, which it already does for
    other params) is a small, well-scoped fix worth doing before NC's first deploy.
 
-4. **API keys don't auto-disable when the underlying Cognito user is disabled.** Only the base
+5. **API keys don't auto-disable when the underlying Cognito user is disabled.** Only the base
    lifecycle (create/rotate/revoke/expire) exists — there's no event-driven sync from Cognito
    admin-disable actions to `apikeys.status`. If a user is deactivated in ULMITA/Cognito, any API
    keys they created stay active until manually revoked.
 
-5. **Gateway-level throttling was never decided.** `docs/stakeholder-feedback-plan-2026-07-29.md`
+6. **Gateway-level throttling was never decided.** `docs/stakeholder-feedback-plan-2026-07-29.md`
    leaves this as an open decision (REST API usage-plans vs. HTTP-API app-level throttling) — it
    was never implemented either way. Current rate limiting, if any, is whatever HTTP API's defaults
    provide plus the unused `rateProfile` field on API keys (`standard`/`elevated` policies exist in
    the `apikeyratepolicies` table but nothing in `ApiKeyService`/`ApiKeyAuthHandler` currently reads
    or enforces them).
 
-6. **Broader non-core WID table families beyond what's implemented are still out of scope.**
+7. **Broader non-core WID table families beyond what's implemented are still out of scope.**
    `docs/wid30-structure-validation-2026-07-31.md` explicitly says optional WID table families
    beyond the current 33 tables aren't migrated or exposed, and there's no automated
    field-by-field validator comparing the live schema against the WID 3.0 structure document —
    conformance has been checked manually so far, not continuously.
 
-7. **`sam validate --lint`/`cfn-lint` has never been run** against `lambda.template` — the 2026-06-30
+8. **`sam validate --lint`/`cfn-lint` has never been run** against `lambda.template` — the 2026-06-30
    hardening changes (IAM role split, Aurora snapshot policy, env-scoped SSM paths — all confirmed
    present in the current template) were authored in an environment without those tools installed,
    so the template has only ever been JSON-parsed, not linted. Worth running once before NC's first
    deploy just to catch anything that slipped through.
 
-8. **`ForceRefreshDatasets` sets a process-wide environment variable with no reset path** — see
+9. **`ForceRefreshDatasets` sets a process-wide environment variable with no reset path** — see
    [ingestion-pipeline.md](./ingestion-pipeline.md#payload-options-ingestrequest). Possible
    warm-Lambda-container leak between invocations; not confirmed to have caused a real incident,
    but not proven safe either.
 
-9. **QCEW's upsert `ON CONFLICT` column list references `codetype` while its `INSERT` column list
-   uses `indcodetype`** — see [database-schema.md](./database-schema.md). Needs verification
-   against the live `industry` table constraint definition.
+10. **QCEW's upsert `ON CONFLICT` column list references `codetype` while its `INSERT` column list
+    uses `indcodetype`** — see [database-schema.md](./database-schema.md). Needs verification
+    against the live `industry` table constraint definition.
 
-10. **Zero ingestor-class-level tests for six of the seven ingestors** (LAUS, CES, QCEW, OEWS,
+11. **Zero ingestor-class-level tests for six of the seven ingestors** (LAUS, CES, QCEW, OEWS,
     Projections, WID Center Lookups — only CPI has one). See [testing.md](./testing.md) for detail
     and a suggested starting approach (fixture-based tests like `BlsFlatFileServiceTests.cs`
     already uses).
+
+12. **No OpenAPI/Swagger generation exists in the API project** — confirmed by checking
+    `NationalWid.Api.csproj` and `Program.cs` for Swashbuckle/NSwag: neither is registered. This
+    means the "generated OpenAPI from this API should match `specs/wid-3.0/draft.yaml`" governance
+    rule in `AGENTS.md` is currently aspirational, not enforced — any drift between the spec and the
+    real implementation has to be found by manual comparison. Adding real OpenAPI generation would
+    make that governance rule actually checkable.
+
+13. **A CI workflow from the original repository was deliberately not carried into this copy**:
+    `.github/workflows/restrict-prod-prs.yml`, which blocked any PR into a `prod` branch unless it
+    came from `dev`. It wasn't copied because it hardcodes Utah's exact two-branch (`dev`/`prod`)
+    workflow, which may not match whatever branching strategy NC adopts for wherever this ends up
+    hosted on GitHub. If NC wants an equivalent branch-protection rule, it's a small, easy workflow
+    to recreate — the original is on GitHub at `utahdws/fed-national-wid` if a reference is useful.
 
 ## Needs a live check NC will have to do themselves
 

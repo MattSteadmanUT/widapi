@@ -5,7 +5,13 @@
 -- =============================================================================
 
 -- Remove all geography rows except the national seed (it was already correct).
-DELETE FROM geographies WHERE NOT (stfips = '00' AND areatype = '00' AND area = '0000000');
+-- NOTE: area is char(6); the national seed row (migration 003) uses '000000' (6
+-- zeros), matching the column's actual length. The literal here previously read
+-- '0000000' (7 zeros) -- a plain length typo that doesn't match the stated
+-- intent of "keep the national seed row" (a 7-char literal never equals a
+-- 6-char column value, so the seed row would have been deleted right along
+-- with everything else). Corrected to the actual 6-zero value.
+DELETE FROM geographies WHERE NOT (stfips = '00' AND areatype = '00' AND area = '000000');
 
 -- Remove all statefips rows (will be re-populated fresh).
 DELETE FROM statefips;

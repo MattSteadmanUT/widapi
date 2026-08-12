@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { NationalWidComponent } from './national-wid.component';
-import { NationalWidApiService } from './national-wid-api.service';
 
 /**
  * Angular module that exports the National WID data explorer.
@@ -33,9 +32,10 @@ import { NationalWidApiService } from './national-wid-api.service';
  *
  * ## Authentication
  *
- * The `getToken` callback in your config should return a valid bearer token.
- * For ULMITA-authenticated deployments, this is a Cognito access token.
- * For deployments using the National WID API key feature, return `ApiKey <yourkey>` instead:
+ * The `getToken` callback in your config should return a valid bearer token from whatever
+ * OIDC identity provider fronts your deployment of the National WID API (Cognito or otherwise
+ * -- see that API's own docs for its current identity provider). For deployments using the
+ * National WID API key feature instead, return `ApiKey <yourkey>`:
  *
  * ```typescript
  * getToken: async () => `ApiKey ${environment.nationalWidApiKey}`
@@ -48,8 +48,9 @@ import { NationalWidApiService } from './national-wid-api.service';
  *
  * ## Styling
  *
- * The component ships with minimal scoped CSS. It relies on W3.CSS for layout classes
- * (`w3-*`) and Font Awesome for icons (`fa-*`). Add these to your host application:
+ * The component ships with scoped CSS that includes its own default color theme (no separate
+ * theme stylesheet required), relying only on base W3.CSS for layout classes (`w3-*`, not the
+ * theme colors) and Font Awesome for icons (`fa-*`). Add these to your host application:
  *
  * ```html
  * <!-- index.html -->
@@ -64,7 +65,6 @@ import { NationalWidApiService } from './national-wid-api.service';
     FormsModule,
     HttpClientModule,
   ],
-  providers: [NationalWidApiService],
   exports: [NationalWidComponent],
 })
 export class NationalWidModule {}

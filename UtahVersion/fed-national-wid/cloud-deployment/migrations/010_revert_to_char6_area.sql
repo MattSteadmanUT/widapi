@@ -50,6 +50,17 @@ UPDATE projectionsmatrix SET area = trim(area) WHERE trim(area) != area;
 UPDATE geographies    SET area = trim(area) WHERE trim(area) != area;
 
 -- Remove the duplicate "0000000" rows that migration 009 introduced.
+-- NOTE (added during the NC handoff review): by this point `area` is already
+-- char(6) (the ALTER COLUMN above already ran), and every 7-char-or-longer row
+-- was already removed by the length(trim(area))>6 cleanup at the top of this
+-- file, before the column type even changed. So this block is redundant with
+-- that earlier cleanup and, as originally written comparing against a 7-char
+-- literal, never matches any real row -- it's a intentionally-left-alone no-op,
+-- NOT a bug to "fix" to 6 zeros: doing that would make it match and delete
+-- legitimate national-level rows in laborforce/ces/industry/iowage/
+-- projectionsmatrix, none of which get re-seeded afterward the way
+-- `geographies` does below. Left as originally written; kept only for
+-- historical clarity of what migration 009's cleanup was chasing.
 DELETE FROM laborforce     WHERE area = '0000000';
 DELETE FROM ces            WHERE area = '0000000';
 DELETE FROM industry       WHERE area = '0000000';
