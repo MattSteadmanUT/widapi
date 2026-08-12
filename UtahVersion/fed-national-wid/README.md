@@ -135,11 +135,8 @@ for the full picture.
 | Client ID | `1151pibjvfgecq8d761drjcmu8` |
 | Region | `us-gov-west-1` |
 
-The JWT's `custom:stFips` claim identifies the requesting state, and helper methods exist to read
-it (`CognitoClaimsExtensions.GetStFips`), but **nothing in the API currently uses it to scope
-results** — no controller filters by the caller's state automatically. Every authenticated caller
-(JWT or API key) can query any state's data by passing `stFips` as an ordinary query parameter;
-there is no per-state access restriction today. If NC needs that scoping, it isn't implemented yet.
+Any authenticated caller — JWT or API key — can query any state's data; this is a nationally-hosted
+public-data API, so there's no per-state access restriction by design.
 
 ---
 

@@ -104,11 +104,7 @@ NC's early attention:
 4. **Six of the seven ingestors have zero dedicated unit tests** at the ingestor-class level (only
    CPI does). If NC's first priority is "make this pipeline trustworthy," this is the highest-value
    place to start.
-5. **The original README claimed the API scopes results to the caller's own state — it doesn't.**
-   Confirmed by grep: the helper method that would do this is never called anywhere. Every
-   authenticated caller can query any state's data today. Low impact since all data is public
-   BLS/WID Center data, but don't assume access is restricted if that assumption ever matters.
-6. Several smaller, concretely-scoped items (a hardcoded Utah contact in outbound BLS request
+5. Several smaller, concretely-scoped items (a hardcoded Utah contact in outbound BLS request
    headers, one upsert with a possible column-name mismatch, an env-var leak risk in the
    force-refresh flag) are listed with exact file locations in known-issues-and-gaps.md.
 

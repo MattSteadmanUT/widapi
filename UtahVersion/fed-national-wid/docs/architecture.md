@@ -104,16 +104,14 @@ the right one per-request:
    [HANDOFF.md](../../HANDOFF.md#infrastructure--access-transition-checklist) for the actual
    decision NC needs to make: continue sharing Utah's ULMITA pool, stand up a separate pool
    (Cognito or otherwise), or trust both at once (`ClientIds` already accepts a list). None of
-   those are more than a config change. `CognitoClaimsExtensions.cs` exposes ULMITA-specific
-   custom claims (`custom:stFips`, `custom:ulmita_activated`, `custom:ulmita_roles`) as typed
-   extension methods
-   on `ClaimsPrincipal`, but **none of them are currently called anywhere in the codebase** — as of
-   this handoff no controller enforces `stFips`-based access restriction or checks activation/role
-   claims at all. The JWT auth requirement is simply "any authenticated user from the configured
-   pool" (`RequireAuthenticatedUser()` fallback policy), not "only the caller's own state's data."
-   This was a deliberate simplification made after an earlier stricter policy (requiring stFips
-   match + activation) caused false 401s for valid users — see the timeline in
-   [HANDOFF.md](../../HANDOFF.md#timeline).
+   those are more than a config change. `CognitoClaimsExtensions.cs` exposes typed extension
+   methods for reading custom claims off the token (`custom:stFips`, `custom:ulmita_activated`,
+   `custom:ulmita_roles`) for any future use, but the access model itself is intentionally simple:
+   the JWT auth requirement is "any authenticated user from the configured pool"
+   (`RequireAuthenticatedUser()` fallback policy) — every authenticated caller can query any
+   state's data. There is no per-state data restriction, by design; this is a nationally-hosted
+   public-data API, not a multi-tenant system that needs to wall states off from each other's
+   queries.
 2. **API key** (`ApiKeyAuthHandler`, scheme name `"ApiKey"`) — recognizes an `Authorization: ApiKey
    <key>` header, hashes the presented key (SHA-256) and looks it up via `ApiKeyService`. If no
    `ApiKey ` header is present it returns `AuthenticateResult.NoResult()` rather than failing, so
