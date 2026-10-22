@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.IO.Compression;
-using NationalWid.Ingestion.Services;
 using ClosedXML.Excel;
 using Microsoft.Extensions.Logging;
-using Npgsql;
 using NationalWid.Ingestion.Models;
+using NationalWid.Ingestion.Services;
+using Npgsql;
 
 namespace NationalWid.Ingestion.Ingestors;
 
@@ -18,7 +18,8 @@ public sealed class BlsOesIngestor(
     HttpClient httpClient,
     string connectionString,
     SourceHashService sourceHashService,
-    ILogger logger)
+    ILogger logger
+)
 {
     private const int YearsBack = 20; // Expanded from 3 to 20 years for better historical coverage
 
@@ -37,7 +38,7 @@ public sealed class BlsOesIngestor(
             var natTask = SafeFetchWorkbookAsync(year, "nat", cancellationToken);
             var stTask = SafeFetchWorkbookAsync(year, "st", cancellationToken);
             var msaTask = SafeFetchWorkbookAsync(year, "msa", cancellationToken); // Metro areas for geographic completeness
-            
+
             tasks.Add(natTask);
             tasks.Add(stTask);
             tasks.Add(msaTask);
@@ -46,11 +47,18 @@ public sealed class BlsOesIngestor(
         var results = await Task.WhenAll(tasks);
         total = results.Sum();
 
-        logger.LogInformation("OES: completed ingestion of {Total} records across all years, geographies (nat, st, msa)", total);
+        logger.LogInformation(
+            "OES: completed ingestion of {Total} records across all years, geographies (nat, st, msa)",
+            total
+        );
         return total;
     }
 
-    private async Task<int> SafeFetchWorkbookAsync(int year, string kind, CancellationToken cancellationToken)
+    private async Task<int> SafeFetchWorkbookAsync(
+        int year,
+        string kind,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -58,26 +66,47 @@ public sealed class BlsOesIngestor(
         }
         catch (Exception ex)
         {
-            logger.LogWarning("OES: error fetching year {Year}, kind {Kind}: {Message}", year, kind, ex.Message);
+            logger.LogWarning(
+                "OES: error fetching year {Year}, kind {Kind}: {Message}",
+                year,
+                kind,
+                ex.Message
+            );
             return 0; // Continue on error instead of crashing
         }
     }
 
-    private async Task<int> FetchWorkbookAsync(int year, string kind, CancellationToken cancellationToken)
+    private async Task<int> FetchWorkbookAsync(
+        int year,
+        string kind,
+        CancellationToken cancellationToken
+    )
     {
         var url = $"https://www.bls.gov/oes/special.requests/oesm{year % 100:00}{kind}.zip";
         logger.LogInformation("OES: downloading {Url}", url);
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.TryAddWithoutValidation("User-Agent", "ULMITA/1.0 (ulmita.org; mattsteadman@utah.gov)");
+        request.Headers.TryAddWithoutValidation(
+            "User-Agent",
+            "ULMITA/1.0 (ulmita.org; mattsteadman@utah.gov)"
+        );
         request.Headers.TryAddWithoutValidation("Accept", "*/*");
         request.Headers.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
         request.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate, br");
 
-        using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var response = await httpClient.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken
+        );
         if (!response.IsSuccessStatusCode)
         {
-            logger.LogInformation("OES: source unavailable for year {Year}, kind {Kind} ({Status})", year, kind, response.StatusCode);
+            logger.LogInformation(
+                "OES: source unavailable for year {Year}, kind {Kind} ({Status})",
+                year,
+                kind,
+                response.StatusCode
+            );
             return 0;
         }
 
@@ -89,7 +118,8 @@ public sealed class BlsOesIngestor(
             url,
             hash,
             zipBytes.LongLength,
-            cancellationToken);
+            cancellationToken
+        );
 
         if (!changed)
         {
@@ -98,7 +128,9 @@ public sealed class BlsOesIngestor(
 
         await using var sourceStream = new MemoryStream(zipBytes);
         using var zip = new ZipArchive(sourceStream, ZipArchiveMode.Read, leaveOpen: false);
-        var entry = zip.Entries.FirstOrDefault(e => e.FullName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase));
+        var entry = zip.Entries.FirstOrDefault(e =>
+            e.FullName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase)
+        );
         if (entry is null)
             return 0;
 
@@ -111,7 +143,11 @@ public sealed class BlsOesIngestor(
         if (rows.Count == 0)
             return 0;
 
-        logger.LogInformation("OES: upserting {Count} rows from {File}", rows.Count, entry.FullName);
+        logger.LogInformation(
+            "OES: upserting {Count} rows from {File}",
+            rows.Count,
+            entry.FullName
+        );
         await UpsertAsync(rows, cancellationToken);
         return rows.Count;
     }
@@ -175,7 +211,7 @@ public sealed class BlsOesIngestor(
                 PeriodType = "01",
                 Period = "00",
                 IndCodeType = "10", // NAICS
-                IndCode = indCode,   // Now includes industry-specific data, not just "000000"
+                IndCode = indCode, // Now includes industry-specific data, not just "000000"
                 OccCodeType = "19",
                 OccCode = occCode,
                 WageSource = "3",
@@ -195,7 +231,11 @@ public sealed class BlsOesIngestor(
         return rowsByKey.Values.ToList();
     }
 
-    private static string GetText(IXLRow row, IReadOnlyDictionary<string, int> headerMap, string key)
+    private static string GetText(
+        IXLRow row,
+        IReadOnlyDictionary<string, int> headerMap,
+        string key
+    )
     {
         return headerMap.TryGetValue(key, out var col)
             ? row.Cell(col).GetFormattedString().Trim()
@@ -240,14 +280,29 @@ public sealed class BlsOesIngestor(
         if (string.IsNullOrWhiteSpace(value) || value is "*" or "#")
             return null;
 
-        return decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed)
+        return decimal.TryParse(
+            value,
+            NumberStyles.Any,
+            CultureInfo.InvariantCulture,
+            out var parsed
+        )
             ? parsed
             : null;
     }
 
     private static bool HasSuppressedValue(IXLRow row, IReadOnlyDictionary<string, int> headerMap)
     {
-        var checkedColumns = new[] { "A_MEAN", "H_MEAN", "A_PCT10", "A_PCT25", "A_MEDIAN", "A_PCT75", "A_PCT90", "TOT_EMP" };
+        var checkedColumns = new[]
+        {
+            "A_MEAN",
+            "H_MEAN",
+            "A_PCT10",
+            "A_PCT25",
+            "A_MEDIAN",
+            "A_PCT75",
+            "A_PCT90",
+            "TOT_EMP",
+        };
         foreach (var col in checkedColumns)
         {
             var value = GetText(row, headerMap, col);
@@ -265,7 +320,8 @@ public sealed class BlsOesIngestor(
 
         foreach (var row in rows)
         {
-            var cmd = new NpgsqlCommand(@"
+            var cmd = new NpgsqlCommand(
+                @"
                 INSERT INTO iowage
                     (stfips, areatype, areatypeversion, area, periodyear, periodtype, period,
                      indindcodetype, indcode, occcodetype, occcode,
@@ -287,7 +343,9 @@ public sealed class BlsOesIngestor(
                     medianwage = EXCLUDED.medianwage,
                     meanwage = EXCLUDED.meanwage,
                     meanhourly = EXCLUDED.meanhourly,
-                    annualmean = EXCLUDED.annualmean", conn);
+                    annualmean = EXCLUDED.annualmean",
+                conn
+            );
 
             cmd.Parameters.AddWithValue("stfips", row.StFips);
             cmd.Parameters.AddWithValue("areatype", row.AreaType);

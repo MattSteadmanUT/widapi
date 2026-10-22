@@ -1,8 +1,8 @@
 openapi: 3.0.0
 servers:
-#  - url: http://api.widcenter.org/widapi/services
-#    description: Analyst Resource Center API
-  - url:  https://qualityinfo.org/widapi/services
+  #  - url: http://api.widcenter.org/widapi/services
+  #    description: Analyst Resource Center API
+  - url: https://qualityinfo.org/widapi/services
     description: Oregon Employment Dept WID API
 info:
   description: |
@@ -18,22 +18,22 @@ info:
     email: gary.m.sincick@oregon.gov
   license:
     name: Apache 2.0
-    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 tags:
   - name: data
     description: All WID data table functions
     externalDocs:
       description: Find out more about the WID structure
-      url: 'http://www.widcenter.org/structure-2/'
+      url: "http://www.widcenter.org/structure-2/"
   - name: lookup
     description: All WID lookup table functions
     externalDocs:
       description: Find out more about the WID structure
-      url: 'http://www.widcenter.org/structure-2/'      
+      url: "http://www.widcenter.org/structure-2/"
   - name: ces
     description: Access to Current Employment Statistics data
   - name: labforce
-    description:  Access to local area unemployment and labor force data
+    description: Access to local area unemployment and labor force data
 paths:
   /wid/data/ces/employment:
     get:
@@ -45,7 +45,7 @@ paths:
       operationId: getCesEmployment
 
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -53,21 +53,21 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: object
-                    items:  
-                      $ref: '#/components/schemas/CesEmploymentDataWrapper'   
+                    items:
+                      $ref: "#/components/schemas/CesEmploymentDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
 
           links:
             listAreas:
               description: get the associated areas for a given set of CES data
               operationId: listCesAreas
-              parameters: 
+              parameters:
                 stfips: $request.query.stfips
                 areatype: $response.body#/areatype
                 area: $response.body#/area
@@ -76,22 +76,21 @@ paths:
                 period: $response.body#/period
                 seriescode: $response.body#/seriescode
                 adjusted: $response.body#/adjusted
-   
-      parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize'     
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodyear'
-        - $ref: '#/components/parameters/minyear'
-        - $ref: '#/components/parameters/maxyear'
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/seriescode'
-        - $ref: '#/components/parameters/adjusted'
 
-        
+      parameters:
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/minyear"
+        - $ref: "#/components/parameters/maxyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/seriescode"
+        - $ref: "#/components/parameters/adjusted"
+
   /wid/data/ces/employment/listAreas:
     get:
       tags:
@@ -100,7 +99,7 @@ paths:
       summary: Get valid areas for CES data. Returns data from WID.GEOG table
       operationId: getCesAreas
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -108,30 +107,29 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/AreaDataWrapper' 
+                    items:
+                      $ref: "#/components/schemas/AreaDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
-
+                    items:
+                      $ref: "#/components/schemas/Link"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodyear'
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/seriescode'
-        - $ref: '#/components/parameters/adjusted'
-        - $ref: '#/components/parameters/minyear'
-        - $ref: '#/components/parameters/maxyear'
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/seriescode"
+        - $ref: "#/components/parameters/adjusted"
+        - $ref: "#/components/parameters/minyear"
+        - $ref: "#/components/parameters/maxyear"
 
   /wid/data/ces/employment/listYears:
     get:
@@ -141,7 +139,7 @@ paths:
       summary: Get all years for CES data
       operationId: getCesYears
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -149,27 +147,27 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: array
-                    items:  
-                      $ref: '#/components/schemas/PeriodDataWrapper'   
+                    items:
+                      $ref: "#/components/schemas/PeriodDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
 
       parameters:
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodyear'
-        - $ref: '#/components/parameters/minyear'
-        - $ref: '#/components/parameters/maxyear'
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/seriescode'
-        - $ref: '#/components/parameters/adjusted'
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/minyear"
+        - $ref: "#/components/parameters/maxyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/seriescode"
+        - $ref: "#/components/parameters/adjusted"
 
   /wid/data/ces/employment/maxPeriod:
     get:
@@ -179,7 +177,7 @@ paths:
       summary: Get most recent period for CES data
       operationId: getCesMaxPeriod
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -187,29 +185,28 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: array
-                    items:  
-                      $ref: '#/components/schemas/PeriodDataWrapper' 
+                    items:
+                      $ref: "#/components/schemas/PeriodDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
 
-      parameters:                  
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodyear'
-        - $ref: '#/components/parameters/minyear'
-        - $ref: '#/components/parameters/maxyear'        
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/seriescode'
-        - $ref: '#/components/parameters/adjusted'
+      parameters:
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/minyear"
+        - $ref: "#/components/parameters/maxyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/seriescode"
+        - $ref: "#/components/parameters/adjusted"
 
-        
   /wid/data/ces/employment/minPeriod:
     get:
       tags:
@@ -218,7 +215,7 @@ paths:
       summary: Get oldest period for CES data
       operationId: getCesMinPeriod
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -226,27 +223,27 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: array
-                    items:  
-                      $ref: '#/components/schemas/PeriodDataWrapper' 
+                    items:
+                      $ref: "#/components/schemas/PeriodDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
 
       parameters:
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodyear'
-        - $ref: '#/components/parameters/minyear'
-        - $ref: '#/components/parameters/maxyear'        
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/seriescode'
-        - $ref: '#/components/parameters/adjusted'
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/minyear"
+        - $ref: "#/components/parameters/maxyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/seriescode"
+        - $ref: "#/components/parameters/adjusted"
 
   /wid/data/ces/employment/listIndustrySeries:
     get:
@@ -256,7 +253,7 @@ paths:
       summary: Get valid industry series codes for CES data
       operationId: getCesIndustrySeries
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -264,29 +261,28 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/CesIndustrySeriesDataWrapper'
+                    items:
+                      $ref: "#/components/schemas/CesIndustrySeriesDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodyear'
-        - $ref: '#/components/parameters/minyear'
-        - $ref: '#/components/parameters/maxyear'        
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/seriescode'
-        
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/minyear"
+        - $ref: "#/components/parameters/maxyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/seriescode"
 
   /wid/data/industry:
     get:
@@ -296,7 +292,7 @@ paths:
       summary: Get QCEW employment and payroll data by industry
       operationId: getIndustryData
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -304,27 +300,26 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/industryDataWrapper'
+                    items:
+                      $ref: "#/components/schemas/industryDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'   
-        - $ref: '#/components/parameters/periodyear'   
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/indcodty'
-        - $ref: '#/components/parameters/indcode' 
-
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/indcodty"
+        - $ref: "#/components/parameters/indcode"
 
   /wid/data/industry/listAreas:
     get:
@@ -334,7 +329,7 @@ paths:
       summary: Get valid areas for QCEW data
       operationId: getQcewAreas
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -342,28 +337,28 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/AreaDataWrapper'
+                    items:
+                      $ref: "#/components/schemas/AreaDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'   
-        - $ref: '#/components/parameters/periodyear'   
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/indcodty'
-        - $ref: '#/components/parameters/indcode' 
-        
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/indcodty"
+        - $ref: "#/components/parameters/indcode"
+
   /wid/data/industry/maxPeriod:
     get:
       tags:
@@ -372,7 +367,7 @@ paths:
       summary: Get most recent period for QCEW data
       operationId: getQcewMaxPeriod
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -380,28 +375,28 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: array
-                    items:  
-                      $ref: '#/components/schemas/PeriodDataWrapper'   
+                    items:
+                      $ref: "#/components/schemas/PeriodDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
 
-      parameters:                  
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'   
-        - $ref: '#/components/parameters/periodyear'   
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/indcodty'
-        - $ref: '#/components/parameters/indcode' 
-        
+      parameters:
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/indcodty"
+        - $ref: "#/components/parameters/indcode"
+
   /wid/data/industry/minPeriod:
     get:
       tags:
@@ -410,7 +405,7 @@ paths:
       summary: Get oldest period for QCEW data
       operationId: getQcewMinPeriod
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -418,27 +413,27 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: array
-                    items:  
-                      $ref: '#/components/schemas/PeriodDataWrapper'   
+                    items:
+                      $ref: "#/components/schemas/PeriodDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'   
-        - $ref: '#/components/parameters/periodyear'   
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/indcodty'
-        - $ref: '#/components/parameters/indcode' 
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/indcodty"
+        - $ref: "#/components/parameters/indcode"
 
   /wid/data/industry/listIndustries:
     get:
@@ -448,7 +443,7 @@ paths:
       summary: Get valid industry codes for QCEW data
       operationId: getQcewIndustryCodes
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -456,24 +451,23 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   industrycode:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/IndustryCode'
+                    items:
+                      $ref: "#/components/schemas/IndustryCode"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'   
-        - $ref: '#/components/parameters/periodyear'   
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/indcodty'
-        - $ref: '#/components/parameters/indcode'       
-
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/indcodty"
+        - $ref: "#/components/parameters/indcode"
 
   /wid/data/ioMatrix:
     get:
@@ -483,7 +477,7 @@ paths:
       summary: Get industry and/or occupational employment and projections
       operationId: getIomatrixData
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -491,27 +485,26 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: object
-                    items: 
-                      $ref: '#/components/schemas/IoMatrixDataWrapper'
+                    items:
+                      $ref: "#/components/schemas/IoMatrixDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodid'
-        - $ref: '#/components/parameters/matincode'
-        - $ref: '#/components/parameters/matoccode'
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodid"
+        - $ref: "#/components/parameters/matincode"
+        - $ref: "#/components/parameters/matoccode"
 
-        
   /wid/data/ioMatrix/listAreas:
     get:
       tags:
@@ -520,7 +513,7 @@ paths:
       summary: Get iomatrix areas
       operationId: getIomatrixAreas
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -528,25 +521,25 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   data:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/AreaDataWrapper'
+                    items:
+                      $ref: "#/components/schemas/AreaDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodid'
-        - $ref: '#/components/parameters/matincode'
-        - $ref: '#/components/parameters/matoccode'
-        
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodid"
+        - $ref: "#/components/parameters/matincode"
+        - $ref: "#/components/parameters/matoccode"
+
   /wid/data/ioMatrix/listIndustries:
     get:
       tags:
@@ -555,7 +548,7 @@ paths:
       summary: Get iomatrix industries
       operationId: getIomatrixIndustryCodes
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -563,26 +556,26 @@ paths:
                 type: object
                 properties:
                   meta:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   inddir:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/MatrixIndustryCodeDataWrapper'
+                    items:
+                      $ref: "#/components/schemas/MatrixIndustryCodeDataWrapper"
                   links:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Link'
+                    items:
+                      $ref: "#/components/schemas/Link"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodid'
-        - $ref: '#/components/parameters/matincode'
-        - $ref: '#/components/parameters/matoccode'
-        
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodid"
+        - $ref: "#/components/parameters/matincode"
+        - $ref: "#/components/parameters/matoccode"
+
   /wid/data/ioMatrix/listOccupations:
     get:
       tags:
@@ -591,7 +584,7 @@ paths:
       summary: Get ioMatrix occupations
       operationId: getIomatrixOccupationCodes
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -599,22 +592,22 @@ paths:
                 type: object
                 properties:
                   metadata:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   occdir:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/MatrixOccupationCode'
+                    items:
+                      $ref: "#/components/schemas/MatrixOccupationCode"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodid'
-        - $ref: '#/components/parameters/matincode'
-        - $ref: '#/components/parameters/matoccode'        
-        
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodid"
+        - $ref: "#/components/parameters/matincode"
+        - $ref: "#/components/parameters/matoccode"
+
   /wid/data/laborForce:
     get:
       tags:
@@ -623,7 +616,7 @@ paths:
       summary: Get local area labor force and unemployment statistics
       operationId: getLaborForceData
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -631,24 +624,24 @@ paths:
                 type: object
                 properties:
                   metadata:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   labforce:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/LaborForce'
+                    items:
+                      $ref: "#/components/schemas/LaborForce"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodyear'
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/adjusted'
-        - $ref: '#/components/parameters/minyear'
-        - $ref: '#/components/parameters/maxyear'
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/adjusted"
+        - $ref: "#/components/parameters/minyear"
+        - $ref: "#/components/parameters/maxyear"
 
   /wid/data/laborForce/listAreas:
     get:
@@ -658,7 +651,7 @@ paths:
       summary: Get valid areas for labor force and unemployment data
       operationId: getLaborForceAreas
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -666,23 +659,23 @@ paths:
                 type: object
                 properties:
                   metadata:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   geog:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Area'
+                    items:
+                      $ref: "#/components/schemas/Area"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize'     
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodyear'
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/adjusted'
-        
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/adjusted"
+
   /wid/data/wages:
     get:
       tags:
@@ -691,7 +684,7 @@ paths:
       summary: Get wage data
       operationId: getWageData
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -699,24 +692,24 @@ paths:
                 type: object
                 properties:
                   metadata:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   iowage:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Wage'
+                    items:
+                      $ref: "#/components/schemas/Wage"
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'   
-        - $ref: '#/components/parameters/periodyear'   
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/indcode' 
-        - $ref: '#/components/parameters/occcode'
-        - $ref: '#/components/parameters/wagesource'
-        - $ref: '#/components/parameters/ratetype'   
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/indcode"
+        - $ref: "#/components/parameters/occcode"
+        - $ref: "#/components/parameters/wagesource"
+        - $ref: "#/components/parameters/ratetype"
 
   /wid/data/wages/listAreas:
     get:
@@ -726,7 +719,7 @@ paths:
       summary: Get wage areas
       operationId: getWageAreas
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -734,61 +727,61 @@ paths:
                 type: object
                 properties:
                   metadata:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   geog:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/Area'
+                    items:
+                      $ref: "#/components/schemas/Area"
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'   
-        - $ref: '#/components/parameters/periodyear'   
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/indcode' 
-        - $ref: '#/components/parameters/occcode'
-        - $ref: '#/components/parameters/wagesource'
-        - $ref: '#/components/parameters/ratetype'
-        
-#  /wid/data/wages/listIndustries:
-#    get:
-#      tags:
-#        - wages
-#        - data
-#      summary: Get iowage industries
-#      operationId: getWageIndustryCodes
-#      responses:
-#        '200':
-#          description: successful operation
-#          content:
-#            application/json:
-#              schema:
-#                type: object
-#                properties:
-#                  metadata:
-#                    $ref: '#/components/schemas/Metadata'
-#                  inddir:
-#                    type: array
-#                    items: 
-#                      $ref: '#/components/schemas/MatrixIndustryCode'
-#
-#      parameters:
-#        - $ref: '#/components/parameters/pageNum'
-#        - $ref: '#/components/parameters/pageSize' 
-#        - $ref: '#/components/parameters/stfips'
-#        - $ref: '#/components/parameters/areatype'
-#        - $ref: '#/components/parameters/area'   
-#        - $ref: '#/components/parameters/periodyear'
-#        - $ref: '#/components/parameters/periodtype'
-#        - $ref: '#/components/parameters/period'
-#        - $ref: '#/components/parameters/indcode' 
-#        - $ref: '#/components/parameters/occcode'
-#        - $ref: '#/components/parameters/wagesource'
-#        - $ref: '#/components/parameters/ratetype'
-        
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/indcode"
+        - $ref: "#/components/parameters/occcode"
+        - $ref: "#/components/parameters/wagesource"
+        - $ref: "#/components/parameters/ratetype"
+
+  #  /wid/data/wages/listIndustries:
+  #    get:
+  #      tags:
+  #        - wages
+  #        - data
+  #      summary: Get iowage industries
+  #      operationId: getWageIndustryCodes
+  #      responses:
+  #        '200':
+  #          description: successful operation
+  #          content:
+  #            application/json:
+  #              schema:
+  #                type: object
+  #                properties:
+  #                  metadata:
+  #                    $ref: '#/components/schemas/Metadata'
+  #                  inddir:
+  #                    type: array
+  #                    items:
+  #                      $ref: '#/components/schemas/MatrixIndustryCode'
+  #
+  #      parameters:
+  #        - $ref: '#/components/parameters/pageNum'
+  #        - $ref: '#/components/parameters/pageSize'
+  #        - $ref: '#/components/parameters/stfips'
+  #        - $ref: '#/components/parameters/areatype'
+  #        - $ref: '#/components/parameters/area'
+  #        - $ref: '#/components/parameters/periodyear'
+  #        - $ref: '#/components/parameters/periodtype'
+  #        - $ref: '#/components/parameters/period'
+  #        - $ref: '#/components/parameters/indcode'
+  #        - $ref: '#/components/parameters/occcode'
+  #        - $ref: '#/components/parameters/wagesource'
+  #        - $ref: '#/components/parameters/ratetype'
+
   /wid/data/wages/listOccupations:
     get:
       tags:
@@ -797,7 +790,7 @@ paths:
       summary: Get ioMatrix occupations
       operationId: getWageOccupationCodes
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
@@ -805,134 +798,133 @@ paths:
                 type: object
                 properties:
                   metadata:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                   occdir:
                     type: array
-                    items: 
-                      $ref: '#/components/schemas/MatrixOccupationCode'
+                    items:
+                      $ref: "#/components/schemas/MatrixOccupationCode"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'   
-        - $ref: '#/components/parameters/periodyear'
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/indcode' 
-        - $ref: '#/components/parameters/occcode'
-        - $ref: '#/components/parameters/wagesource'
-        - $ref: '#/components/parameters/ratetype'       
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/indcode"
+        - $ref: "#/components/parameters/occcode"
+        - $ref: "#/components/parameters/wagesource"
+        - $ref: "#/components/parameters/ratetype"
 
-        
-#  /wid/lookup/areaType:
-#    get:
-#      tags:
-#        - lookup
-#      summary: Get areatype names
-#      operationId: getAreaTypes      
-#      responses:
-#        '200':
-#          description: successful operation
-#          content:
-#            application/json:
-#              schema:
-#                type: array
-#                items:
-#                  $ref: '#/components/schemas/AreaType'
+  #  /wid/lookup/areaType:
+  #    get:
+  #      tags:
+  #        - lookup
+  #      summary: Get areatype names
+  #      operationId: getAreaTypes
+  #      responses:
+  #        '200':
+  #          description: successful operation
+  #          content:
+  #            application/json:
+  #              schema:
+  #                type: array
+  #                items:
+  #                  $ref: '#/components/schemas/AreaType'
 
-#     parameters:
-#        - $ref: '#/components/parameters/stfips'
-#        - $ref: '#/components/parameters/areatype'
-#        
-# /wid/lookup/addresty:
-#    get:
-#      tags:
-#        - lookup
-#      summary: Get address type codes used in stfirms
-#      responses:
-#        '200':
-#          description: successful operation
-#
-#          content:
-#            application/json:
-#              schema:
-#                type: array
-#                items:
-#                  $ref: '#/components/schemas/AddressType'
-#
-#      parameters:
-#        - $ref: '#/components/parameters/addressty'
-        
-#  /wid/lookup/matrixIndustries:
-#   get:
-#      tags:
-#        - lookup
-#      summary: Get industry titles used in iomatrix
-#      operationId: getIoMatrixIndustries
-#      responses:
-#        '200':
-#          description: successful operation
-#          content:
-#            application/json:
-#              schema:
-#                type: array
-#                items:
-#                  $ref: '#/components/schemas/MatrixIndustryCode'
+  #     parameters:
+  #        - $ref: '#/components/parameters/stfips'
+  #        - $ref: '#/components/parameters/areatype'
+  #
+  # /wid/lookup/addresty:
+  #    get:
+  #      tags:
+  #        - lookup
+  #      summary: Get address type codes used in stfirms
+  #      responses:
+  #        '200':
+  #          description: successful operation
+  #
+  #          content:
+  #            application/json:
+  #              schema:
+  #                type: array
+  #                items:
+  #                  $ref: '#/components/schemas/AddressType'
+  #
+  #      parameters:
+  #        - $ref: '#/components/parameters/addressty'
 
-#      parameters:
-#        - $ref: '#/components/parameters/pageNum'
-#        - $ref: '#/components/parameters/pageSize'    
-#        - $ref: '#/components/parameters/stfips'
-#        - $ref: '#/components/parameters/matincode'
-#        - $ref: '#/components/parameters/periodid'
+  #  /wid/lookup/matrixIndustries:
+  #   get:
+  #      tags:
+  #        - lookup
+  #      summary: Get industry titles used in iomatrix
+  #      operationId: getIoMatrixIndustries
+  #      responses:
+  #        '200':
+  #          description: successful operation
+  #          content:
+  #            application/json:
+  #              schema:
+  #                type: array
+  #                items:
+  #                  $ref: '#/components/schemas/MatrixIndustryCode'
 
-#  /wid/lookup/matrixOccupations:
-#    get:
-#      tags:
-#        - lookup
-#      summary: Get occuparion titles used in iomatrix
-#      operationId: getIoMatrixOccupations
-#      responses:
-#        '200':
-#          description: successful operation
-#          content:
-#            application/json:
-#              schema:
-#                type: array
-#                items:
-#                  $ref: '#/components/schemas/MatrixOccupationCode'
+  #      parameters:
+  #        - $ref: '#/components/parameters/pageNum'
+  #        - $ref: '#/components/parameters/pageSize'
+  #        - $ref: '#/components/parameters/stfips'
+  #        - $ref: '#/components/parameters/matincode'
+  #        - $ref: '#/components/parameters/periodid'
 
-#      parameters:
-#        - $ref: '#/components/parameters/pageNum'
-#        - $ref: '#/components/parameters/pageSize'     
-#        - $ref: '#/components/parameters/stfips'
-#        - $ref: '#/components/parameters/matoccode'
-#        - $ref: '#/components/parameters/periodid'
-        
-#  /wid/lookup/areas:
-#    get:
-#      tags:
-#        - lookup
-#      summary: Get geograpic areas
-#      operationId: getAreas
-#      responses:
-#        '200':
-#          description: successful operation
-#          content:
-#           application/json:
-#              schema:
-#                type: array
-#                items:
-#                  $ref: '#/components/schemas/Area'
+  #  /wid/lookup/matrixOccupations:
+  #    get:
+  #      tags:
+  #        - lookup
+  #      summary: Get occuparion titles used in iomatrix
+  #      operationId: getIoMatrixOccupations
+  #      responses:
+  #        '200':
+  #          description: successful operation
+  #          content:
+  #            application/json:
+  #              schema:
+  #                type: array
+  #                items:
+  #                  $ref: '#/components/schemas/MatrixOccupationCode'
 
-#      parameters:
-#        - $ref: '#/components/parameters/pageNum'
-#        - $ref: '#/components/parameters/pageSize'       
-#        - $ref: '#/components/parameters/stfips'
-#        - $ref: '#/components/parameters/areatype'
-#        - $ref: '#/components/parameters/area'
+  #      parameters:
+  #        - $ref: '#/components/parameters/pageNum'
+  #        - $ref: '#/components/parameters/pageSize'
+  #        - $ref: '#/components/parameters/stfips'
+  #        - $ref: '#/components/parameters/matoccode'
+  #        - $ref: '#/components/parameters/periodid'
+
+  #  /wid/lookup/areas:
+  #    get:
+  #      tags:
+  #        - lookup
+  #      summary: Get geograpic areas
+  #      operationId: getAreas
+  #      responses:
+  #        '200':
+  #          description: successful operation
+  #          content:
+  #           application/json:
+  #              schema:
+  #                type: array
+  #                items:
+  #                  $ref: '#/components/schemas/Area'
+
+  #      parameters:
+  #        - $ref: '#/components/parameters/pageNum'
+  #        - $ref: '#/components/parameters/pageSize'
+  #        - $ref: '#/components/parameters/stfips'
+  #        - $ref: '#/components/parameters/areatype'
+  #        - $ref: '#/components/parameters/area'
   /wid/data/laborForce/maxPeriod:
     get:
       tags:
@@ -941,24 +933,24 @@ paths:
       summary: Get most recent period for CES data
       operationId: getLaborForceMaxPeriod
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Period'
+                $ref: "#/components/schemas/Period"
 
-      parameters:                  
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodyear'
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/seriescode'
-        - $ref: '#/components/parameters/adjusted'
+      parameters:
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/seriescode"
+        - $ref: "#/components/parameters/adjusted"
   /wid/data/laborForce/minPeriod:
     get:
       tags:
@@ -967,29 +959,28 @@ paths:
       summary: Get oldest period for CES data
       operationId: getLaborForceMinPeriod
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Period'
+                $ref: "#/components/schemas/Period"
 
       parameters:
-        - $ref: '#/components/parameters/pageNum'
-        - $ref: '#/components/parameters/pageSize' 
-        - $ref: '#/components/parameters/stfips'
-        - $ref: '#/components/parameters/areatype'
-        - $ref: '#/components/parameters/area'
-        - $ref: '#/components/parameters/periodyear'
-        - $ref: '#/components/parameters/periodtype'
-        - $ref: '#/components/parameters/period'
-        - $ref: '#/components/parameters/seriescode'
-        - $ref: '#/components/parameters/adjusted'
-
+        - $ref: "#/components/parameters/pageNum"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/stfips"
+        - $ref: "#/components/parameters/areatype"
+        - $ref: "#/components/parameters/area"
+        - $ref: "#/components/parameters/periodyear"
+        - $ref: "#/components/parameters/periodtype"
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/seriescode"
+        - $ref: "#/components/parameters/adjusted"
 
 externalDocs:
   description: Find out more about the Workforce Information Database
-  url: 'http://www.widcenter.org'
+  url: "http://www.widcenter.org"
 components:
   parameters:
     pageNum:
@@ -1009,17 +1000,17 @@ components:
     stfips:
       name: stateFips
       in: query
-      description: > 
+      description: >
         2-digit state FIPS code
           * '00' - United States
           * '41' - Oregon
       schema:
         type: string
         nullable: true
-        example: '41'
-        enum: 
-          - '00'
-          - '41'
+        example: "41"
+        enum:
+          - "00"
+          - "41"
     addressty:
       name: addressty
       in: query
@@ -1039,10 +1030,10 @@ components:
         type: string
         nullable: true
         enum:
-          - '00'
-          - '01'
-          - '21'
-          - '04'
+          - "00"
+          - "01"
+          - "21"
+          - "04"
     area:
       name: area
       in: query
@@ -1053,9 +1044,9 @@ components:
       name: year
       in: query
       schema:
-        type: string  
+        type: string
         nullable: true
-      
+
     periodtype:
       name: periodType
       in: query
@@ -1064,26 +1055,26 @@ components:
            * '01' - Annual
            * '03' - Monthly
       schema:
-        type: string     
+        type: string
         nullable: true
-        enum: 
-          - '01'
-          - '03'
-      
+        enum:
+          - "01"
+          - "03"
+
     period:
       name: period
       in: query
-      description:  > 
+      description: >
         2-digit code representing specific period.  
           Zero-padded number corresponding to time period (e.g. month, quarter).  Use 00 for annual data.
       schema:
-        type: string   
+        type: string
     periodid:
       name: periodId
       in: query
-      description:  code used to look up the base and projection years 
+      description: code used to look up the base and projection years
       schema:
-        type: string    
+        type: string
     indcodty:
       name: industryCodeType
       in: query
@@ -1092,18 +1083,18 @@ components:
           * '05' - SIC
           * '10' - NAICS
       schema:
-        type: string 
+        type: string
         nullable: true
-        enum: 
-          - '05'
-          - '10'
+        enum:
+          - "05"
+          - "10"
     indcode:
       name: industry
       in: query
       description: industry code
       schema:
-        type: string   
-        nullable:  true
+        type: string
+        nullable: true
     occodetype:
       name: occupationCodeType
       in: query
@@ -1112,38 +1103,38 @@ components:
           * '19' - SOC 2018
           * '45' - Wage Occupations
       schema:
-        type: string 
-        nullable:  true
+        type: string
+        nullable: true
     occcode:
       name: occupation
       in: query
-      description:  occupational classification code 
+      description: occupational classification code
       schema:
-        type: string     
+        type: string
     wagesource:
       name: wageSource
       in: query
       description: code representing the source of the wage data
       schema:
-        type: string     
+        type: string
     ratetype:
       name: rateType
       in: query
       description: code identifying the type of wage rate
       schema:
-        type: string            
+        type: string
     matincode:
       name: industry
       in: query
-      description:  io matrix industry code
+      description: io matrix industry code
       schema:
-        type: string 
+        type: string
     matoccode:
       name: occupation
       in: query
-      description:  io matrix occupational code
+      description: io matrix occupational code
       schema:
-        type: string 
+        type: string
     seriescode:
       name: industrySeries
       in: query
@@ -1162,21 +1153,20 @@ components:
     minyear:
       name: minYear
       in: query
-      description:  earliest data year
+      description: earliest data year
       schema:
-        type: string  
+        type: string
     maxyear:
       name: maxYear
       in: query
-      description:  latest data year
+      description: latest data year
       schema:
-        type: string      
+        type: string
   schemas:
-  
     Metadata:
       type: object
       properties:
-        widVersion: 
+        widVersion:
           type: string
         apiVersion:
           type: string
@@ -1193,235 +1183,235 @@ components:
     Link:
       type: object
       properties:
-        href: 
+        href:
           type: string
-        rel: 
+        rel:
           type: string
-        type: 
-          type: string         
-          
+        type:
+          type: string
+
     AddressType:
       type: object
       properties:
         addressty:
           type: string
-          example: '41'
+          example: "41"
         addresdesc:
           type: string
-          example:  '00000000'
+          example: "00000000"
     AreaType:
       type: object
       properties:
         stateFips:
           type: string
-          example: '41'
+          example: "41"
         areaType:
           type: string
-          example: '01'
-          
+          example: "01"
+
     CesEmploymentDataWrapper:
       type: object
       properties:
-        type: 
+        type:
           type: string
           example: ces
         id:
           type: string
-          example: '41-04-000001-2019-03-01-00000000-0'
+          example: "41-04-000001-2019-03-01-00000000-0"
         attributes:
           type: array
-          items: 
-            $ref: '#/components/schemas/CesEmployment'   
-            
+          items:
+            $ref: "#/components/schemas/CesEmployment"
+
     CesIndustrySeriesDataWrapper:
       type: object
       properties:
-        type: 
+        type:
           type: string
           example: cesSeries
         id:
           type: string
-          example: '41-00000000-0'
+          example: "41-00000000-0"
         attributes:
           type: array
-          items: 
-            $ref: '#/components/schemas/CesIndustrySeries'   
+          items:
+            $ref: "#/components/schemas/CesIndustrySeries"
 
     AreaDataWrapper:
       type: object
       properties:
-        type: 
+        type:
           type: string
           example: area
         id:
           type: string
-          example: '41-04-000001'
+          example: "41-04-000001"
         attributes:
           type: array
-          items: 
-            $ref: '#/components/schemas/Area'   
-            
+          items:
+            $ref: "#/components/schemas/Area"
+
     PeriodDataWrapper:
       type: object
       properties:
-        type: 
+        type:
           type: string
           example: period
         id:
           type: string
-          example: '03-2020-12'
+          example: "03-2020-12"
         attributes:
           type: array
-          items: 
-            $ref: '#/components/schemas/Period'   
+          items:
+            $ref: "#/components/schemas/Period"
 
     YearDataWrapper:
       type: object
       properties:
-        type: 
+        type:
           type: string
           example: year
         id:
           type: string
-          example: '2020'
+          example: "2020"
         attributes:
           type: array
-          items: 
-            $ref: '#/components/schemas/Year'   
-            
+          items:
+            $ref: "#/components/schemas/Year"
+
     IoMatrixDataWrapper:
       type: object
       properties:
-        type: 
+        type:
           type: string
           example: ioMatrix
         id:
           type: string
-          example: '41-15-000015-10-1029-419022'
+          example: "41-15-000015-10-1029-419022"
         attributes:
           type: array
-          items: 
-            $ref: '#/components/schemas/IoMatrix'  
-            
+          items:
+            $ref: "#/components/schemas/IoMatrix"
+
     MatrixIndustryCodeDataWrapper:
       type: object
       properties:
-        type: 
+        type:
           type: string
           example: ioMatrixIndustryCode
         id:
           type: string
-          example: '41-721100'
+          example: "41-721100"
         attributes:
           type: array
-          items: 
-            $ref: '#/components/schemas/MatrixIndustryCode'   
-            
+          items:
+            $ref: "#/components/schemas/MatrixIndustryCode"
+
     MatrixOccupationCodeDataWrapper:
       type: object
       properties:
-        type: 
+        type:
           type: string
           example: ioMatrixOccupationCode
         id:
           type: string
-          example: '41-721100'
+          example: "41-721100"
         attributes:
           type: array
-          items: 
-            $ref: '#/components/schemas/MatrixOccupationCode'        
-          
+          items:
+            $ref: "#/components/schemas/MatrixOccupationCode"
+
     CesHoursAndEarnings:
       type: object
       description: The CES object represents an employment estimate from the Current Employment Statistics program for a particular time period, industry, and area.
       properties:
         stateFips:
           type: string
-          example: '41'
+          example: "41"
           description: 2-digit FIPS code representing the state.
         areaType:
           type: string
-          example: '01'
+          example: "01"
           description: 2-digit code representing the type of area.  Common values include 00=US, 01=state, 04=county, 21=MSA
         area:
           type: string
-          example: '000001'
+          example: "000001"
           description: 6-digit FIPS code for the indiviual area
         year:
           type: string
-          example:  '2018'
+          example: "2018"
         periodType:
           type: string
-          example:  '03'
+          example: "03"
           description: 2-digit code representing the type of period. 01=Annual, 03=monthly
         period:
           type: string
-          example: '01'
+          example: "01"
         industrySeriesCode:
           type: string
-          example: '00000000'
-          description:  8-digit code used by the Current Employment Statistics program to represent a specific industry.
+          example: "00000000"
+          description: 8-digit code used by the Current Employment Statistics program to represent a specific industry.
         adjusted:
           type: string
-          example:  '1'
+          example: "1"
           description: Indicates if record contains seasonally adjusted data. 1=adjusted, 0=not adjusted
         benchmarkYear:
           type: string
-          example:  '2017'
+          example: "2017"
           description: Year that the data were last benchmarked
         preliminary:
           type: string
-          example:  '0'
+          example: "0"
           description: Preliminary/revised flag. 0=not preliminary, 1=preliminary
         productionWorkerEmployment:
           type: integer
-          example:  0
+          example: 0
           description: Number of production workers
         femaleEmployment:
           type: integer
-          example:  0
-          description:  Number of female workers employed
+          example: 0
+          description: Number of female workers employed
         weeklyHours:
           type: integer
-          example:  0
+          example: 0
           description: Average hours worked per week for production workers
         weeklyEarnings:
           type: integer
-          example:  0
+          example: 0
           description: Average weekly earnings for production workers
         hourlyEarnings:
           type: integer
-          example:  0
+          example: 0
           description: Average hourly earnings for production workers
         suppressRecord:
           type: string
-          example:  '0'
+          example: "0"
           description: Suppress total record. 1=suppressed, 0=not suppressed
         supppressHoursAndEarnings:
           type: string
-          example:  '0'
+          example: "0"
           description: Suppress hours and earnings data. 1=suppressed, 0=not suppressed
         suppressProductionWorkers:
           type: string
-          example:  '0'
+          example: "0"
           description: Suppress production worker data. 1=suppressed, 0=not suppressed
         suppressFemaleEmployment:
           type: string
-          example:  '0'
+          example: "0"
           description: Suppress female employment data. 1=suppressed, 0=not suppressed
         hoursAllWorkers:
           type: integer
-          example:  0
-          description:  Average hours worked per week for all workers
+          example: 0
+          description: Average hours worked per week for all workers
         weeklyEarningsAllWorkers:
           type: number
-          example:  0
+          example: 0
         hourlyEarningsAllWorkers:
           type: number
-          example:  0
+          example: 0
         suppressAllWorkers:
           type: string
-          example:  '0'
+          example: "0"
 
     CesEmployment:
       type: object
@@ -1429,156 +1419,154 @@ components:
       properties:
         stateFips:
           type: string
-          example: '41'
+          example: "41"
           description: 2-digit FIPS code representing the state.
         areaType:
           type: string
-          example: '01'
+          example: "01"
           description: 2-digit code representing the type of area.  Common values include 00=US, 01=state, 04=county, 21=MSA
         area:
           type: string
-          example: '000001'
+          example: "000001"
           description: 6-digit FIPS code for the indiviual area
         year:
           type: string
-          example:  '2018'
+          example: "2018"
         periodType:
           type: string
-          example:  '03'
+          example: "03"
           description: 2-digit code representing the type of period. 01=Annual, 03=monthly
         period:
           type: string
-          example: '01'
+          example: "01"
         industrySeries:
           type: string
-          example: '00000000'
-          description:  8-digit code used by the Current Employment Statistics program to represent a specific industry.
+          example: "00000000"
+          description: 8-digit code used by the Current Employment Statistics program to represent a specific industry.
         seasonallyAdjusted:
           type: string
-          example:  '1'
+          example: "1"
           description: Indicates if record contains seasonally adjusted data. 1=adjusted, 0=not adjusted
         benchmarkYear:
           type: string
-          example:  '2017'
+          example: "2017"
           description: Year that the data were last benchmarked
         preliminary:
           type: string
-          example:  '0'
+          example: "0"
           description: Preliminary/revised flag. 0=not preliminary, 1=preliminary
         employment:
           type: integer
           example: 123456
           description: Number employed by place of work; actual number, not in thousands.
 
-
     CesIndustrySeries:
       type: object
       properties:
         stateFips:
           type: string
-          example: '41'
+          example: "41"
         industrySeries:
           type: string
-          example:  '00000000'
+          example: "00000000"
         description:
           type: string
         shortTitle:
           type: string
         longTitle:
-          type: string          
+          type: string
         level:
           type: string
-          example: '0'
-          
+          example: "0"
 
     Area:
       type: object
       properties:
         stateFips:
           type: string
-          example: '41'
+          example: "41"
         areaType:
           type: string
-          example: '01'
+          example: "01"
         area:
           type: string
-          example: '000001'
+          example: "000001"
         name:
           type: string
-          example: 'Oregon'
-        description: 
+          example: "Oregon"
+        description:
           type: string
-          example: 'State of Oregon'
+          example: "State of Oregon"
         latitude:
           type: number
           example: 0
         longitude:
           type: number
-          example:  0
+          example: 0
         geoPrecisionCode:
           type: string
-          example:  '0'
-          
+          example: "0"
+
     IndustryCode:
       type: object
       properties:
         stateFips:
           type: string
-          example: '41'
+          example: "41"
         codeType:
           type: string
-          example: '10'
+          example: "10"
         code:
           type: string
-          example: '451212'
+          example: "451212"
 
     industryDataWrapper:
       type: object
       properties:
-        type: 
+        type:
           type: string
           example: industry
         id:
           type: string
-          example: '41-15-000015-10-1029-419022'
+          example: "41-15-000015-10-1029-419022"
         attributes:
           type: array
-          items: 
-            $ref: '#/components/schemas/Industry'   
+          items:
+            $ref: "#/components/schemas/Industry"
 
     Industry:
       type: object
       properties:
         stateFips:
           type: string
-          example: '41'
+          example: "41"
         areaType:
           type: string
-          example: '01'
+          example: "01"
         area:
           type: string
-          example: '000001'
+          example: "000001"
         year:
           type: string
-          example:  '2018'
+          example: "2018"
         periodType:
           type: string
-          example:  '03'
+          example: "03"
         period:
           type: string
-          example: '01'
+          example: "01"
         industryCodeType:
           type: string
-          example: '10'
+          example: "10"
         industryCode:
           type: string
-          example: '451212'
+          example: "451212"
         ownership:
           type: string
-          example: '50'
+          example: "50"
         preliminary:
           type: string
-          enum: ['0','1']
+          enum: ["0", "1"]
         firms:
           type: integer
         establishments:
@@ -1603,23 +1591,23 @@ components:
           type: integer
         suppress:
           type: string
-          enum: ['0','1']
-          
+          enum: ["0", "1"]
+
     IoMatrix:
       type: object
       properties:
         stfips:
           type: string
-          example: '41'
+          example: "41"
         areatype:
           type: string
-          example: '01'
+          example: "01"
         area:
           type: string
-          example: '000001'
+          example: "000001"
         periodid:
           type: string
-          example: '01'
+          example: "01"
         matincode:
           type: string
           example:
@@ -1628,7 +1616,7 @@ components:
           example:
         estemp:
           type: integer
-        projemp: 
+        projemp:
           type: integer
         pctestind:
           type: number
@@ -1671,37 +1659,37 @@ components:
         suppress:
           type: string
           maxLength: 1
-          
+
     Wage:
       type: object
       properties:
         stateFips:
           type: string
-          example: '41'
+          example: "41"
         areaType:
           type: string
-          example: '01'
+          example: "01"
         area:
           type: string
-          example: '000001'
+          example: "000001"
         year:
           type: string
-          example:  '2018'
+          example: "2018"
         periodType:
           type: string
-          example:  '03'
+          example: "03"
         period:
           type: string
-          example: '01'
+          example: "01"
         industryCodeType:
           type: string
-          example: '10'
+          example: "10"
         industryCode:
           type: string
-          example: ''
+          example: ""
         occupationCodeType:
           type: string
-          example: '08'
+          example: "08"
         occupationCode:
           type: string
         source:
@@ -1735,10 +1723,10 @@ components:
       properties:
         stateFips:
           type: string
-          example: '41'
+          example: "41"
         industryCode:
           type: string
-          example: 'xx'
+          example: "xx"
         periodId:
           type: string
         industryCodeType:
@@ -1803,10 +1791,10 @@ components:
       properties:
         stfips:
           type: string
-          example: '41'
+          example: "41"
         matoccode:
           type: string
-          example: 'xx'
+          example: "xx"
         periodid:
           type: string
         matoccodtyp:
@@ -1821,16 +1809,16 @@ components:
       properties:
         year:
           type: string
-          example: '2018'
-        periodType: 
+          example: "2018"
+        periodType:
           type: string
-          example: '03'
+          example: "03"
         period:
           type: string
-          example:  '01'
+          example: "01"
     Year:
       type: object
       properties:
         year:
           type: string
-          example: '2018'
+          example: "2018"

@@ -1,8 +1,8 @@
 using System.Globalization;
 using Microsoft.Extensions.Logging;
-using Npgsql;
 using NationalWid.Ingestion.Models;
 using NationalWid.Ingestion.Services;
+using Npgsql;
 
 namespace NationalWid.Ingestion.Ingestors;
 
@@ -15,7 +15,8 @@ public sealed class BlsQcewIngestor(
     HttpClient httpClient,
     string connectionString,
     SourceHashService sourceHashService,
-    ILogger logger)
+    ILogger logger
+)
 {
     // Fetch last 5 years of quarterly data.
     private const int YearsBack = 5;
@@ -47,7 +48,11 @@ public sealed class BlsQcewIngestor(
         return total;
     }
 
-    private async Task<int> FetchQuarterAsync(int year, int quarter, CancellationToken cancellationToken)
+    private async Task<int> FetchQuarterAsync(
+        int year,
+        int quarter,
+        CancellationToken cancellationToken
+    )
     {
         var url = $"https://data.bls.gov/cew/data/api/{year}/{quarter}/industry/10.csv";
         logger.LogInformation("QCEW: fetching {Year} Q{Quarter}", year, quarter);
@@ -61,7 +66,8 @@ public sealed class BlsQcewIngestor(
                     "QCEW: source unavailable for {Year} Q{Quarter} ({Status}); continuing",
                     year,
                     quarter,
-                    response.StatusCode);
+                    response.StatusCode
+                );
             }
             else
             {
@@ -69,7 +75,8 @@ public sealed class BlsQcewIngestor(
                     "QCEW: request failed for {Year} Q{Quarter} with {Status}; continuing",
                     year,
                     quarter,
-                    response.StatusCode);
+                    response.StatusCode
+                );
             }
             return 0;
         }
@@ -82,7 +89,8 @@ public sealed class BlsQcewIngestor(
             url,
             hash,
             bytes.LongLength,
-            cancellationToken);
+            cancellationToken
+        );
 
         if (!changed)
         {
@@ -94,7 +102,12 @@ public sealed class BlsQcewIngestor(
         if (rows.Count == 0)
             return 0;
 
-        logger.LogInformation("QCEW: upserting {Count} rows for {Year} Q{Quarter}", rows.Count, year, quarter);
+        logger.LogInformation(
+            "QCEW: upserting {Count} rows for {Year} Q{Quarter}",
+            rows.Count,
+            year,
+            quarter
+        );
         await UpsertAsync(rows, cancellationToken);
         return rows.Count;
     }
@@ -107,10 +120,13 @@ public sealed class BlsQcewIngestor(
         await using var conn = new NpgsqlConnection(connectionString);
         await conn.OpenAsync(cancellationToken);
 
-        var cmd = new NpgsqlCommand(@"
+        var cmd = new NpgsqlCommand(
+            @"
             SELECT stfips, areatype, area
             FROM geographies
-            WHERE areatype IN ('04', '21', '31');", conn);
+            WHERE areatype IN ('04', '21', '31');",
+            conn
+        );
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
@@ -139,9 +155,8 @@ public sealed class BlsQcewIngestor(
                     if (msaNumeric.Length > 0)
                     {
                         // Index by the rightmost 4 digits (the CBSA core code).
-                        var msaKey = msaNumeric.Length >= 4
-                            ? msaNumeric[^4..]
-                            : msaNumeric.PadLeft(4, '0');
+                        var msaKey =
+                            msaNumeric.Length >= 4 ? msaNumeric[^4..] : msaNumeric.PadLeft(4, '0');
                         if (!_msaMap.ContainsKey(msaKey))
                             _msaMap[msaKey] = (stFips, areaType == "31" ? "31" : "21", area);
                     }
@@ -149,7 +164,11 @@ public sealed class BlsQcewIngestor(
             }
         }
 
-        logger.LogInformation("QCEW: geography maps loaded (county={CountyCount}, msa={MsaCount})", _countyMap.Count, _msaMap.Count);
+        logger.LogInformation(
+            "QCEW: geography maps loaded (county={CountyCount}, msa={MsaCount})",
+            _countyMap.Count,
+            _msaMap.Count
+        );
     }
 
     private List<IndustryRow> BuildRowsFromCsv(string csv)
@@ -188,8 +207,7 @@ public sealed class BlsQcewIngestor(
                 continue;
 
             var period = quarter;
-            var key =
-                $"{stFips}:{areaType}:0:{area}:{year}:02:{period}:{ownCode}:{industryCode}";
+            var key = $"{stFips}:{areaType}:0:{area}:{year}:02:{period}:{ownCode}:{industryCode}";
 
             rowsByKey[key] = new IndustryRow
             {
@@ -207,14 +225,21 @@ public sealed class BlsQcewIngestor(
                 TaxableWages = ParseNullableDecimal(cols[13]),
                 Contributions = ParseNullableDecimal(cols[14]),
                 WeeklyWage = ParseNullableDecimal(cols[15]),
-                SuppRecord = disclosureCode.Equals("N", StringComparison.OrdinalIgnoreCase) ? "1" : "0",
+                SuppRecord = disclosureCode.Equals("N", StringComparison.OrdinalIgnoreCase)
+                    ? "1"
+                    : "0",
             };
         }
 
         return rowsByKey.Values.ToList();
     }
 
-    private bool TryResolveArea(string areaFips, out string stFips, out string areaType, out string area)
+    private bool TryResolveArea(
+        string areaFips,
+        out string stFips,
+        out string areaType,
+        out string area
+    )
     {
         stFips = "";
         areaType = "";
@@ -228,7 +253,11 @@ public sealed class BlsQcewIngestor(
             return true;
         }
 
-        if (areaFips.Length == 5 && areaFips.All(char.IsDigit) && areaFips.EndsWith("000", StringComparison.Ordinal))
+        if (
+            areaFips.Length == 5
+            && areaFips.All(char.IsDigit)
+            && areaFips.EndsWith("000", StringComparison.Ordinal)
+        )
         {
             stFips = areaFips[..2];
             areaType = "01";
@@ -237,7 +266,11 @@ public sealed class BlsQcewIngestor(
         }
 
         // County-level QCEW areas (e.g., 01001): area = county suffix (last 3 digits) padded to 6.
-        if (areaFips.Length == 5 && areaFips.All(char.IsDigit) && !areaFips.EndsWith("000", StringComparison.Ordinal))
+        if (
+            areaFips.Length == 5
+            && areaFips.All(char.IsDigit)
+            && !areaFips.EndsWith("000", StringComparison.Ordinal)
+        )
         {
             stFips = areaFips[..2];
             areaType = "04";
@@ -273,7 +306,8 @@ public sealed class BlsQcewIngestor(
 
             foreach (var row in batchRows)
             {
-                var cmd = new NpgsqlBatchCommand(@"
+                var cmd = new NpgsqlBatchCommand(
+                    @"
                     INSERT INTO industry
                         (stfips, areatype, areatypeversion, area, periodyear, periodtype, period,
                          ownership, indcodetype, indcode,
@@ -296,7 +330,8 @@ public sealed class BlsQcewIngestor(
                         highempq = EXCLUDED.highempq,
                         lowempq = EXCLUDED.lowempq,
                         supprecord = EXCLUDED.SuppRecord,
-                        prelim = EXCLUDED.prelim");
+                        prelim = EXCLUDED.prelim"
+                );
 
                 cmd.Parameters.AddWithValue("stfips", row.StFips);
                 cmd.Parameters.AddWithValue("areatype", row.AreaType);
@@ -308,10 +343,19 @@ public sealed class BlsQcewIngestor(
                 cmd.Parameters.AddWithValue("ownership", row.Ownership);
                 cmd.Parameters.AddWithValue("indcodetype", row.IndCodeType);
                 cmd.Parameters.AddWithValue("indcode", row.IndCode);
-                cmd.Parameters.AddWithValue("avgmonthlyemp", (object?)row.AvgMonthlyEmp ?? DBNull.Value);
+                cmd.Parameters.AddWithValue(
+                    "avgmonthlyemp",
+                    (object?)row.AvgMonthlyEmp ?? DBNull.Value
+                );
                 cmd.Parameters.AddWithValue("totalwages", (object?)row.TotalWages ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("taxablewages", (object?)row.TaxableWages ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("uicontributions", (object?)row.Contributions ?? DBNull.Value);
+                cmd.Parameters.AddWithValue(
+                    "taxablewages",
+                    (object?)row.TaxableWages ?? DBNull.Value
+                );
+                cmd.Parameters.AddWithValue(
+                    "uicontributions",
+                    (object?)row.Contributions ?? DBNull.Value
+                );
                 cmd.Parameters.AddWithValue("weeklywage", (object?)row.WeeklyWage ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("empcount", (object?)row.EmpCount ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("highempq", (object?)row.HighEmpQ ?? DBNull.Value);
@@ -332,7 +376,12 @@ public sealed class BlsQcewIngestor(
         if (string.IsNullOrWhiteSpace(value))
             return null;
 
-        return decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed)
+        return decimal.TryParse(
+            value,
+            NumberStyles.Any,
+            CultureInfo.InvariantCulture,
+            out var parsed
+        )
             ? parsed
             : null;
     }

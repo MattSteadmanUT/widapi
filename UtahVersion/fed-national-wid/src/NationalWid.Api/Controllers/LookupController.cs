@@ -14,9 +14,7 @@ namespace NationalWid.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("lookups")]
-public sealed class LookupController(
-    WIDDbContext db,
-    IQueryService queryService) : ControllerBase
+public sealed class LookupController(WIDDbContext db, IQueryService queryService) : ControllerBase
 {
     /// <summary>Returns paginated geographic area records, optionally filtered by state FIPS, area type, version, or area code.</summary>
     [HttpGet("geographies")]
@@ -30,7 +28,8 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         IQueryable<Geography> query = db.Geographies.AsNoTracking();
 
@@ -38,14 +37,33 @@ public sealed class LookupController(
         if (stFipsFilter.Length > 0)
             query = query.Where(x => stFipsFilter.Contains(x.StFips));
         query = QueryFiltering.ApplyStringFilter(query, nameof(Geography.AreaType), areaType);
-        query = QueryFiltering.ApplyStringFilter(query, nameof(Geography.AreaTypeVersion), areaTypeVersion);
-        query = QueryFiltering.ApplyStringFilter(query, nameof(Geography.Area), area, WidCodes.NormalizeArea);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(Geography.AreaTypeVersion),
+            areaTypeVersion
+        );
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(Geography.Area),
+            area,
+            WidCodes.NormalizeArea
+        );
 
         var ordered = QuerySorting.Apply(
             query,
             sort,
-            nameof(Geography.StFips), nameof(Geography.AreaType), nameof(Geography.AreaTypeVersion), nameof(Geography.Area));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+            nameof(Geography.StFips),
+            nameof(Geography.AreaType),
+            nameof(Geography.AreaTypeVersion),
+            nameof(Geography.Area)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 
@@ -57,22 +75,27 @@ public sealed class LookupController(
         [FromRoute] string areaType,
         [FromRoute] string areaTypeVersion,
         [FromRoute] string area,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var normalizedStFips = WidCodes.NormalizeStFips(stFips);
-        if (string.IsNullOrWhiteSpace(normalizedStFips) || !WidCodes.IsValidStFips(normalizedStFips))
+        if (
+            string.IsNullOrWhiteSpace(normalizedStFips) || !WidCodes.IsValidStFips(normalizedStFips)
+        )
             throw new BadHttpRequestException("stFips must be a 2-digit numeric code.");
 
         var normalizedArea = WidCodes.NormalizeArea(area) ?? area;
 
-        var row = await db.Geographies
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x =>
-                x.StFips == normalizedStFips
-                && x.AreaType == areaType
-                && x.AreaTypeVersion == areaTypeVersion
-                && x.Area == normalizedArea,
-                cancellationToken);
+        var row = await db
+            .Geographies.AsNoTracking()
+            .FirstOrDefaultAsync(
+                x =>
+                    x.StFips == normalizedStFips
+                    && x.AreaType == areaType
+                    && x.AreaTypeVersion == areaTypeVersion
+                    && x.Area == normalizedArea,
+                cancellationToken
+            );
 
         return row is null ? NotFound() : Ok(row);
     }
@@ -88,7 +111,8 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         IQueryable<PeriodYear> query = db.PeriodYears.AsNoTracking();
 
@@ -97,8 +121,21 @@ public sealed class LookupController(
             query = query.Where(x => stFipsFilter.Contains(x.StFips));
         query = QueryFiltering.ApplyStringFilter(query, nameof(PeriodYear.PeriodType), periodType);
 
-        var ordered = QuerySorting.Apply(query, sort, nameof(PeriodYear.StFips), nameof(PeriodYear.Year), nameof(PeriodYear.PeriodType), nameof(PeriodYear.Period));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var ordered = QuerySorting.Apply(
+            query,
+            sort,
+            nameof(PeriodYear.StFips),
+            nameof(PeriodYear.Year),
+            nameof(PeriodYear.PeriodType),
+            nameof(PeriodYear.Period)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 
@@ -114,18 +151,41 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         IQueryable<CesCode> query = db.CesCodes.AsNoTracking();
 
         var stFipsFilter = WidCodes.ParseStFipsFilter(stFips);
         if (stFipsFilter.Length > 0)
             query = query.Where(x => stFipsFilter.Contains(x.StFips));
-        query = QueryFiltering.ApplyStringFilter(query, nameof(CesCode.SeriesCodeType), seriesCodeType);
-        query = QueryFiltering.ApplyStringFilter(query, nameof(CesCode.SeriesCode), seriesCode, WidCodes.NormalizeCodePattern, allowWildcard: true);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(CesCode.SeriesCodeType),
+            seriesCodeType
+        );
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(CesCode.SeriesCode),
+            seriesCode,
+            WidCodes.NormalizeCodePattern,
+            allowWildcard: true
+        );
 
-        var ordered = QuerySorting.Apply(query, sort, nameof(CesCode.StFips), nameof(CesCode.SeriesCodeType), nameof(CesCode.SeriesCode));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var ordered = QuerySorting.Apply(
+            query,
+            sort,
+            nameof(CesCode.StFips),
+            nameof(CesCode.SeriesCodeType),
+            nameof(CesCode.SeriesCode)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 
@@ -140,10 +200,11 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var query = db.AreaTypeReferences
-            .AsNoTracking()
+        var query = db
+            .AreaTypeReferences.AsNoTracking()
             .Select(x => new AreaTypeLookup
             {
                 StFips = x.StFips,
@@ -158,16 +219,27 @@ public sealed class LookupController(
 
         query = QueryFiltering.ApplyStringFilter(query, nameof(AreaTypeLookup.AreaType), areaType);
 
-        var ordered = QuerySorting.Apply(query, sort, nameof(AreaTypeLookup.StFips), nameof(AreaTypeLookup.AreaType));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var ordered = QuerySorting.Apply(
+            query,
+            sort,
+            nameof(AreaTypeLookup.StFips),
+            nameof(AreaTypeLookup.AreaType)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
 
         if (result.Total > 0)
         {
             return Ok(ResponseEnvelope.Create(result, Request));
         }
 
-        var fallbackQuery = db.Geographies
-            .AsNoTracking()
+        var fallbackQuery = db
+            .Geographies.AsNoTracking()
             .Select(x => new AreaTypeLookup
             {
                 StFips = x.StFips,
@@ -176,24 +248,45 @@ public sealed class LookupController(
             })
             .Distinct();
 
-        fallbackQuery = QueryFiltering.ApplyStringFilter(fallbackQuery, nameof(AreaTypeLookup.AreaType), areaType);
+        fallbackQuery = QueryFiltering.ApplyStringFilter(
+            fallbackQuery,
+            nameof(AreaTypeLookup.AreaType),
+            areaType
+        );
 
         if (stFipsFilter.Length > 0)
             fallbackQuery = fallbackQuery.Where(x => stFipsFilter.Contains(x.StFips));
 
-        var fallbackOrdered = QuerySorting.Apply(fallbackQuery, sort, nameof(AreaTypeLookup.StFips), nameof(AreaTypeLookup.AreaType));
-        var fallbackResult = await queryService.PageAsync(fallbackOrdered, page, pageSize, cursor, cancellationToken);
+        var fallbackOrdered = QuerySorting.Apply(
+            fallbackQuery,
+            sort,
+            nameof(AreaTypeLookup.StFips),
+            nameof(AreaTypeLookup.AreaType)
+        );
+        var fallbackResult = await queryService.PageAsync(
+            fallbackOrdered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
 
         var mapped = new PagedResult<AreaTypeLookup>
         {
-            Items = fallbackResult.Items.Select(x => new AreaTypeLookup
-            {
-                StFips = x.StFips,
-                AreaType = x.AreaType,
-                AreaTypeName = string.IsNullOrWhiteSpace(x.AreaTypeName)
-                    ? (LookupCatalog.AreaTypeTitles.TryGetValue(x.AreaType, out var title) ? title : null)
-                    : x.AreaTypeName,
-            }).ToList(),
+            Items = fallbackResult
+                .Items.Select(x => new AreaTypeLookup
+                {
+                    StFips = x.StFips,
+                    AreaType = x.AreaType,
+                    AreaTypeName = string.IsNullOrWhiteSpace(x.AreaTypeName)
+                        ? (
+                            LookupCatalog.AreaTypeTitles.TryGetValue(x.AreaType, out var title)
+                                ? title
+                                : null
+                        )
+                        : x.AreaTypeName,
+                })
+                .ToList(),
             Total = fallbackResult.Total,
             Page = fallbackResult.Page,
             PageSize = fallbackResult.PageSize,
@@ -213,10 +306,11 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var query = db.StateFipsReferences
-            .AsNoTracking()
+        var query = db
+            .StateFipsReferences.AsNoTracking()
             .Select(x => new StateFipsLookup
             {
                 StFips = x.StFips,
@@ -228,16 +322,27 @@ public sealed class LookupController(
         if (stFipsFilter.Length > 0)
             query = query.Where(x => stFipsFilter.Contains(x.StFips));
 
-        var ordered = QuerySorting.Apply(query, sort, nameof(StateFipsLookup.StFips), nameof(StateFipsLookup.StateName));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var ordered = QuerySorting.Apply(
+            query,
+            sort,
+            nameof(StateFipsLookup.StFips),
+            nameof(StateFipsLookup.StateName)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
 
         if (result.Total > 0)
         {
             return Ok(ResponseEnvelope.Create(result, Request));
         }
 
-        var fallbackQuery = LookupCatalog.StateFips
-            .Select(x => new StateFipsLookup
+        var fallbackQuery = LookupCatalog
+            .StateFips.Select(x => new StateFipsLookup
             {
                 StFips = x.Key,
                 StateName = x.Value.Name,
@@ -247,8 +352,19 @@ public sealed class LookupController(
         if (stFipsFilter.Length > 0)
             fallbackQuery = fallbackQuery.Where(x => stFipsFilter.Contains(x.StFips));
 
-        var fallbackOrdered = QuerySorting.Apply(fallbackQuery, sort, nameof(StateFipsLookup.StFips), nameof(StateFipsLookup.StateName));
-        var fallbackResult = await queryService.PageAsync(fallbackOrdered, page, pageSize, cursor, cancellationToken);
+        var fallbackOrdered = QuerySorting.Apply(
+            fallbackQuery,
+            sort,
+            nameof(StateFipsLookup.StFips),
+            nameof(StateFipsLookup.StateName)
+        );
+        var fallbackResult = await queryService.PageAsync(
+            fallbackOrdered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(fallbackResult, Request));
     }
 
@@ -261,28 +377,38 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var query = db.PeriodYears
-            .AsNoTracking()
+        var query = db
+            .PeriodYears.AsNoTracking()
             .Select(x => x.PeriodType)
             .Distinct()
-            .Select(x => new PeriodTypeLookup
-            {
-                PeriodType = x,
-                PeriodTypeName = x,
-            });
+            .Select(x => new PeriodTypeLookup { PeriodType = x, PeriodTypeName = x });
 
         var ordered = QuerySorting.Apply(query, sort, nameof(PeriodTypeLookup.PeriodType));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
 
         var mapped = new PagedResult<PeriodTypeLookup>
         {
-            Items = result.Items.Select(x => new PeriodTypeLookup
-            {
-                PeriodType = x.PeriodType,
-                PeriodTypeName = LookupCatalog.PeriodTypeTitles.TryGetValue(x.PeriodType, out var title) ? title : x.PeriodType,
-            }).ToList(),
+            Items = result
+                .Items.Select(x => new PeriodTypeLookup
+                {
+                    PeriodType = x.PeriodType,
+                    PeriodTypeName = LookupCatalog.PeriodTypeTitles.TryGetValue(
+                        x.PeriodType,
+                        out var title
+                    )
+                        ? title
+                        : x.PeriodType,
+                })
+                .ToList(),
             Total = result.Total,
             Page = result.Page,
             PageSize = result.PageSize,
@@ -302,22 +428,34 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var query = db.PeriodYears
-            .AsNoTracking()
-            .Select(x => new PeriodLookup
-            {
-                PeriodType = x.PeriodType,
-                Period = x.Period,
-            })
+        var query = db
+            .PeriodYears.AsNoTracking()
+            .Select(x => new PeriodLookup { PeriodType = x.PeriodType, Period = x.Period })
             .Distinct();
 
-        query = QueryFiltering.ApplyStringFilter(query, nameof(PeriodLookup.PeriodType), periodType);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(PeriodLookup.PeriodType),
+            periodType
+        );
         query = QueryFiltering.ApplyStringFilter(query, nameof(PeriodLookup.Period), period);
 
-        var ordered = QuerySorting.Apply(query, sort, nameof(PeriodLookup.PeriodType), nameof(PeriodLookup.Period));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var ordered = QuerySorting.Apply(
+            query,
+            sort,
+            nameof(PeriodLookup.PeriodType),
+            nameof(PeriodLookup.Period)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 
@@ -333,50 +471,64 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var fromIndustry = db.Industry.AsNoTracking().Select(x => new IndustryCodeLookup
-        {
-            StFips = x.StFips,
-            CodeType = x.IndCodeType,
-            Code = x.IndCode,
-            CodeLevel = null,
-            CodeTitle = null,
-            CodeTitleLong = null,
-        });
-        var fromWages = db.IOWages.AsNoTracking().Select(x => new IndustryCodeLookup
-        {
-            StFips = x.StFips,
-            CodeType = x.IndCodeType,
-            Code = x.IndCode,
-            CodeLevel = null,
-            CodeTitle = null,
-            CodeTitleLong = null,
-        });
-        var fromProjections = db.ProjectionsMatrix.AsNoTracking().Select(x => new IndustryCodeLookup
-        {
-            StFips = x.StFips,
-            CodeType = x.IndCodeType,
-            Code = x.IndCode,
-            CodeLevel = null,
-            CodeTitle = null,
-            CodeTitleLong = null,
-        });
-        var fromIndDirectories = db.IndDirectories.AsNoTracking().Select(x => new IndustryCodeLookup
-        {
-            StFips = x.StFips,
-            CodeType = x.IndCodeType,
-            Code = x.IndCode,
-            CodeLevel = null,
-            CodeTitle = x.IndTitle,
-            CodeTitleLong = x.IndTitle,
-        });
+        var fromIndustry = db
+            .Industry.AsNoTracking()
+            .Select(x => new IndustryCodeLookup
+            {
+                StFips = x.StFips,
+                CodeType = x.IndCodeType,
+                Code = x.IndCode,
+                CodeLevel = null,
+                CodeTitle = null,
+                CodeTitleLong = null,
+            });
+        var fromWages = db
+            .IOWages.AsNoTracking()
+            .Select(x => new IndustryCodeLookup
+            {
+                StFips = x.StFips,
+                CodeType = x.IndCodeType,
+                Code = x.IndCode,
+                CodeLevel = null,
+                CodeTitle = null,
+                CodeTitleLong = null,
+            });
+        var fromProjections = db
+            .ProjectionsMatrix.AsNoTracking()
+            .Select(x => new IndustryCodeLookup
+            {
+                StFips = x.StFips,
+                CodeType = x.IndCodeType,
+                Code = x.IndCode,
+                CodeLevel = null,
+                CodeTitle = null,
+                CodeTitleLong = null,
+            });
+        var fromIndDirectories = db
+            .IndDirectories.AsNoTracking()
+            .Select(x => new IndustryCodeLookup
+            {
+                StFips = x.StFips,
+                CodeType = x.IndCodeType,
+                Code = x.IndCode,
+                CodeLevel = null,
+                CodeTitle = x.IndTitle,
+                CodeTitleLong = x.IndTitle,
+            });
 
         var query = fromIndustry
             .Concat(fromWages)
             .Concat(fromProjections)
             .Concat(fromIndDirectories)
-            .GroupBy(x => new { x.StFips, x.CodeType, x.Code })
+            .GroupBy(x => new
+            {
+                x.StFips,
+                x.CodeType,
+                x.Code,
+            })
             .Select(g => new IndustryCodeLookup
             {
                 StFips = g.Key.StFips,
@@ -391,11 +543,33 @@ public sealed class LookupController(
         if (stFipsFilter.Length > 0)
             query = query.Where(x => stFipsFilter.Contains(x.StFips));
 
-        query = QueryFiltering.ApplyStringFilter(query, nameof(IndustryCodeLookup.CodeType), codeType);
-        query = QueryFiltering.ApplyStringFilter(query, nameof(IndustryCodeLookup.Code), code, WidCodes.NormalizeCodePattern, allowWildcard: true);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(IndustryCodeLookup.CodeType),
+            codeType
+        );
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(IndustryCodeLookup.Code),
+            code,
+            WidCodes.NormalizeCodePattern,
+            allowWildcard: true
+        );
 
-        var ordered = QuerySorting.Apply(query, sort, nameof(IndustryCodeLookup.StFips), nameof(IndustryCodeLookup.CodeType), nameof(IndustryCodeLookup.Code));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var ordered = QuerySorting.Apply(
+            query,
+            sort,
+            nameof(IndustryCodeLookup.StFips),
+            nameof(IndustryCodeLookup.CodeType),
+            nameof(IndustryCodeLookup.Code)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 
@@ -411,43 +585,55 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var fromWages = db.IOWages.AsNoTracking().Select(x => new OccupationCodeLookup
-        {
-            StFips = x.StFips,
-            CodeType = x.OccCodeType,
-            Code = x.OccCode,
-            CodeLevel = null,
-            CodeTitle = null,
-            CodeTitleLong = null,
-            SubTotal = null,
-        });
-        var fromProjections = db.ProjectionsMatrix.AsNoTracking().Select(x => new OccupationCodeLookup
-        {
-            StFips = x.StFips,
-            CodeType = x.OccCodeType,
-            Code = x.OccCode,
-            CodeLevel = null,
-            CodeTitle = null,
-            CodeTitleLong = null,
-            SubTotal = null,
-        });
-        var fromOccDirectories = db.OccDirectories.AsNoTracking().Select(x => new OccupationCodeLookup
-        {
-            StFips = x.StFips,
-            CodeType = x.OccCodeType,
-            Code = x.OccCode,
-            CodeLevel = null,
-            CodeTitle = x.OccTitle,
-            CodeTitleLong = x.OccTitle,
-            SubTotal = null,
-        });
+        var fromWages = db
+            .IOWages.AsNoTracking()
+            .Select(x => new OccupationCodeLookup
+            {
+                StFips = x.StFips,
+                CodeType = x.OccCodeType,
+                Code = x.OccCode,
+                CodeLevel = null,
+                CodeTitle = null,
+                CodeTitleLong = null,
+                SubTotal = null,
+            });
+        var fromProjections = db
+            .ProjectionsMatrix.AsNoTracking()
+            .Select(x => new OccupationCodeLookup
+            {
+                StFips = x.StFips,
+                CodeType = x.OccCodeType,
+                Code = x.OccCode,
+                CodeLevel = null,
+                CodeTitle = null,
+                CodeTitleLong = null,
+                SubTotal = null,
+            });
+        var fromOccDirectories = db
+            .OccDirectories.AsNoTracking()
+            .Select(x => new OccupationCodeLookup
+            {
+                StFips = x.StFips,
+                CodeType = x.OccCodeType,
+                Code = x.OccCode,
+                CodeLevel = null,
+                CodeTitle = x.OccTitle,
+                CodeTitleLong = x.OccTitle,
+                SubTotal = null,
+            });
 
         var query = fromWages
             .Concat(fromProjections)
             .Concat(fromOccDirectories)
-            .GroupBy(x => new { x.StFips, x.CodeType, x.Code })
+            .GroupBy(x => new
+            {
+                x.StFips,
+                x.CodeType,
+                x.Code,
+            })
             .Select(g => new OccupationCodeLookup
             {
                 StFips = g.Key.StFips,
@@ -463,11 +649,33 @@ public sealed class LookupController(
         if (stFipsFilter.Length > 0)
             query = query.Where(x => stFipsFilter.Contains(x.StFips));
 
-        query = QueryFiltering.ApplyStringFilter(query, nameof(OccupationCodeLookup.CodeType), codeType);
-        query = QueryFiltering.ApplyStringFilter(query, nameof(OccupationCodeLookup.Code), code, WidCodes.NormalizeCodePattern, allowWildcard: true);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(OccupationCodeLookup.CodeType),
+            codeType
+        );
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(OccupationCodeLookup.Code),
+            code,
+            WidCodes.NormalizeCodePattern,
+            allowWildcard: true
+        );
 
-        var ordered = QuerySorting.Apply(query, sort, nameof(OccupationCodeLookup.StFips), nameof(OccupationCodeLookup.CodeType), nameof(OccupationCodeLookup.Code));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var ordered = QuerySorting.Apply(
+            query,
+            sort,
+            nameof(OccupationCodeLookup.StFips),
+            nameof(OccupationCodeLookup.CodeType),
+            nameof(OccupationCodeLookup.Code)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 
@@ -480,30 +688,44 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var query = db.Industry
-            .AsNoTracking()
+        var query = db
+            .Industry.AsNoTracking()
             .Select(x => x.Ownership)
             .Distinct()
-            .Select(x => new OwnershipLookup
-            {
-                Ownership = x,
-                OwnershipTitle = null,
-            });
+            .Select(x => new OwnershipLookup { Ownership = x, OwnershipTitle = null });
 
-        query = QueryFiltering.ApplyStringFilter(query, nameof(OwnershipLookup.Ownership), ownership);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(OwnershipLookup.Ownership),
+            ownership
+        );
 
         var ordered = QuerySorting.Apply(query, sort, nameof(OwnershipLookup.Ownership));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
 
         var mapped = new PagedResult<OwnershipLookup>
         {
-            Items = result.Items.Select(x => new OwnershipLookup
-            {
-                Ownership = x.Ownership,
-                OwnershipTitle = LookupCatalog.OwnershipTitles.TryGetValue(x.Ownership, out var title) ? title : null,
-            }).ToList(),
+            Items = result
+                .Items.Select(x => new OwnershipLookup
+                {
+                    Ownership = x.Ownership,
+                    OwnershipTitle = LookupCatalog.OwnershipTitles.TryGetValue(
+                        x.Ownership,
+                        out var title
+                    )
+                        ? title
+                        : null,
+                })
+                .ToList(),
             Total = result.Total,
             Page = result.Page,
             PageSize = result.PageSize,
@@ -524,10 +746,11 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var query = LookupCatalog.WageSources
-            .Select(x => new WageSourceLookup
+        var query = LookupCatalog
+            .WageSources.Select(x => new WageSourceLookup
             {
                 StFips = x.StFips,
                 WageSource = x.WageSource,
@@ -539,10 +762,25 @@ public sealed class LookupController(
         if (stFipsFilter.Length > 0)
             query = query.Where(x => stFipsFilter.Contains(x.StFips));
 
-        query = QueryFiltering.ApplyStringFilter(query, nameof(WageSourceLookup.WageSource), wageSource);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(WageSourceLookup.WageSource),
+            wageSource
+        );
 
-        var ordered = QuerySorting.Apply(query, sort, nameof(WageSourceLookup.StFips), nameof(WageSourceLookup.WageSource));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var ordered = QuerySorting.Apply(
+            query,
+            sort,
+            nameof(WageSourceLookup.StFips),
+            nameof(WageSourceLookup.WageSource)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 
@@ -556,20 +794,31 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var query = LookupCatalog.WageRateTypes
-            .Select(x => new WageRateTypeLookup
+        var query = LookupCatalog
+            .WageRateTypes.Select(x => new WageRateTypeLookup
             {
                 RateType = x.RateType,
                 RateTypeTitle = x.RateTypeTitle,
             })
             .AsQueryable();
 
-        query = QueryFiltering.ApplyStringFilter(query, nameof(WageRateTypeLookup.RateType), rateType);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(WageRateTypeLookup.RateType),
+            rateType
+        );
 
         var ordered = QuerySorting.Apply(query, sort, nameof(WageRateTypeLookup.RateType));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 
@@ -582,21 +831,29 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var query = db.PeriodYears
-            .AsNoTracking()
+        var query = db
+            .PeriodYears.AsNoTracking()
             .Select(x => x.Year)
             .Distinct()
-            .Select(x => new BenchmarkLookup
-            {
-                Benchmark = x,
-            });
+            .Select(x => new BenchmarkLookup { Benchmark = x });
 
-        query = QueryFiltering.ApplyStringFilter(query, nameof(BenchmarkLookup.Benchmark), benchmark);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(BenchmarkLookup.Benchmark),
+            benchmark
+        );
 
         var ordered = QuerySorting.Apply(query, sort, nameof(BenchmarkLookup.Benchmark));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 
@@ -611,10 +868,11 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var query = LookupCatalog.GrowthCodes
-            .Select(x => new GrowthCodeLookup
+        var query = LookupCatalog
+            .GrowthCodes.Select(x => new GrowthCodeLookup
             {
                 StFips = x.StFips,
                 GrowthCode = x.GrowthCode,
@@ -626,10 +884,25 @@ public sealed class LookupController(
         if (stFipsFilter.Length > 0)
             query = query.Where(x => stFipsFilter.Contains(x.StFips));
 
-        query = QueryFiltering.ApplyStringFilter(query, nameof(GrowthCodeLookup.GrowthCode), growthCode);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(GrowthCodeLookup.GrowthCode),
+            growthCode
+        );
 
-        var ordered = QuerySorting.Apply(query, sort, nameof(GrowthCodeLookup.StFips), nameof(GrowthCodeLookup.GrowthCode));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+        var ordered = QuerySorting.Apply(
+            query,
+            sort,
+            nameof(GrowthCodeLookup.StFips),
+            nameof(GrowthCodeLookup.GrowthCode)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 
@@ -645,22 +918,47 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         IQueryable<IndDirectory> query = db.IndDirectories.AsNoTracking();
 
         var stFipsFilter = WidCodes.ParseStFipsFilter(stFips);
         if (stFipsFilter.Length > 0)
             query = query.Where(x => stFipsFilter.Contains(x.StFips));
-        query = QueryFiltering.ApplyStringFilter(query, nameof(IndDirectory.ProjPeriod), projPeriod);
-        query = QueryFiltering.ApplyStringFilter(query, nameof(IndDirectory.IndCodeType), indCodeType);
-        query = QueryFiltering.ApplyStringFilter(query, nameof(IndDirectory.IndCode), indCode, WidCodes.NormalizeCodePattern, allowWildcard: true);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(IndDirectory.ProjPeriod),
+            projPeriod
+        );
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(IndDirectory.IndCodeType),
+            indCodeType
+        );
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(IndDirectory.IndCode),
+            indCode,
+            WidCodes.NormalizeCodePattern,
+            allowWildcard: true
+        );
 
         var ordered = QuerySorting.Apply(
             query,
             sort,
-            nameof(IndDirectory.StFips), nameof(IndDirectory.ProjPeriod), nameof(IndDirectory.IndCodeType), nameof(IndDirectory.IndCode));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+            nameof(IndDirectory.StFips),
+            nameof(IndDirectory.ProjPeriod),
+            nameof(IndDirectory.IndCodeType),
+            nameof(IndDirectory.IndCode)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 
@@ -676,22 +974,47 @@ public sealed class LookupController(
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         IQueryable<OccDirectory> query = db.OccDirectories.AsNoTracking();
 
         var stFipsFilter = WidCodes.ParseStFipsFilter(stFips);
         if (stFipsFilter.Length > 0)
             query = query.Where(x => stFipsFilter.Contains(x.StFips));
-        query = QueryFiltering.ApplyStringFilter(query, nameof(OccDirectory.ProjPeriod), projPeriod);
-        query = QueryFiltering.ApplyStringFilter(query, nameof(OccDirectory.OccCodeType), occCodeType);
-        query = QueryFiltering.ApplyStringFilter(query, nameof(OccDirectory.OccCode), occCode, WidCodes.NormalizeCodePattern, allowWildcard: true);
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(OccDirectory.ProjPeriod),
+            projPeriod
+        );
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(OccDirectory.OccCodeType),
+            occCodeType
+        );
+        query = QueryFiltering.ApplyStringFilter(
+            query,
+            nameof(OccDirectory.OccCode),
+            occCode,
+            WidCodes.NormalizeCodePattern,
+            allowWildcard: true
+        );
 
         var ordered = QuerySorting.Apply(
             query,
             sort,
-            nameof(OccDirectory.StFips), nameof(OccDirectory.ProjPeriod), nameof(OccDirectory.OccCodeType), nameof(OccDirectory.OccCode));
-        var result = await queryService.PageAsync(ordered, page, pageSize, cursor, cancellationToken);
+            nameof(OccDirectory.StFips),
+            nameof(OccDirectory.ProjPeriod),
+            nameof(OccDirectory.OccCodeType),
+            nameof(OccDirectory.OccCode)
+        );
+        var result = await queryService.PageAsync(
+            ordered,
+            page,
+            pageSize,
+            cursor,
+            cancellationToken
+        );
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 }

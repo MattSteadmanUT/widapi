@@ -15,13 +15,17 @@ public sealed class WidCenterLookupIngestor(
     HttpClient httpClient,
     string connectionString,
     SourceHashService sourceHashService,
-    ILogger logger)
+    ILogger logger
+)
 {
     private const string GeogZipUrl = "https://data.widcenter.org/wfinfodb/national/geog15.zip";
-    private const string AreaTypeUrl = "https://data.widcenter.org/wfinfodb/structure/lookup/areatype.txt";
+    private const string AreaTypeUrl =
+        "https://data.widcenter.org/wfinfodb/structure/lookup/areatype.txt";
     private const string CesCodeUrl = "https://data.widcenter.org/wfinfodb/national/cescode.txt";
-    private const string IndustryCodesUrl = "https://data.widcenter.org/download/naics2022/indcodes2022.csv";
-    private const string OccupationCodesUrl = "https://data.widcenter.org/download/soc2018/occcodes.csv";
+    private const string IndustryCodesUrl =
+        "https://data.widcenter.org/download/naics2022/indcodes2022.csv";
+    private const string OccupationCodesUrl =
+        "https://data.widcenter.org/download/soc2018/occcodes.csv";
     private const string ReferenceProjPeriod = "0000-0000";
 
     public async Task<int> RunAsync(CancellationToken cancellationToken)
@@ -39,7 +43,11 @@ public sealed class WidCenterLookupIngestor(
 
     private async Task<int> LoadGeographyBundleAsync(CancellationToken cancellationToken)
     {
-        var bytes = await DownloadChangedSourceAsync("WIDCENTER-GEOG", GeogZipUrl, cancellationToken);
+        var bytes = await DownloadChangedSourceAsync(
+            "WIDCENTER-GEOG",
+            GeogZipUrl,
+            cancellationToken
+        );
         if (bytes is null)
         {
             return 0;
@@ -47,7 +55,9 @@ public sealed class WidCenterLookupIngestor(
 
         await using var stream = new MemoryStream(bytes);
         using var zip = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: false);
-        var nested = zip.Entries.FirstOrDefault(e => e.FullName.EndsWith("geog15txt.zip", StringComparison.OrdinalIgnoreCase));
+        var nested = zip.Entries.FirstOrDefault(e =>
+            e.FullName.EndsWith("geog15txt.zip", StringComparison.OrdinalIgnoreCase)
+        );
         if (nested is null)
         {
             logger.LogWarning("WIDCenter geography zip did not contain geog15txt.zip");
@@ -62,13 +72,21 @@ public sealed class WidCenterLookupIngestor(
         nestedStream.Position = 0;
 
         using var nestedZip = new ZipArchive(nestedStream, ZipArchiveMode.Read, leaveOpen: false);
-        var geogEntry = nestedZip.Entries.FirstOrDefault(e => e.FullName.EndsWith("geog.txt", StringComparison.OrdinalIgnoreCase));
-        var stateEntry = nestedZip.Entries.FirstOrDefault(e => e.FullName.EndsWith("stfipstb.txt", StringComparison.OrdinalIgnoreCase));
-        var areaTypeEntry = nestedZip.Entries.FirstOrDefault(e => e.FullName.EndsWith("AREATYPE.txt", StringComparison.OrdinalIgnoreCase));
+        var geogEntry = nestedZip.Entries.FirstOrDefault(e =>
+            e.FullName.EndsWith("geog.txt", StringComparison.OrdinalIgnoreCase)
+        );
+        var stateEntry = nestedZip.Entries.FirstOrDefault(e =>
+            e.FullName.EndsWith("stfipstb.txt", StringComparison.OrdinalIgnoreCase)
+        );
+        var areaTypeEntry = nestedZip.Entries.FirstOrDefault(e =>
+            e.FullName.EndsWith("AREATYPE.txt", StringComparison.OrdinalIgnoreCase)
+        );
 
         if (geogEntry is null || stateEntry is null)
         {
-            logger.LogWarning("WIDCenter geography text bundle missing expected files (geog.txt or stfipstb.txt)");
+            logger.LogWarning(
+                "WIDCenter geography text bundle missing expected files (geog.txt or stfipstb.txt)"
+            );
             return 0;
         }
 
@@ -84,14 +102,26 @@ public sealed class WidCenterLookupIngestor(
                 var st = NormalizeCode(cols[0], 2);
                 var at = NormalizeCode(cols[1], 2);
                 var title = cols[2].Trim();
-                if (string.IsNullOrWhiteSpace(st) || string.IsNullOrWhiteSpace(at) || string.IsNullOrWhiteSpace(title))
+                if (
+                    string.IsNullOrWhiteSpace(st)
+                    || string.IsNullOrWhiteSpace(at)
+                    || string.IsNullOrWhiteSpace(title)
+                )
                     continue;
 
                 areaTypeTitles[(st, at)] = title;
             }
         }
 
-        var geographies = new List<(string StFips, string AreaType, string AreaTypeVersion, string Area, string AreaTitle, string? AreaTypeTitle)>();
+        var geographies =
+            new List<(
+                string StFips,
+                string AreaType,
+                string AreaTypeVersion,
+                string Area,
+                string AreaTitle,
+                string? AreaTypeTitle
+            )>();
         await foreach (var line in ReadLinesAsync(geogEntry, cancellationToken))
         {
             var cols = ParseCsvLine(line);
@@ -104,21 +134,28 @@ public sealed class WidCenterLookupIngestor(
             // col[3] is a 60-char truncated title; col[4] is the full name — use the longer one.
             var col3 = cols[3].Trim();
             var col4 = cols.Length > 4 ? cols[4].Trim() : "";
-            var areaTitle = (col4.Length > col3.Length ? col4 : col3)[..Math.Min((col4.Length > col3.Length ? col4 : col3).Length, 80)];
+            var areaTitle = (col4.Length > col3.Length ? col4 : col3)[
+                ..Math.Min((col4.Length > col3.Length ? col4 : col3).Length, 80)
+            ];
             // col[4] is NOT the area type title — it's the full area name.
             // Get area type title from the AREATYPE.txt dictionary instead.
             string? areaTypeTitle = null;
 
-            if (string.IsNullOrWhiteSpace(st) || string.IsNullOrWhiteSpace(at) || string.IsNullOrWhiteSpace(rawArea) || string.IsNullOrWhiteSpace(areaTitle))
+            if (
+                string.IsNullOrWhiteSpace(st)
+                || string.IsNullOrWhiteSpace(at)
+                || string.IsNullOrWhiteSpace(rawArea)
+                || string.IsNullOrWhiteSpace(areaTitle)
+            )
                 continue;
 
             // Convert WIDCenter area codes to WID 3.0 char(6) convention.
             var area = at switch
             {
-                "00" => "000000",                    // National
-                "01" => st.PadLeft(6, '0'),            // State: stFips left-padded to 6
-                "04" => CountyArea(st, rawArea),       // County: suffix padded to 6
-                _    => rawArea.PadLeft(6, '0'),       // MSA/sub-state: WIDCenter code padded to 6
+                "00" => "000000", // National
+                "01" => st.PadLeft(6, '0'), // State: stFips left-padded to 6
+                "04" => CountyArea(st, rawArea), // County: suffix padded to 6
+                _ => rawArea.PadLeft(6, '0'), // MSA/sub-state: WIDCenter code padded to 6
             };
 
             if (areaTypeTitles.TryGetValue((st, at), out var stTitle))
@@ -140,7 +177,11 @@ public sealed class WidCenterLookupIngestor(
             var name = cols[1].Trim();
             var abbrev = cols[2].Trim();
 
-            if (string.IsNullOrWhiteSpace(st) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(abbrev))
+            if (
+                string.IsNullOrWhiteSpace(st)
+                || string.IsNullOrWhiteSpace(name)
+                || string.IsNullOrWhiteSpace(abbrev)
+            )
                 continue;
 
             states.Add((st, name, abbrev));
@@ -158,7 +199,11 @@ public sealed class WidCenterLookupIngestor(
 
     private async Task<int> LoadAreaTypesAsync(CancellationToken cancellationToken)
     {
-        var bytes = await DownloadChangedSourceAsync("WIDCENTER-AREATYPE", AreaTypeUrl, cancellationToken);
+        var bytes = await DownloadChangedSourceAsync(
+            "WIDCENTER-AREATYPE",
+            AreaTypeUrl,
+            cancellationToken
+        );
         if (bytes is null)
         {
             return 0;
@@ -176,7 +221,11 @@ public sealed class WidCenterLookupIngestor(
             var st = NormalizeCode(cols[0], 2);
             var at = NormalizeCode(cols[1], 2);
             var name = cols[2].Trim();
-            if (string.IsNullOrWhiteSpace(st) || string.IsNullOrWhiteSpace(at) || string.IsNullOrWhiteSpace(name))
+            if (
+                string.IsNullOrWhiteSpace(st)
+                || string.IsNullOrWhiteSpace(at)
+                || string.IsNullOrWhiteSpace(name)
+            )
                 continue;
 
             rows.Add((st, at, name));
@@ -189,14 +238,24 @@ public sealed class WidCenterLookupIngestor(
 
     private async Task<int> LoadCesCodesAsync(CancellationToken cancellationToken)
     {
-        var bytes = await DownloadChangedSourceAsync("WIDCENTER-CESCODE", CesCodeUrl, cancellationToken);
+        var bytes = await DownloadChangedSourceAsync(
+            "WIDCENTER-CESCODE",
+            CesCodeUrl,
+            cancellationToken
+        );
         if (bytes is null)
         {
             return 0;
         }
 
         var lines = ReadUtf8Lines(bytes);
-        var rows = new List<(string StFips, string SeriesCodeType, string SeriesCode, string SeriesTitle)>();
+        var rows =
+            new List<(
+                string StFips,
+                string SeriesCodeType,
+                string SeriesCode,
+                string SeriesTitle
+            )>();
 
         foreach (var line in lines)
         {
@@ -222,13 +281,20 @@ public sealed class WidCenterLookupIngestor(
 
     private async Task<int> LoadIndustryDirectoriesAsync(CancellationToken cancellationToken)
     {
-        var bytes = await DownloadChangedSourceAsync("WIDCENTER-INDCODES2022", IndustryCodesUrl, cancellationToken);
+        var bytes = await DownloadChangedSourceAsync(
+            "WIDCENTER-INDCODES2022",
+            IndustryCodesUrl,
+            cancellationToken
+        );
         if (bytes is null)
         {
             return 0;
         }
 
-        var rowsByKey = new Dictionary<string, (string StFips, string ProjPeriod, string IndCodeType, string IndCode, string IndTitle)>(StringComparer.Ordinal);
+        var rowsByKey = new Dictionary<
+            string,
+            (string StFips, string ProjPeriod, string IndCodeType, string IndCode, string IndTitle)
+        >(StringComparer.Ordinal);
         foreach (var line in ReadUtf8Lines(bytes))
         {
             var cols = ParseCsvLine(line);
@@ -240,7 +306,12 @@ public sealed class WidCenterLookupIngestor(
             var code = NormalizeDigits(cols[2], 1, 10);
             var title = cols[3].Trim();
 
-            if (string.IsNullOrWhiteSpace(st) || string.IsNullOrWhiteSpace(codeType) || string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(title))
+            if (
+                string.IsNullOrWhiteSpace(st)
+                || string.IsNullOrWhiteSpace(codeType)
+                || string.IsNullOrWhiteSpace(code)
+                || string.IsNullOrWhiteSpace(title)
+            )
                 continue;
 
             var key = $"{st}:{ReferenceProjPeriod}:{codeType}:{code}";
@@ -254,13 +325,20 @@ public sealed class WidCenterLookupIngestor(
 
     private async Task<int> LoadOccupationDirectoriesAsync(CancellationToken cancellationToken)
     {
-        var bytes = await DownloadChangedSourceAsync("WIDCENTER-OCCCODES2018", OccupationCodesUrl, cancellationToken);
+        var bytes = await DownloadChangedSourceAsync(
+            "WIDCENTER-OCCCODES2018",
+            OccupationCodesUrl,
+            cancellationToken
+        );
         if (bytes is null)
         {
             return 0;
         }
 
-        var rowsByKey = new Dictionary<string, (string StFips, string ProjPeriod, string OccCodeType, string OccCode, string OccTitle)>(StringComparer.Ordinal);
+        var rowsByKey = new Dictionary<
+            string,
+            (string StFips, string ProjPeriod, string OccCodeType, string OccCode, string OccTitle)
+        >(StringComparer.Ordinal);
         foreach (var line in ReadUtf8Lines(bytes))
         {
             var cols = ParseCsvLine(line);
@@ -272,7 +350,12 @@ public sealed class WidCenterLookupIngestor(
             var code = NormalizeDigits(cols[2], 1, 10);
             var title = cols[3].Trim();
 
-            if (string.IsNullOrWhiteSpace(st) || string.IsNullOrWhiteSpace(codeType) || string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(title))
+            if (
+                string.IsNullOrWhiteSpace(st)
+                || string.IsNullOrWhiteSpace(codeType)
+                || string.IsNullOrWhiteSpace(code)
+                || string.IsNullOrWhiteSpace(title)
+            )
                 continue;
 
             var key = $"{st}:{ReferenceProjPeriod}:{codeType}:{code}";
@@ -287,12 +370,17 @@ public sealed class WidCenterLookupIngestor(
     private async Task<byte[]?> DownloadChangedSourceAsync(
         string dataset,
         string url,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         using var response = await httpClient.GetAsync(url, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            logger.LogWarning("WIDCenter source request failed: {Url} ({StatusCode})", url, response.StatusCode);
+            logger.LogWarning(
+                "WIDCenter source request failed: {Url} ({StatusCode})",
+                url,
+                response.StatusCode
+            );
             return null;
         }
 
@@ -304,7 +392,8 @@ public sealed class WidCenterLookupIngestor(
             url,
             hash,
             bytes.LongLength,
-            cancellationToken);
+            cancellationToken
+        );
 
         return changed ? bytes : null;
     }
@@ -332,10 +421,15 @@ public sealed class WidCenterLookupIngestor(
 
     private static async IAsyncEnumerable<string> ReadLinesAsync(
         ZipArchiveEntry entry,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken
+    )
     {
         await using var stream = entry.Open();
-        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        using var reader = new StreamReader(
+            stream,
+            Encoding.UTF8,
+            detectEncodingFromByteOrderMarks: true
+        );
 
         while (!reader.EndOfStream)
         {
@@ -439,7 +533,8 @@ public sealed class WidCenterLookupIngestor(
     private static async Task<int> UpsertAreaTypesAsync(
         NpgsqlConnection conn,
         IEnumerable<(string StFips, string AreaType, string AreaTypeName)> rows,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var affected = 0;
         foreach (var chunk in rows.Chunk(500))
@@ -449,12 +544,14 @@ public sealed class WidCenterLookupIngestor(
 
             foreach (var row in chunk)
             {
-                var cmd = new NpgsqlBatchCommand(@"
+                var cmd = new NpgsqlBatchCommand(
+                    @"
                     INSERT INTO areatypes (stfips, areatype, areatypename)
                     VALUES (@stfips, @areatype, @areatypename)
                     ON CONFLICT (stfips, areatype)
                     DO UPDATE SET
-                        areatypename = EXCLUDED.areatypename");
+                        areatypename = EXCLUDED.areatypename"
+                );
 
                 cmd.Parameters.AddWithValue("stfips", row.StFips);
                 cmd.Parameters.AddWithValue("areatype", row.AreaType);
@@ -472,7 +569,8 @@ public sealed class WidCenterLookupIngestor(
     private static async Task<int> UpsertStateFipsAsync(
         NpgsqlConnection conn,
         IEnumerable<(string StFips, string StateName, string StateAbbrev)> rows,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var affected = 0;
         foreach (var chunk in rows.Chunk(500))
@@ -482,13 +580,15 @@ public sealed class WidCenterLookupIngestor(
 
             foreach (var row in chunk)
             {
-                var cmd = new NpgsqlBatchCommand(@"
+                var cmd = new NpgsqlBatchCommand(
+                    @"
                     INSERT INTO statefips (stfips, statename, stateabbrev)
                     VALUES (@stfips, @statename, @stateabbrev)
                     ON CONFLICT (stfips)
                     DO UPDATE SET
                         statename = EXCLUDED.statename,
-                        stateabbrev = EXCLUDED.stateabbrev");
+                        stateabbrev = EXCLUDED.stateabbrev"
+                );
 
                 cmd.Parameters.AddWithValue("stfips", row.StFips);
                 cmd.Parameters.AddWithValue("statename", row.StateName);
@@ -505,8 +605,16 @@ public sealed class WidCenterLookupIngestor(
 
     private static async Task<int> UpsertGeographiesAsync(
         NpgsqlConnection conn,
-        IEnumerable<(string StFips, string AreaType, string AreaTypeVersion, string Area, string AreaTitle, string? AreaTypeTitle)> rows,
-        CancellationToken cancellationToken)
+        IEnumerable<(
+            string StFips,
+            string AreaType,
+            string AreaTypeVersion,
+            string Area,
+            string AreaTitle,
+            string? AreaTypeTitle
+        )> rows,
+        CancellationToken cancellationToken
+    )
     {
         var affected = 0;
         foreach (var chunk in rows.Chunk(500))
@@ -516,20 +624,25 @@ public sealed class WidCenterLookupIngestor(
 
             foreach (var row in chunk)
             {
-                var cmd = new NpgsqlBatchCommand(@"
+                var cmd = new NpgsqlBatchCommand(
+                    @"
                     INSERT INTO geographies (stfips, areatype, areatypeversion, area, areaname, areatypetitle)
                     VALUES (@stfips, @areatype, @areatypeversion, @area, @areaname, @areatypetitle)
                     ON CONFLICT (stfips, areatype, areatypeversion, area)
                     DO UPDATE SET
                         areaname = EXCLUDED.areaname,
-                        areatypetitle = COALESCE(EXCLUDED.areatypetitle, geographies.areatypetitle)");
+                        areatypetitle = COALESCE(EXCLUDED.areatypetitle, geographies.areatypetitle)"
+                );
 
                 cmd.Parameters.AddWithValue("stfips", row.StFips);
                 cmd.Parameters.AddWithValue("areatype", row.AreaType);
                 cmd.Parameters.AddWithValue("areatypeversion", row.AreaTypeVersion);
                 cmd.Parameters.AddWithValue("area", row.Area);
                 cmd.Parameters.AddWithValue("areaname", row.AreaTitle);
-                cmd.Parameters.AddWithValue("areatypetitle", (object?)row.AreaTypeTitle ?? DBNull.Value);
+                cmd.Parameters.AddWithValue(
+                    "areatypetitle",
+                    (object?)row.AreaTypeTitle ?? DBNull.Value
+                );
                 batch.BatchCommands.Add(cmd);
             }
 
@@ -542,8 +655,14 @@ public sealed class WidCenterLookupIngestor(
 
     private static async Task<int> UpsertCesCodesAsync(
         NpgsqlConnection conn,
-        IEnumerable<(string StFips, string SeriesCodeType, string SeriesCode, string SeriesTitle)> rows,
-        CancellationToken cancellationToken)
+        IEnumerable<(
+            string StFips,
+            string SeriesCodeType,
+            string SeriesCode,
+            string SeriesTitle
+        )> rows,
+        CancellationToken cancellationToken
+    )
     {
         var affected = 0;
         foreach (var chunk in rows.Chunk(500))
@@ -553,12 +672,14 @@ public sealed class WidCenterLookupIngestor(
 
             foreach (var row in chunk)
             {
-                var cmd = new NpgsqlBatchCommand(@"
+                var cmd = new NpgsqlBatchCommand(
+                    @"
                     INSERT INTO cescodes (stfips, seriescodetype, seriescode, seriestitle)
                     VALUES (@stfips, @seriescodetype, @seriescode, @seriestitle)
                     ON CONFLICT (stfips, seriescodetype, seriescode)
                     DO UPDATE SET
-                        seriestitle = EXCLUDED.seriestitle");
+                        seriestitle = EXCLUDED.seriestitle"
+                );
 
                 cmd.Parameters.AddWithValue("stfips", row.StFips);
                 cmd.Parameters.AddWithValue("seriescodetype", row.SeriesCodeType);
@@ -576,8 +697,15 @@ public sealed class WidCenterLookupIngestor(
 
     private static async Task<int> UpsertIndDirectoriesAsync(
         NpgsqlConnection conn,
-        IEnumerable<(string StFips, string ProjPeriod, string IndCodeType, string IndCode, string IndTitle)> rows,
-        CancellationToken cancellationToken)
+        IEnumerable<(
+            string StFips,
+            string ProjPeriod,
+            string IndCodeType,
+            string IndCode,
+            string IndTitle
+        )> rows,
+        CancellationToken cancellationToken
+    )
     {
         var affected = 0;
         foreach (var chunk in rows.Chunk(500))
@@ -587,12 +715,14 @@ public sealed class WidCenterLookupIngestor(
 
             foreach (var row in chunk)
             {
-                var cmd = new NpgsqlBatchCommand(@"
+                var cmd = new NpgsqlBatchCommand(
+                    @"
                     INSERT INTO inddirectories (stfips, projperiod, indindcodetype, indcode, indtitle)
                     VALUES (@stfips, @projperiod, @indcodetype, @indcode, @indtitle)
                     ON CONFLICT (stfips, projperiod, indcodetype, indcode)
                     DO UPDATE SET
-                        indtitle = EXCLUDED.indtitle");
+                        indtitle = EXCLUDED.indtitle"
+                );
 
                 cmd.Parameters.AddWithValue("stfips", row.StFips);
                 cmd.Parameters.AddWithValue("projperiod", row.ProjPeriod);
@@ -611,8 +741,15 @@ public sealed class WidCenterLookupIngestor(
 
     private static async Task<int> UpsertOccDirectoriesAsync(
         NpgsqlConnection conn,
-        IEnumerable<(string StFips, string ProjPeriod, string OccCodeType, string OccCode, string OccTitle)> rows,
-        CancellationToken cancellationToken)
+        IEnumerable<(
+            string StFips,
+            string ProjPeriod,
+            string OccCodeType,
+            string OccCode,
+            string OccTitle
+        )> rows,
+        CancellationToken cancellationToken
+    )
     {
         var affected = 0;
         foreach (var chunk in rows.Chunk(500))
@@ -622,12 +759,14 @@ public sealed class WidCenterLookupIngestor(
 
             foreach (var row in chunk)
             {
-                var cmd = new NpgsqlBatchCommand(@"
+                var cmd = new NpgsqlBatchCommand(
+                    @"
                     INSERT INTO occdirectories (stfips, projperiod, occcodetype, occcode, occtitle)
                     VALUES (@stfips, @projperiod, @occcodetype, @occcode, @occtitle)
                     ON CONFLICT (stfips, projperiod, occcodetype, occcode)
                     DO UPDATE SET
-                        occtitle = EXCLUDED.occtitle");
+                        occtitle = EXCLUDED.occtitle"
+                );
 
                 cmd.Parameters.AddWithValue("stfips", row.StFips);
                 cmd.Parameters.AddWithValue("projperiod", row.ProjPeriod);
