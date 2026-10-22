@@ -704,7 +704,3 @@ public sealed class ViewsController(
         };
     }
 }
-
-
-
-

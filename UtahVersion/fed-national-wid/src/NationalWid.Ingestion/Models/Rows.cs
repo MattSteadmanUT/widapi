@@ -125,6 +125,3 @@ public sealed record CesCodeRow
     public string? IndCode { get; init; }
     public string? IndCodeType { get; init; }
 }
-
-
-

@@ -384,6 +384,3 @@ public sealed class BlsQcewIngestor(
         return values;
     }
 }
-
-
-

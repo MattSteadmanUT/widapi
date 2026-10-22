@@ -695,8 +695,3 @@ public sealed class LookupController(
         return Ok(ResponseEnvelope.Create(result, Request));
     }
 }
-
-
-
-
-

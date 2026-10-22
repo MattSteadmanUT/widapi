@@ -132,8 +132,6 @@ paths:
         - $ref: '#/components/parameters/adjusted'
         - $ref: '#/components/parameters/minyear'
         - $ref: '#/components/parameters/maxyear'
-        
-
 
   /wid/data/ces/employment/listYears:
     get:
@@ -1799,8 +1797,6 @@ components:
         employmentPopulatinRatio:
           type: number
           example: 67.3
-
-          
 
     MatrixOccupationCode:
       type: object
